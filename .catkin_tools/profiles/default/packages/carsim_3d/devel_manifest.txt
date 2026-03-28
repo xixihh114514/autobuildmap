@@ -1,0 +1,4 @@
+carsim_3d
+/home/rera/robotcup2026/devel/.private/carsim_3d/share/carsim_3d/cmake/carsim_3dConfig.cmake /home/rera/robotcup2026/devel/share/carsim_3d/cmake/carsim_3dConfig.cmake
+/home/rera/robotcup2026/devel/.private/carsim_3d/share/carsim_3d/cmake/carsim_3dConfig-version.cmake /home/rera/robotcup2026/devel/share/carsim_3d/cmake/carsim_3dConfig-version.cmake
+/home/rera/robotcup2026/devel/.private/carsim_3d/lib/pkgconfig/carsim_3d.pc /home/rera/robotcup2026/devel/lib/pkgconfig/carsim_3d.pc

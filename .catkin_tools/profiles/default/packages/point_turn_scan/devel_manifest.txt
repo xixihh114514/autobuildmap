@@ -1,0 +1,4 @@
+point_turn_scan
+/home/rera/robotcup2026/devel/.private/point_turn_scan/share/point_turn_scan/cmake/point_turn_scanConfig.cmake /home/rera/robotcup2026/devel/share/point_turn_scan/cmake/point_turn_scanConfig.cmake
+/home/rera/robotcup2026/devel/.private/point_turn_scan/share/point_turn_scan/cmake/point_turn_scanConfig-version.cmake /home/rera/robotcup2026/devel/share/point_turn_scan/cmake/point_turn_scanConfig-version.cmake
+/home/rera/robotcup2026/devel/.private/point_turn_scan/lib/pkgconfig/point_turn_scan.pc /home/rera/robotcup2026/devel/lib/pkgconfig/point_turn_scan.pc

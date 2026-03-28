@@ -1,0 +1,4 @@
+car
+/home/rera/robotcup2026/devel/.private/car/share/car/cmake/carConfig.cmake /home/rera/robotcup2026/devel/share/car/cmake/carConfig.cmake
+/home/rera/robotcup2026/devel/.private/car/share/car/cmake/carConfig-version.cmake /home/rera/robotcup2026/devel/share/car/cmake/carConfig-version.cmake
+/home/rera/robotcup2026/devel/.private/car/lib/pkgconfig/car.pc /home/rera/robotcup2026/devel/lib/pkgconfig/car.pc

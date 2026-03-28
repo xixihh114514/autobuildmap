@@ -1,0 +1,44 @@
+local_costmap:
+  global_frame: map
+  robot_base_frame: base_link
+  transform_tolerance: 0.5
+
+  update_frequency: 10.0
+  publish_frequency: 10.0
+
+  static_map: false
+  rolling_window: true
+  width: 4.0
+  height: 4.0
+  resolution: 0.03
+
+  plugins:
+    - {name: obstacle_layer, type: "costmap_2d::ObstacleLayer"}
+    - {name: inflation_layer, type: "costmap_2d::InflationLayer"}
+
+ 
+  obstacle_layer:
+    observation_sources: laser_scan_sensor # visual_obstacle_cloud #视觉补充需要加
+
+    laser_scan_sensor:
+      topic: /scan_filtered
+      sensor_frame: lidar
+      data_type: LaserScan
+      marking: true
+      clearing: true
+
+    # 视觉补充点云
+    # visual_obstacle_cloud:                     
+    #   topic: /visual_obstacle_cloud
+    #   sensor_frame: camera_depth_optical_frame   
+    #   data_type: PointCloud2
+    #   marking: true
+    #   clearing: false
+    #   min_obstacle_height: 0.10
+    #   max_obstacle_height: 2.0
+    #   obstacle_range: 5.0
+    #   raytrace_range: 5.5
+
+  # inflation_layer:
+  #   inflation_radius: 0.30
+  #   cost_scaling_factor: 10.0

@@ -1,0 +1,25 @@
+velodyne/velodyne_msgs
+/home/rera/robotcup2026/devel/.private/velodyne_msgs/share/gennodejs/ros/velodyne_msgs/_index.js /home/rera/robotcup2026/devel/share/gennodejs/ros/velodyne_msgs/_index.js
+/home/rera/robotcup2026/devel/.private/velodyne_msgs/share/gennodejs/ros/velodyne_msgs/msg/VelodynePacket.js /home/rera/robotcup2026/devel/share/gennodejs/ros/velodyne_msgs/msg/VelodynePacket.js
+/home/rera/robotcup2026/devel/.private/velodyne_msgs/share/gennodejs/ros/velodyne_msgs/msg/_index.js /home/rera/robotcup2026/devel/share/gennodejs/ros/velodyne_msgs/msg/_index.js
+/home/rera/robotcup2026/devel/.private/velodyne_msgs/share/gennodejs/ros/velodyne_msgs/msg/VelodyneScan.js /home/rera/robotcup2026/devel/share/gennodejs/ros/velodyne_msgs/msg/VelodyneScan.js
+/home/rera/robotcup2026/devel/.private/velodyne_msgs/share/roseus/ros/velodyne_msgs/manifest.l /home/rera/robotcup2026/devel/share/roseus/ros/velodyne_msgs/manifest.l
+/home/rera/robotcup2026/devel/.private/velodyne_msgs/share/roseus/ros/velodyne_msgs/msg/VelodynePacket.l /home/rera/robotcup2026/devel/share/roseus/ros/velodyne_msgs/msg/VelodynePacket.l
+/home/rera/robotcup2026/devel/.private/velodyne_msgs/share/roseus/ros/velodyne_msgs/msg/VelodyneScan.l /home/rera/robotcup2026/devel/share/roseus/ros/velodyne_msgs/msg/VelodyneScan.l
+/home/rera/robotcup2026/devel/.private/velodyne_msgs/share/velodyne_msgs/cmake/velodyne_msgs-msg-paths.cmake /home/rera/robotcup2026/devel/share/velodyne_msgs/cmake/velodyne_msgs-msg-paths.cmake
+/home/rera/robotcup2026/devel/.private/velodyne_msgs/share/velodyne_msgs/cmake/velodyne_msgs-msg-extras.cmake /home/rera/robotcup2026/devel/share/velodyne_msgs/cmake/velodyne_msgs-msg-extras.cmake
+/home/rera/robotcup2026/devel/.private/velodyne_msgs/share/velodyne_msgs/cmake/velodyne_msgsConfig.cmake /home/rera/robotcup2026/devel/share/velodyne_msgs/cmake/velodyne_msgsConfig.cmake
+/home/rera/robotcup2026/devel/.private/velodyne_msgs/share/velodyne_msgs/cmake/velodyne_msgsConfig-version.cmake /home/rera/robotcup2026/devel/share/velodyne_msgs/cmake/velodyne_msgsConfig-version.cmake
+/home/rera/robotcup2026/devel/.private/velodyne_msgs/share/common-lisp/ros/velodyne_msgs/msg/VelodyneScan.lisp /home/rera/robotcup2026/devel/share/common-lisp/ros/velodyne_msgs/msg/VelodyneScan.lisp
+/home/rera/robotcup2026/devel/.private/velodyne_msgs/share/common-lisp/ros/velodyne_msgs/msg/velodyne_msgs-msg.asd /home/rera/robotcup2026/devel/share/common-lisp/ros/velodyne_msgs/msg/velodyne_msgs-msg.asd
+/home/rera/robotcup2026/devel/.private/velodyne_msgs/share/common-lisp/ros/velodyne_msgs/msg/_package.lisp /home/rera/robotcup2026/devel/share/common-lisp/ros/velodyne_msgs/msg/_package.lisp
+/home/rera/robotcup2026/devel/.private/velodyne_msgs/share/common-lisp/ros/velodyne_msgs/msg/_package_VelodyneScan.lisp /home/rera/robotcup2026/devel/share/common-lisp/ros/velodyne_msgs/msg/_package_VelodyneScan.lisp
+/home/rera/robotcup2026/devel/.private/velodyne_msgs/share/common-lisp/ros/velodyne_msgs/msg/_package_VelodynePacket.lisp /home/rera/robotcup2026/devel/share/common-lisp/ros/velodyne_msgs/msg/_package_VelodynePacket.lisp
+/home/rera/robotcup2026/devel/.private/velodyne_msgs/share/common-lisp/ros/velodyne_msgs/msg/VelodynePacket.lisp /home/rera/robotcup2026/devel/share/common-lisp/ros/velodyne_msgs/msg/VelodynePacket.lisp
+/home/rera/robotcup2026/devel/.private/velodyne_msgs/include/velodyne_msgs/VelodynePacket.h /home/rera/robotcup2026/devel/include/velodyne_msgs/VelodynePacket.h
+/home/rera/robotcup2026/devel/.private/velodyne_msgs/include/velodyne_msgs/VelodyneScan.h /home/rera/robotcup2026/devel/include/velodyne_msgs/VelodyneScan.h
+/home/rera/robotcup2026/devel/.private/velodyne_msgs/lib/python3/dist-packages/velodyne_msgs/__init__.py /home/rera/robotcup2026/devel/lib/python3/dist-packages/velodyne_msgs/__init__.py
+/home/rera/robotcup2026/devel/.private/velodyne_msgs/lib/python3/dist-packages/velodyne_msgs/msg/_VelodyneScan.py /home/rera/robotcup2026/devel/lib/python3/dist-packages/velodyne_msgs/msg/_VelodyneScan.py
+/home/rera/robotcup2026/devel/.private/velodyne_msgs/lib/python3/dist-packages/velodyne_msgs/msg/__init__.py /home/rera/robotcup2026/devel/lib/python3/dist-packages/velodyne_msgs/msg/__init__.py
+/home/rera/robotcup2026/devel/.private/velodyne_msgs/lib/python3/dist-packages/velodyne_msgs/msg/_VelodynePacket.py /home/rera/robotcup2026/devel/lib/python3/dist-packages/velodyne_msgs/msg/_VelodynePacket.py
+/home/rera/robotcup2026/devel/.private/velodyne_msgs/lib/pkgconfig/velodyne_msgs.pc /home/rera/robotcup2026/devel/lib/pkgconfig/velodyne_msgs.pc

@@ -1,0 +1,4 @@
+velodyne/velodyne_pcl
+/home/rera/robotcup2026/devel/.private/velodyne_pcl/share/velodyne_pcl/cmake/velodyne_pclConfig.cmake /home/rera/robotcup2026/devel/share/velodyne_pcl/cmake/velodyne_pclConfig.cmake
+/home/rera/robotcup2026/devel/.private/velodyne_pcl/share/velodyne_pcl/cmake/velodyne_pclConfig-version.cmake /home/rera/robotcup2026/devel/share/velodyne_pcl/cmake/velodyne_pclConfig-version.cmake
+/home/rera/robotcup2026/devel/.private/velodyne_pcl/lib/pkgconfig/velodyne_pcl.pc /home/rera/robotcup2026/devel/lib/pkgconfig/velodyne_pcl.pc

@@ -1,0 +1,25 @@
+[rospy.client][INFO] 2026-03-11 21:49:10,120: init_node, name[/rostopic_35920_1773236950061], pid[35920]
+[xmlrpc][INFO] 2026-03-11 21:49:10,121: XML-RPC server binding to 0.0.0.0:0
+[xmlrpc][INFO] 2026-03-11 21:49:10,122: Started XML-RPC server [http://rera:44649/]
+[rospy.impl.masterslave][INFO] 2026-03-11 21:49:10,123: _ready: http://rera:44649/
+[rospy.init][INFO] 2026-03-11 21:49:10,123: ROS Slave URI: [http://rera:44649/]
+[rospy.registration][INFO] 2026-03-11 21:49:10,123: Registering with master node http://localhost:11311
+[xmlrpc][INFO] 2026-03-11 21:49:10,124: xml rpc node: starting XML-RPC server
+[rospy.init][INFO] 2026-03-11 21:49:10,225: registered with master
+[rospy.rosout][INFO] 2026-03-11 21:49:10,226: initializing /rosout core topic
+[rospy.rosout][INFO] 2026-03-11 21:49:10,231: connected to core topic /rosout
+[rospy.simtime][INFO] 2026-03-11 21:49:10,231: initializing /clock core topic
+[rospy.simtime][INFO] 2026-03-11 21:49:10,237: connected to core topic /clock
+[rospy.internal][INFO] 2026-03-11 21:49:10,251: topic[/clock] adding connection to [http://rera:42143/], count 0
+[rospy.internal][INFO] 2026-03-11 21:49:10,296: topic[/velodyne_points] adding connection to [http://rera:42143/], count 0
+[rospy.internal][INFO] 2026-03-11 21:49:10,434: topic[/rosout] adding connection to [/rosout], count 0
+[rospy.core][INFO] 2026-03-11 21:49:10,792: signal_shutdown [atexit]
+[rospy.internal][INFO] 2026-03-11 21:49:10,795: topic[/rosout] removing connection to /rosout
+[rospy.internal][ERROR] 2026-03-11 21:49:10,797: Traceback (most recent call last):
+  File "/opt/ros/noetic/lib/python3/dist-packages/rospy/impl/tcpros_base.py", line 739, in receive_once
+    sock.setblocking(1)
+OSError: [Errno 9] Bad file descriptor
+
+[rospy.internal][INFO] 2026-03-11 21:49:10,797: topic[/clock] removing connection to http://rera:42143/
+[rospy.internal][INFO] 2026-03-11 21:49:10,798: topic[/velodyne_points] removing connection to http://rera:42143/
+[rospy.impl.masterslave][INFO] 2026-03-11 21:49:10,798: atexit

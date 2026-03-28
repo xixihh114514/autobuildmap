@@ -1,0 +1,7 @@
+[INFO] [1773236897.645146782]: rviz version 1.14.26
+[INFO] [1773236897.645248784]: compiled against Qt version 5.12.8
+[INFO] [1773236897.645296984]: compiled against OGRE version 1.9.0 (Ghadamon)
+[INFO] [1773236897.663105205]: Forcing OpenGl version 0.
+[INFO] [1773236898.446997542, 19.138000000]: Stereo is NOT SUPPORTED
+[INFO] [1773236898.447094143, 19.138000000]: OpenGL device: SVGA3D; build: RELEASE;  LLVM;
+[INFO] [1773236898.447123044, 19.138000000]: OpenGl version: 4.1 (GLSL 4.1) limited to GLSL 1.4 on Mesa system.

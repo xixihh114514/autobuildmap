@@ -1,0 +1,51 @@
+<launch>
+  <!--
+    可选：把 FAST-LIO 世界系 camera_init 与本工程 map 世界系桥接到同一棵 TF 树。
+    典型症状：RViz 报
+    "No transform between map and camera_init / two unconnected trees"
+  -->
+  <arg name="bridge_map_to_camera_init" default="true"/>
+  <arg name="map_frame" default="map"/>
+  <arg name="fastlio_world_frame" default="camera_init"/>
+
+  <!--
+    loam_interface 的作用：
+    1) 订阅上游里程计和点云（例如 FAST-LIO 的 /Odometry 与 /cloud_registered）
+    2) 转换后统一发布到本工程常用话题：
+       - /state_estimation
+       - /registered_scan
+    3) 可选发布 TF（map <-> sensor）
+  -->
+  <node pkg="loam_interface" type="loamInterface" name="loamInterface" output="screen" required="true">
+    <!-- 上游里程计输入话题（FAST-LIO 默认是 /Odometry） -->
+    <param name="stateEstimationTopic" type="string" value="/Odometry" />
+
+    <!-- 上游点云输入话题（FAST-LIO 默认是 /cloud_registered） -->
+    <param name="registeredScanTopic" type="string" value="/cloud_registered_ego_filtered" />
+
+    <!-- 是否对里程计做坐标翻转（旧版 LOAM 坐标系不一致时可设 true） -->
+    <param name="flipStateEstimation" type="bool" value="false" />
+
+    <!-- 是否对点云做坐标翻转（与上面保持一致，通常与里程计同开同关） -->
+    <param name="flipRegisteredScan" type="bool" value="false" />
+
+    <!-- 是否发布 map->sensor 的 TF -->
+    <param name="sendTF" type="bool" value="true" />
+
+    <!-- TF 方向是否反转（false: map->sensor, true: sensor->map） -->
+    <param name="reverseTF" type="bool" value="false" />
+  </node>
+
+  <!--
+    连接两棵世界系：
+    map 通过静态单位变换连接到 camera_init
+    若你后续有其他节点发布 map<->camera_init，请将 bridge_map_to_camera_init 设为 false，避免冲突。
+  -->
+  <group if="$(arg bridge_map_to_camera_init)">
+    <node pkg="tf"
+          type="static_transform_publisher"
+          name="tf_map_to_camera_init_bridge"
+          args="0 0 0 0 0 0 $(arg map_frame) $(arg fastlio_world_frame) 100" />
+  </group>
+
+</launch>

@@ -1,0 +1,37 @@
+common:
+    lid_topic:  "/velodyne_points"   # FAST-LIO输入原始雷达点云；后置滤波请使用 /cloud_registered 等FAST-LIO输出
+    imu_topic:  "/camera/imu"        # IMU 话题
+    time_sync_en: false              # 仅当无法进行外部硬件时间同步时才建议开启
+    time_offset_lidar_to_imu: 0.0    # LiDAR 相对 IMU 的时间偏移（秒），即使 time_sync_en=false 也会生效
+                                     # 若外参/时延未精确标定，建议保持 0.0
+
+preprocess:
+    lidar_type: 2                # 雷达类型：1-Livox，2-Velodyne，3-Ouster
+    scan_line: 16                # 线数（VLP-16 为 16 线）
+    scan_rate: 10                # 雷达转速/频率（Hz）
+    timestamp_unit: 0            # 点云时间字段单位：0-秒，1-毫秒，2-微秒，3-纳秒
+    blind: 0.1                   # 盲区半径（米），小于该距离的点会被过滤
+
+mapping:
+    acc_cov: 0.1                 # 加速度噪声协方差
+    gyr_cov: 0.1                 # 角速度噪声协方差
+    b_acc_cov: 0.0001            # 加速度零偏随机游走协方差
+    b_gyr_cov: 0.0001            # 陀螺零偏随机游走协方差
+    fov_degree:    360           # 有效视场角（度）
+    det_range:     50.0         # 有效探测距离（米）
+    extrinsic_est_en:  false     # 是否在线估计 IMU-LiDAR 外参（建议已标定时关闭）
+    extrinsic_T: [ -0.087660, 0.008281, 0.066770 ]   # LiDAR 在 IMU 坐标系下的平移
+    extrinsic_R: [ 1, 0, 0,
+                   0, 1, 0,
+                   0, 0, 1]      # LiDAR 在 IMU 坐标系下的旋转（行优先 3x3）
+
+publish:
+    path_en:  true              # 是否发布路径
+    scan_publish_en:  true       # 是否发布点云（关闭可减少输出）
+    dense_publish_en: true       # 是否发布稠密点云
+    scan_bodyframe_pub_en: true  # 是否发布 IMU/body 系下点云
+
+pcd_save:
+    pcd_save_en: true            # 是否保存 PCD
+    interval: -1                 # 每个 PCD 文件保存的帧数
+                                 # -1 表示所有帧保存到同一个文件（长时运行可能占用大量内存）

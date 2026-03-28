@@ -1,0 +1,15 @@
+velodyne/velodyne_pointcloud
+/home/rera/robotcup2026/devel/.private/velodyne_pointcloud/share/velodyne_pointcloud/cmake/velodyne_pointcloudConfig.cmake /home/rera/robotcup2026/devel/share/velodyne_pointcloud/cmake/velodyne_pointcloudConfig.cmake
+/home/rera/robotcup2026/devel/.private/velodyne_pointcloud/share/velodyne_pointcloud/cmake/velodyne_pointcloudConfig-version.cmake /home/rera/robotcup2026/devel/share/velodyne_pointcloud/cmake/velodyne_pointcloudConfig-version.cmake
+/home/rera/robotcup2026/devel/.private/velodyne_pointcloud/share/velodyne_pointcloud/docs/TransformNodeConfig-usage.dox /home/rera/robotcup2026/devel/share/velodyne_pointcloud/docs/TransformNodeConfig-usage.dox
+/home/rera/robotcup2026/devel/.private/velodyne_pointcloud/share/velodyne_pointcloud/docs/TransformNodeConfig.wikidoc /home/rera/robotcup2026/devel/share/velodyne_pointcloud/docs/TransformNodeConfig.wikidoc
+/home/rera/robotcup2026/devel/.private/velodyne_pointcloud/share/velodyne_pointcloud/docs/TransformNodeConfig.dox /home/rera/robotcup2026/devel/share/velodyne_pointcloud/docs/TransformNodeConfig.dox
+/home/rera/robotcup2026/devel/.private/velodyne_pointcloud/include/velodyne_pointcloud/TransformNodeConfig.h /home/rera/robotcup2026/devel/include/velodyne_pointcloud/TransformNodeConfig.h
+/home/rera/robotcup2026/devel/.private/velodyne_pointcloud/lib/libvelodyne_rawdata.so /home/rera/robotcup2026/devel/lib/libvelodyne_rawdata.so
+/home/rera/robotcup2026/devel/.private/velodyne_pointcloud/lib/libdata_containers.so /home/rera/robotcup2026/devel/lib/libdata_containers.so
+/home/rera/robotcup2026/devel/.private/velodyne_pointcloud/lib/libtransform_nodelet.so /home/rera/robotcup2026/devel/lib/libtransform_nodelet.so
+/home/rera/robotcup2026/devel/.private/velodyne_pointcloud/lib/python3/dist-packages/velodyne_pointcloud/__init__.py /home/rera/robotcup2026/devel/lib/python3/dist-packages/velodyne_pointcloud/__init__.py
+/home/rera/robotcup2026/devel/.private/velodyne_pointcloud/lib/python3/dist-packages/velodyne_pointcloud/cfg/__init__.py /home/rera/robotcup2026/devel/lib/python3/dist-packages/velodyne_pointcloud/cfg/__init__.py
+/home/rera/robotcup2026/devel/.private/velodyne_pointcloud/lib/python3/dist-packages/velodyne_pointcloud/cfg/TransformNodeConfig.py /home/rera/robotcup2026/devel/lib/python3/dist-packages/velodyne_pointcloud/cfg/TransformNodeConfig.py
+/home/rera/robotcup2026/devel/.private/velodyne_pointcloud/lib/pkgconfig/velodyne_pointcloud.pc /home/rera/robotcup2026/devel/lib/pkgconfig/velodyne_pointcloud.pc
+/home/rera/robotcup2026/devel/.private/velodyne_pointcloud/lib/velodyne_pointcloud/transform_node /home/rera/robotcup2026/devel/lib/velodyne_pointcloud/transform_node

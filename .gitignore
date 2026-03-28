@@ -1,0 +1,7 @@
+build/
+devel/
+.catkin_tools/
+.ros/
+.codex
+__pycache__/
+src/visual_obstacle_detector/yolo_env/

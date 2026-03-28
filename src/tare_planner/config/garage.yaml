@@ -1,0 +1,198 @@
+# ===============================
+# TARE Planner - garage 场景配置
+# 作用：定义话题接口、行为开关、感知/规划网格与可视化参数
+# ===============================
+
+# ----------- 话题接口（订阅）-----------
+# 外部启动探索指令
+sub_start_exploration_topic_ : /start_exploration
+# 地形地图（近场）
+sub_terrain_map_topic_ : /terrain_map
+# 地形地图（扩展/远场）
+sub_terrain_map_ext_topic_ : /terrain_map_ext
+# 与扫描时刻对齐后的位姿估计
+sub_state_estimation_topic_ : /state_estimation_at_scan
+# 已配准点云
+sub_registered_scan_topic_ : /registered_scan
+# 规划边界（覆盖边界）
+sub_coverage_boundary_topic_ : /sensor_coverage_planner/coverage_boundary
+# 视点/导航边界
+sub_viewpoint_boundary_topic_ : /navigation_boundary
+# 禁入区域边界
+sub_nogo_boundary_topic_ : /sensor_coverage_planner/nogo_boundary
+# 手柄输入（用于人工触发/复位）
+sub_joystick_topic_ : /joy
+# 外部复位 waypoint 指令
+sub_reset_waypoint_topic_ : /reset_waypoint
+
+# ----------- 话题接口（发布）-----------
+# 探索完成标志
+pub_exploration_finish_topic_ : exploration_finish
+# 运行时分解信息（各模块耗时）
+pub_runtime_breakdown_topic_ : runtime_breakdown
+# 总运行时
+pub_runtime_topic_ : /runtime
+# 输出导航 waypoint
+pub_waypoint_topic_ : /way_point
+# 动量策略触发次数
+pub_momentum_activation_count_topic_ : momentum_activation_count
+
+# ----------- 行为开关与核心阈值 -----------
+# 启动后自动开始探索
+kAutoStart : true
+# 支持“快速回家”策略
+kRushHome : true
+# 规划时考虑地形高度
+kUseTerrainHeight : true
+# 启用地形碰撞检查
+kCheckTerrainCollision : true
+# 允许对 waypoint 进行外延
+kExtendWayPoint : true
+# 使用视线可达的前瞻点
+kUseLineOfSightLookAheadPoint : true
+# 禁止“无探索直接回家”
+kNoExplorationReturnHome : true
+
+# waypoint 外延距离（大/小）
+kExtendWayPointDistanceBig : 8.0
+kExtendWayPointDistanceSmall : 4.5
+# 关键位姿点云降采样分辨率
+kKeyposeCloudDwzFilterLeafSize : 0.2
+
+# 回家相关阈值
+kRushHomeDist : 10
+kAtHomeDistThreshold : 0.5
+# 地形碰撞阈值
+kTerrainCollisionThreshold : 0.5
+# 前瞻距离
+kLookAheadDistance : 8
+
+# 动量模式（避免频繁转向）
+kUseMomentum : false 
+kDirectionChangeCounterThr : 6
+kDirectionNoChangeCounterThr : 5
+
+# 手柄上用于 waypoint 复位的轴编号
+kResetWaypointJoystickAxesID : 2
+
+
+# ===============================
+# PlanningEnv（前沿与目标生成）
+# ===============================
+# 使用 Frontier（前沿）驱动探索
+kUseFrontier : true
+# 前沿聚类距离阈值
+kFrontierClusterTolerance : 1.0
+# 前沿簇最小点数
+kFrontierClusterMinSize : 30
+# 是否把 coverage 边界用于 Frontier 过滤
+kUseCoverageBoundaryOnFrontier : false 
+# 是否把 coverage 边界用于物体表面处理
+kUseCoverageBoundaryOnObjectSurface : false
+
+
+# ===============================
+# Rolling Occupancy Grid（滚动占据栅格）
+# ===============================
+rolling_occupancy_grid/resolution_x : 0.3
+rolling_occupancy_grid/resolution_y : 0.3
+rolling_occupancy_grid/resolution_z : 0.3
+
+# 点云管理与体素化参数
+kSurfaceCloudDwzLeafSize : 0.5
+kCollisionCloudDwzLeafSize : 0.2
+kKeyposeCloudStackNum : 5
+kPointCloudRowNum : 50
+kPointCloudColNum : 50
+kPointCloudLevelNum : 30
+kMaxCellPointNum : 100000
+kPointCloudCellSize : 18
+kPointCloudCellHeight : 1.8
+kPointCloudManagerNeighborCellNum : 5
+kCoverCloudZSqueezeRatio : 2.0
+
+
+# ===============================
+# KeyposeGraph（关键位姿图）
+# ===============================
+# 新增节点/边的距离、高度、碰撞判定阈值
+keypose_graph/kAddNodeMinDist : 1.0
+keypose_graph/kAddNonKeyposeNodeMinDist : 0.5
+keypose_graph/kAddEdgeConnectDistThr : 3.0
+keypose_graph/kAddEdgeToLastKeyposeDistThr : 3.0
+keypose_graph/kAddEdgeVerticalThreshold : 1.0
+keypose_graph/kAddEdgeCollisionCheckResolution : 0.4
+keypose_graph/kAddEdgeCollisionCheckRadius : 0.4
+keypose_graph/kAddEdgeCollisionCheckPointNumThr : 1
+
+
+# ===============================
+# ViewPointManager（视点采样与局部路径）
+# ===============================
+viewpoint_manager/number_x : 40
+viewpoint_manager/number_y : 40
+viewpoint_manager/number_z : 1
+viewpoint_manager/resolution_x : 1.2
+viewpoint_manager/resolution_y : 1.2
+viewpoint_manager/resolution_z : 0.0
+
+# 连通性/优化/碰撞参数
+kConnectivityHeightDiffThr : 0.25
+kGreedyViewPointSampleRange : 3
+kLocalPathOptimizationItrMax : 10
+kViewPointCollisionMargin : 0.7
+kViewPointCollisionMarginZPlus : 0.5
+kViewPointCollisionMarginZMinus : 0.5
+kCollisionGridZScale : 1.0
+kCollisionGridResolutionX : 0.2
+kCollisionGridResolutionY : 0.2
+kCollisionGridResolutionZ : 0.0
+kCollisionPointThr : 1
+kLineOfSightStopAtNearestObstacle : true
+kViewPointHeightFromTerrain : 0.75
+kViewPointHeightFromTerrainChangeThreshold : 0.6
+kCheckDynamicObstacleCollision : false
+kCollisionFrameCountMax : 3
+
+# 传感器覆盖模型参数
+kSensorRange : 12.0
+kNeighborRange : 3.0
+kCoverageOcclusionThr : 0.3
+kCoverageDilationRadius : 1.0
+
+
+# ===============================
+# Grid World（全局离散子空间）
+# ===============================
+kGridWorldXNum : 121
+kGridWorldYNum : 121
+kGridWorldZNum : 121
+kGridWorldCellHeight : 3.0
+kGridWorldNearbyGridNum : 5
+
+# 子空间状态切换阈值
+kMinAddPointNumSmall : 40
+kMinAddPointNumBig : 60
+kMinAddFrontierPointNum : 15
+kCellExploringToCoveredThr : 1
+kCellCoveredToExploringThr: 10
+kCellExploringToAlmostCoveredThr: 10
+kCellAlmostCoveredToExploringThr: 20
+kCellUnknownToExploringThr: 1
+
+
+# ===============================
+# Visualization（可视化）
+# ===============================
+kExploringSubspaceMarkerColorGradientAlpha : true
+kExploringSubspaceMarkerColorMaxAlpha : 0.8
+kExploringSubspaceMarkerColorR : 0.0
+kExploringSubspaceMarkerColorG : 1.0
+kExploringSubspaceMarkerColorB : 0.0
+kExploringSubspaceMarkerColorA : 1.0
+kLocalPlanningHorizonMarkerColorR : 0.0
+kLocalPlanningHorizonMarkerColorG : 1.0
+kLocalPlanningHorizonMarkerColorB : 0.0
+kLocalPlanningHorizonMarkerColorA : 1.0
+kLocalPlanningHorizonMarkerWidth : 0.3
+kLocalPlanningHorizonHeight : 3.0

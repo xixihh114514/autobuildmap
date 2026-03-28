@@ -1,0 +1,10 @@
+<launch>
+  <arg name="model" default="$(find car)/urdf/car.urdf" />
+
+  <include file="$(find car)/launch/gazebo.launch" />
+
+  <include file="$(find car)/launch/display.launch">
+    <arg name="model" value="$(arg model)" />
+    <arg name="delay_sec" value="30" />
+  </include>
+</launch>

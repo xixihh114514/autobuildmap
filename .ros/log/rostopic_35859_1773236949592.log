@@ -1,0 +1,20 @@
+[rospy.client][INFO] 2026-03-11 21:49:09,705: init_node, name[/rostopic_35859_1773236949592], pid[35859]
+[xmlrpc][INFO] 2026-03-11 21:49:09,706: XML-RPC server binding to 0.0.0.0:0
+[xmlrpc][INFO] 2026-03-11 21:49:09,708: Started XML-RPC server [http://rera:34771/]
+[rospy.init][INFO] 2026-03-11 21:49:09,709: ROS Slave URI: [http://rera:34771/]
+[rospy.impl.masterslave][INFO] 2026-03-11 21:49:09,709: _ready: http://rera:34771/
+[rospy.registration][INFO] 2026-03-11 21:49:09,711: Registering with master node http://localhost:11311
+[xmlrpc][INFO] 2026-03-11 21:49:09,711: xml rpc node: starting XML-RPC server
+[rospy.init][INFO] 2026-03-11 21:49:09,810: registered with master
+[rospy.rosout][INFO] 2026-03-11 21:49:09,811: initializing /rosout core topic
+[rospy.rosout][INFO] 2026-03-11 21:49:09,815: connected to core topic /rosout
+[rospy.simtime][INFO] 2026-03-11 21:49:09,816: initializing /clock core topic
+[rospy.simtime][INFO] 2026-03-11 21:49:09,818: connected to core topic /clock
+[rospy.internal][INFO] 2026-03-11 21:49:09,823: topic[/clock] adding connection to [http://rera:42143/], count 0
+[rospy.internal][INFO] 2026-03-11 21:49:09,868: topic[/camera/imu] adding connection to [http://rera:42143/], count 0
+[rospy.internal][INFO] 2026-03-11 21:49:10,032: topic[/rosout] adding connection to [/rosout], count 0
+[rospy.core][INFO] 2026-03-11 21:49:10,267: signal_shutdown [atexit]
+[rospy.internal][INFO] 2026-03-11 21:49:10,271: topic[/rosout] removing connection to /rosout
+[rospy.internal][INFO] 2026-03-11 21:49:10,272: topic[/clock] removing connection to http://rera:42143/
+[rospy.internal][INFO] 2026-03-11 21:49:10,274: topic[/camera/imu] removing connection to http://rera:42143/
+[rospy.impl.masterslave][INFO] 2026-03-11 21:49:10,274: atexit

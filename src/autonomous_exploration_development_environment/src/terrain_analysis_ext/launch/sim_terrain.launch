@@ -1,0 +1,16 @@
+<launch>
+  <!-- 是否启用 terrain_analysis_ext 的连通性检查 -->
+  <arg name="checkTerrainConn" default="true" />
+
+  <!-- terrain_analysis_ext 相对 terrain_analysis 的延迟启动秒数 -->
+  <arg name="ext_delay_sec" default="5" />
+
+  <!-- 先启动 terrain_analysis -->
+  <include file="$(find terrain_analysis)/launch/terrain_analysis.launch" />
+
+  <!-- 5 秒后再启动 terrain_analysis_ext -->
+  <include file="$(find terrain_analysis_ext)/launch/terrain_analysis_ext.launch">
+    <arg name="checkTerrainConn" value="$(arg checkTerrainConn)" />
+    <arg name="delay_sec" value="$(arg ext_delay_sec)" />
+  </include>
+</launch>

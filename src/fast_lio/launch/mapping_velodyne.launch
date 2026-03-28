@@ -1,0 +1,21 @@
+<launch>
+<!-- Velodyne 激光雷达建图启动文件 -->
+
+    <arg name="rviz" default="true" />  <!-- 是否启动 RViz -->
+
+    <rosparam command="load" file="$(find fast_lio)/config/velodyne.yaml" />  <!-- 加载 Velodyne 配置 -->
+
+    <param name="feature_extract_enable" type="bool" value="1"/>      <!-- 是否启用特征提取，FAST-LIO2 通常关闭 -->
+    <param name="point_filter_num" type="int" value="4"/>             <!-- 点云降采样步长 -->
+    <param name="max_iteration" type="int" value="10" />               <!-- IKF 最大迭代次数 -->
+    <param name="filter_size_surf" type="double" value="0.5" />       <!-- 当前帧体素滤波分辨率 -->
+    <param name="filter_size_map" type="double" value="0.2" />        <!-- 地图体素滤波分辨率 -->
+    <param name="cube_side_length" type="double" value="1000" />      <!-- 局部地图立方体边长（米） -->
+    <param name="runtime_pos_log_enable" type="bool" value="0" />     <!-- 是否输出运行位置日志 -->
+    <node pkg="fast_lio" type="fastlio_mapping" name="laserMapping" output="screen" /> <!-- FAST-LIO 主节点 -->
+
+    <group if="$(arg rviz)">  <!-- 仅在 rviz:=true 时启动可视化 -->
+    <node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz" args="-d $(find fast_lio)/rviz_cfg/loam_livox.rviz" /> <!-- RViz 配置 -->
+    </group>
+
+</launch>

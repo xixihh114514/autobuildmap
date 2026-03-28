@@ -1,0 +1,40 @@
+<launch>
+    <!--
+      Garage 场景探索入口：
+      1) 复用 explore.launch 主流程
+      2) 固定 scenario=garage
+      3) 可选启用边界发布节点 navigationBoundary
+    -->
+
+    <!-- 是否录制 rosbag（录制 TARE 相关话题） -->
+    <arg name="rosbag_record" default="false"/>
+    <!-- 录包保存目录（相对 HOME） -->
+    <arg name="bag_path" default="Desktop"/>
+    <!-- 录包文件名前缀 -->
+    <arg name="bag_name_prefix" default="tare_garage"/>
+    <!-- 是否启动 TARE 的 RViz 配置 -->
+    <arg name="rviz" default="true"/>
+    <!-- 是否启用边界约束（发布 boundary.ply） -->
+    <arg name="use_boundary" default="false"/>
+
+    <!-- 主探索流程：传递参数到 explore.launch，并指定 garage 场景配置 -->
+    <include file="$(find tare_planner)/launch/explore.launch">
+        <arg name="scenario" value="garage"/>
+        <arg name="rosbag_record" value="$(arg rosbag_record)"/>
+        <arg name="bag_path" value="$(arg bag_path)"/>
+        <arg name="bag_name_prefix" value="$(arg bag_name_prefix)"/>
+        <arg name="rviz" value="$(arg rviz)"/>
+    </include>
+
+    <!-- 可选边界发布：向 /navigation_boundary 周期发布边界多边形 -->
+    <group if="$(arg use_boundary)">
+        <node pkg="tare_planner" type="navigationBoundary" name="navigationBoundary" output="screen" required="true">
+            <!-- 边界文件路径（PLY） -->
+            <param name="boundary_file_dir" type="string" value="$(find tare_planner)/data/boundary.ply" />
+            <!-- 启动后立即发送边界 -->
+            <param name="sendBoundary" type="bool" value="true" />
+            <!-- 边界重复发送周期（s） -->
+            <param name="sendBoundaryInterval" type="int" value="2" />
+        </node>
+    </group>
+</launch>
