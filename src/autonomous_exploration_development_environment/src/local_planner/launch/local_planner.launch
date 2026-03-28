@@ -14,7 +14,7 @@
   <arg name="cameraOffsetZ" default="-0.07187"/>
 
   <!-- 是否允许双向行驶（true 可倒车） -->
-  <arg name="twoWayDrive" default="false"/>
+  <arg name="twoWayDrive" default="true"/>
   <!-- 最大速度上限（m/s） -->
   <arg name="maxSpeed" default="2.0"/>
 
