@@ -1,0 +1,15 @@
+recovery_behaviors:
+- name: "clear_costmap"
+  type: "clear_costmap_recovery/ClearCostmapRecovery"
+  reset_distance: 3.0           # 保持不变
+  force_updating: true
+  
+- name: "rotate"
+  type: "rotate_recovery/RotateRecovery"
+  sim_granularity: 0.01         # 减小以增加旋转精度
+  
+- name: "backup"
+  type: "move_slow_and_clear/MoveSlowAndClear"
+  clearing_distance: 1.0        # 保持不变
+  limited_trans_speed: 0.05     # 降低以更平滑后退
+  limited_rot_speed: 0.2        # 降低以更平滑旋转

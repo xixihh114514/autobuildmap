@@ -1,0 +1,73 @@
+# =====================================================
+# 全局代价地图（Global Costmap）参数配置文件
+# 适用于：Gazebo + gmapping（边建图）+ move_base（A* + TEB）
+# =====================================================
+
+global_costmap:
+  # ------------------- 坐标系与时间容忍 -------------------
+  global_frame: map
+    # 全局参考坐标系（地图坐标系）
+    # 所有路径规划、障碍物位置都基于此坐标系
+    # 必须与 gmapping 发布的 map_frame 一致
+
+  robot_base_frame: base_link
+    # 机器人底盘中心坐标系
+    # 足迹、传感器、膨胀都以这个坐标系为原点
+
+  transform_tolerance: 0.5
+    # TF 坐标变换最大容忍时间（秒）
+    # 建议：0.3 ~ 1.0，仿真可设大一点
+
+  # ------------------- 更新与发布频率 -------------------
+  update_frequency: 1.0
+    # 代价地图内部更新频率（Hz）
+    # 建议：0.5 ~ 2.0（建图时可设低）
+
+  publish_frequency: 1.0
+    # 代价地图发布频率（用于 RViz 显示）
+    # 设为 0 表示不发布（调试时可关闭）
+    # 建议：1.0 ~ 2.0
+
+  # ------------------- 地图模式设置 -------------------
+  static_map: true
+    # 是否使用静态地图（来自 map_server）,自主建图阿需要修改成flase
+
+  rolling_window: false
+    # 是否启用“滚动窗口”模式
+    # false → 全局地图（配合 map 话题）
+    # true  → 局部滚动地图（用于 local_costmap）
+    # 全局代价地图必须为 false
+
+  # ------------------- 地图尺寸与分辨率（仅在 static_map: false 时生效）---
+  width: 12.0
+    # 代价地图宽度（米），仅在 rolling_window: false 且 static_map: false 时使用
+    # 建议：覆盖机器人活动范围，过大浪费内存
+
+  height: 12.0
+    # 代价地图高度（米）
+
+  resolution: 0.03
+    # 栅格分辨率（米/格）
+    # 0.03 → 3cm，适合高精度导航
+    # 建议：0.02 ~ 0.05，与激光和足迹匹配
+
+  # ------------------- 代价地图插件层（按顺序执行）-------------------
+  plugins:
+    - {name: static_layer,     type: "costmap_2d::StaticLayer"}
+      # 静态地图层：加载 /map 话题中的占用栅格
+
+    - {name: obstacle_layer,   type: "costmap_2d::ObstacleLayer"}
+      # 动态障碍物层：根据激光/点云实时标记障碍
+
+    - {name: inflation_layer,  type: "costmap_2d::InflationLayer"}
+      # 膨胀层：在障碍物周围生成梯度代价（安全区）
+
+# =====================================================
+# 注意：
+# 2. 地图尺寸（width/height）在 static_map: false 时才生效
+# 3. 插件顺序不能乱：static → obstacle → inflation
+# =====================================================
+
+  inflation_layer:
+    inflation_radius: 0.3
+    cost_scaling_factor: 10.0
