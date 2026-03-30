@@ -212,3 +212,56 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       当日初始版本
    3.28.1
       local中允许车辆倒车
+
+26.3.30
+   3.30.0
+      当日初始版本
+   3.30.1
+      local_planner先做诊断性调参，验证窄通道和90度弯卡住是否主要由方向约束过强导致
+      修改了local_planner.launch：
+      checkRotObstacle：true -> false
+      dirWeight：0.02 -> 0.005
+      pathCropByGoal：true -> false
+      备注：dirThre原始默认值为90.0，当前180.0为手动调整，不属于本次代改内容
+   3.30.2
+      针对窄路丁字路口继续调local_planner
+      修改了local_planner.launch：
+      twoWayDrive：false -> true
+      lookAheadDis：1.5 -> 0.7
+      说明：允许倒车修正姿态，并缩短前视距离，避免局部跟踪在丁字路口和直角弯处切不进去
+   3.30.3
+      针对窄通道内来回振荡继续调local_planner
+      修改了local_planner.launch：
+      dirWeight：0.01 -> 0.02
+      dirThre：140.0 -> 120.0
+      lookAheadDis：0.7 -> 0.9
+      yawRateGain：7.5 -> 5.0
+      stopYawRateGain：7.5 -> 5.0
+      switchTimeThre：1.0 -> 2.0
+      说明：增强目标方向约束，减小转向增益，拉长前后切换时间，尽量降低窄通道内左右摆动和前后反复
+   3.30.4
+      振荡幅度减小但仍无法正常通过窄通道，继续做折中调参
+      修改了local_planner.launch：
+      autonomySpeed：1.0 -> 0.7
+      dirWeight：0.02 -> 0.015
+      dirThre：120.0 -> 130.0
+      lookAheadDis：0.9 -> 0.8
+      说明：在抑制振荡的基础上适当放宽通过性，并降低自动速度
+   3.30.5
+      回退到会在通道中振荡的版本
+      修改了local_planner.launch：
+      autonomySpeed：0.7 -> 1.0
+      dirWeight：0.015 -> 0.02
+      dirThre：130.0 -> 120.0
+      lookAheadDis：0.8 -> 0.9
+      说明：回退到3.30.3对应的参数组，保留twoWayDrive=true、yawRateGain=5.0、stopYawRateGain=5.0、switchTimeThre=2.0
+   3.30.6
+      继续回退到振荡更明显的版本
+      修改了local_planner.launch：
+      dirWeight：0.02 -> 0.01
+      dirThre：120.0 -> 140.0
+      lookAheadDis：0.9 -> 0.7
+      yawRateGain：5.0 -> 7.5
+      stopYawRateGain：5.0 -> 7.5
+      switchTimeThre：2.0 -> 1.0
+      说明：回退到3.30.2对应的参数组，保留twoWayDrive=true、autonomySpeed=1.0
