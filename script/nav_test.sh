@@ -51,6 +51,14 @@ NAV_PID=$!
 sleep 2
 echo -e "${GREEN}-> nav.launch 已启动 (PID: $NAV_PID)${NC}"
 
+echo -e "${YELLOW}[6/6] 启动 rrt_goal_decision...${NC}"
+# 延迟启动 rrt_goal_decision，确保 move_base 已经发布全局代价地图
+sleep 3
+roslaunch rrt_goal_decision rrt_goal_decision.launch &
+RRT_PID=$!
+sleep 1
+echo -e "${GREEN}-> rrt_goal_decision 已启动 (PID: $RRT_PID)${NC}"
+
 echo -e "${GREEN}==========================================${NC}"
 echo -e "${GREEN}   所有节点已启动！正在打开调试工具...   ${NC}"
 echo -e "${GREEN}==========================================${NC}"

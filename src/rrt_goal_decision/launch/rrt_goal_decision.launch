@@ -54,7 +54,7 @@
         <param name="distance_change_threshold" value="0.01"/>
 
         <!-- 最大缓慢次数 -->
-        <param name="slow_count_limit" value="12"/>
+        <param name="slow_count_limit" value="8"/>
 
         <!-- 任务最大超时时间 (秒) -->
         <param name="abort_timeout" value="60.0"/>

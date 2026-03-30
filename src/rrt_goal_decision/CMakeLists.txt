@@ -135,6 +135,10 @@ add_executable(rrt_goal_decision
   src/rrt_goal_node.cpp
 )
 
+add_executable(global_costmap_tester
+  src/global_costmap_tester.cpp
+)
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -147,6 +151,10 @@ add_executable(rrt_goal_decision
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(rrt_goal_decision
+  ${catkin_LIBRARIES}
+)
+
+target_link_libraries(global_costmap_tester
   ${catkin_LIBRARIES}
 )
 

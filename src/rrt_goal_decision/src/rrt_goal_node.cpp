@@ -20,6 +20,7 @@
 #include <iomanip>
 
 #include <std_msgs/Float32MultiArray.h>
+#include <visualization_msgs/Marker.h>
 
 typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
 
@@ -147,6 +148,12 @@ private:
 
     ros::Publisher candidate_pub;
     ros::Publisher rescue_info_pub;  // 【新增】救援模式信息发布
+    ros::Publisher debug_marker_pub;  // 【调试】marker 可视化发布器
+
+    // 【调试】循环颜色计数器（8 色循环）
+    int goal_color_index;
+    const char* goal_colors[8];  // 0-7 共 8 种颜色
+    int debug_marker_id;  // 【调试】marker ID 计数器
 
 public:
     FrontierGoalManager() : pnh("~"), ac("move_base", true), gen(std::random_device{}())
@@ -179,7 +186,7 @@ public:
         
         pnh.param("global_shrink_radius", global_shrink_radius, 1.5);   
         pnh.param("global_shrink_step", global_shrink_step, 0.05);      
-        pnh.param("global_safe_threshold", global_safe_threshold, 50.0); 
+        pnh.param("global_safe_threshold", global_safe_threshold, 50.0);  // 恢复默认阈值 
         pnh.param("global_safe_window_resolution", global_safe_window_resolution, 0.03);  // 【新增】
 
         pnh.param("arrived_ignore_radius", arrived_ignore_radius, 0.8); 
@@ -204,12 +211,26 @@ public:
         has_raw_map_ = false;
 
         frontier_sub = nh.subscribe("/detected_points", 100, &FrontierGoalManager::frontierCallback, this);
-        global_costmap_sub = nh.subscribe("/move_base/global_costmap/costmap", 1, &FrontierGoalManager::globalCostmapCallback, this);
-        plan_sub = nh.subscribe("/move_base/GlobalPlanner/plan", 1, &FrontierGoalManager::planCallback, this);
-        map_sub_ = nh.subscribe("/map", 1, &FrontierGoalManager::rawMapCallback, this);
+        // 直接订阅原始全局代价地图话题
+        global_costmap_sub = nh.subscribe("/move_base/global_costmap/costmap", 10, &FrontierGoalManager::globalCostmapCallback, this);
+        plan_sub = nh.subscribe("/move_base/GlobalPlanner/plan", 10, &FrontierGoalManager::planCallback, this);
+        map_sub_ = nh.subscribe("/map", 10, &FrontierGoalManager::rawMapCallback, this);
         
         candidate_pub = nh.advertise<std_msgs::Float32MultiArray>("/goal_candidates", 1);
         rescue_info_pub = nh.advertise<std_msgs::Float32MultiArray>("/rescue_mode_info", 1, true);  // 【新增】
+        debug_marker_pub = nh.advertise<visualization_msgs::Marker>("/rrt_goal_debug_markers", 100, true);  // 【调试】
+
+        // 【调试】初始化 8 种循环颜色
+        goal_colors[0] = "RED";
+        goal_colors[1] = "GREEN";
+        goal_colors[2] = "BLUE";
+        goal_colors[3] = "YELLOW";
+        goal_colors[4] = "CYAN";
+        goal_colors[5] = "MAGENTA";
+        goal_colors[6] = "ORANGE";
+        goal_colors[7] = "PINK";
+        goal_color_index = 0;
+        debug_marker_id = 0;  // 【调试】初始化 marker ID
 
         goal_active = false;
         cancel_pending = false;
@@ -245,15 +266,73 @@ public:
         rescue_info_pub.publish(msg);
     }
 
+    // 【调试】根据颜色索引获取 RGB 值
+    void getColorRGB(int color_index, float& r, float& g, float& b)
+    {
+        switch(color_index % 8) {
+            case 0: r=1.0; g=0.0; b=0.0; break;       // RED
+            case 1: r=0.0; g=1.0; b=0.0; break;       // GREEN
+            case 2: r=0.0; g=0.0; b=1.0; break;       // BLUE
+            case 3: r=1.0; g=1.0; b=0.0; break;       // YELLOW
+            case 4: r=0.0; g=1.0; b=1.0; break;       // CYAN
+            case 5: r=1.0; g=0.0; b=1.0; break;       // MAGENTA
+            case 6: r=1.0; g=0.5; b=0.0; break;       // ORANGE
+            case 7: r=1.0; g=0.4; b=0.7; break;       // PINK
+            default: r=1.0; g=1.0; b=1.0; break;
+        }
+    }
+
+    // 【调试】发布彩色 marker 标记点
+    void publishDebugMarker(double x, double y, int color_index)
+    {
+        visualization_msgs::Marker marker;
+        marker.header.frame_id = "map";
+        marker.header.stamp = ros::Time::now();
+        marker.ns = "rrt_goal_debug";  // 命名空间包含颜色信息
+        marker.id = debug_marker_id++;
+        marker.type = visualization_msgs::Marker::SPHERE;
+        marker.action = visualization_msgs::Marker::ADD;
+        marker.pose.position.x = x;
+        marker.pose.position.y = y;
+        marker.pose.position.z = 0.3;
+        marker.pose.orientation.w = 1.0;
+        marker.scale.x = 0.5;
+        marker.scale.y = 0.5;
+        marker.scale.z = 0.2;
+        marker.lifetime = ros::Duration(120.0);  // 120 秒后自动消失
+
+        // 根据颜色索引设置 RGB
+        float r, g, b;
+        getColorRGB(color_index, r, g, b);
+        marker.color.r = r;
+        marker.color.g = g;
+        marker.color.b = b;
+        marker.color.a = 0.9;
+
+        // 【调试】在 marker 文本中显示颜色索引
+        marker.text = "Color#" + std::to_string(color_index);
+
+        debug_marker_pub.publish(marker);
+    }
+
     void frontierCallback(const geometry_msgs::PointStamped::ConstPtr& msg)
     {
         if (frontier_buffer.size() > 2000) frontier_buffer.erase(frontier_buffer.begin());
         frontier_buffer.push_back(*msg);
     }
 
-    void globalCostmapCallback(const nav_msgs::OccupancyGrid::ConstPtr& msg) { 
-        global_costmap = *msg; 
+    void globalCostmapCallback(const nav_msgs::OccupancyGrid::ConstPtr& msg) {
+        global_costmap = *msg;
         has_global_costmap = true;
+        // 【调试】输出地图尺寸
+        static int callback_count = 0;
+        callback_count++;
+        if (callback_count <= 3 || callback_count % 100 == 0) {
+            ROS_INFO("[COSTMAP_CALLBACK] Received #%d: stamp=%.3f, size=%dx%d",
+                     callback_count,
+                     msg->header.stamp.toSec(),
+                     msg->info.width, msg->info.height);
+        }
     }
 
     void rawMapCallback(const nav_msgs::OccupancyGrid::ConstPtr& msg) {
@@ -421,6 +500,8 @@ public:
                 double extra_x = new_x;
                 double extra_y = new_y;
                 double extra_dist = 0.0;
+                bool extra_safe = true;  // 【修复】标记额外收缩是否成功
+                
                 while (extra_dist < global_extra_shrink_distance) {
                     extra_x += dir_x * global_shrink_step;
                     extra_y += dir_y * global_shrink_step;
@@ -429,19 +510,23 @@ public:
                     // 检查额外收缩点是否仍然安全（简化检查，只检查单点）
                     int e_mx = static_cast<int>((extra_x - map_origin_x) / res);
                     int e_my = static_cast<int>((extra_y - map_origin_y) / res);
-                    if (e_mx < 0 || e_mx >= width || e_my < 0 || e_my >= height) break;
+                    if (e_mx < 0 || e_mx >= width || e_my < 0 || e_my >= height) {
+                        extra_safe = false;
+                        break;
+                    }
                     int e_index = e_my * width + e_mx;
                     if (e_index < global_costmap.data.size()) {
                         unsigned char e_cost = static_cast<unsigned char>(global_costmap.data[e_index]);
                         if (e_cost >= global_safe_threshold) {
                             ROS_INFO("[SHRINK] Extra point unsafe (cost=%d), using original safe point.", (int)e_cost);
+                            extra_safe = false;  // 【修复】标记额外收缩失败
                             break;  // 额外点不安全，使用原安全点
                         }
                     }
                 }
 
-                // 使用额外收缩后的点（如果有效）
-                if (extra_dist >= global_extra_shrink_distance) {
+                // 使用额外收缩后的点（只有当额外收缩完全成功时）
+                if (extra_safe && extra_dist >= global_extra_shrink_distance) {
                     target_x = extra_x;
                     target_y = extra_y;
                     ROS_INFO("[SHRINK] Using extra shrunk point (%.2f, %.2f).", target_x, target_y);
@@ -801,8 +886,10 @@ public:
         }
 
         // 【调试】输出选点统计
-        ROS_INFO("[GOAL_SELECT] Total=%d, shrink_fail=%d, obstacle_fail=%d, blacklist_fail=%d, valid=%d, best_weight=%.2f",
-                 total_points, shrink_fail, obstacle_fail, blacklist_fail, valid_count, best.weight);
+        ros::Time select_time = ros::Time::now();
+        ROS_INFO("[GOAL_SELECT] Total=%d, shrink_fail=%d, obstacle_fail=%d, blacklist_fail=%d, valid=%d, best_weight=%.2f, costmap_stamp=%d.%09d",
+                 total_points, shrink_fail, obstacle_fail, blacklist_fail, valid_count, best.weight, 
+                 global_costmap.header.stamp.sec, global_costmap.header.stamp.nsec);
 
         candidate_pub.publish(debug_msg);
         return best;
@@ -897,12 +984,20 @@ public:
         double rx, ry, ryaw;
         if(!getRobotPose(rx, ry, ryaw)) return;
 
+        // 【调试】获取当前循环颜色并发布 marker
+        int current_color_index = goal_color_index;
+        const char* current_color = goal_colors[goal_color_index];
+        // 颜色说明：0=RED, 1=GREEN, 2=BLUE, 3=YELLOW, 4=CYAN, 5=MAGENTA, 6=ORANGE, 7=PINK
+        
+        // 【调试】发布彩色 marker
+        publishDebugMarker(c.x, c.y, current_color_index);
+
         move_base_msgs::MoveBaseGoal goal;
         goal.target_pose.header.frame_id = "map";
         goal.target_pose.header.stamp = ros::Time::now();
         goal.target_pose.pose.position.x = c.x;
         goal.target_pose.pose.position.y = c.y;
-        
+
         double yaw = calculateFrontierOrientation(c.x, c.y, rx, ry);
         if (std::isnan(yaw)) yaw = atan2(c.y - ry, c.x - rx);
         if (std::isnan(yaw)) yaw = ryaw;
@@ -926,8 +1021,69 @@ public:
         // 【修复】不在 sendGoal 时重置计数，只在成功时重置
 
         double final_cost = getCost(c.x, c.y);
-        ROS_INFO("[GOAL_SENT] Target=(%.2f, %.2f), cost=%.1f, weight=%.2f, dist=%.2f, consecutive_failures=%d",
-                 c.x, c.y, final_cost, c.weight, c.distance, consecutive_plan_failures);
+        
+        // 【调试】检查目标点周围 5x5 区域的代价值
+        int unsafe_count = 0;
+        int total_check = 0;
+        double max_nearby_cost = 0;
+        double res = global_costmap.info.resolution;
+        double map_origin_x = global_costmap.info.origin.position.x;
+        double map_origin_y = global_costmap.info.origin.position.y;
+        int width = global_costmap.info.width;
+        int height = global_costmap.info.height;
+        int mx = static_cast<int>((c.x - map_origin_x) / res);
+        int my = static_cast<int>((c.y - map_origin_y) / res);
+        
+        for (int dy = -2; dy <= 2; ++dy) {
+            for (int dx = -2; dx <= 2; ++dx) {
+                int nx = mx + dx;
+                int ny = my + dy;
+                if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+                int index = ny * width + nx;
+                if (index >= global_costmap.data.size()) continue;
+                unsigned char cost = static_cast<unsigned char>(global_costmap.data[index]);
+                if (cost > max_nearby_cost) max_nearby_cost = cost;
+                if (cost >= global_safe_threshold) unsafe_count++;
+                total_check++;
+            }
+        }
+        
+        // 【调试】检查 shrink 后的代价是否与选点时一致
+        ROS_INFO("[GOAL_SENT][Color=#%d=%s] Target=(%.2f, %.2f), map_idx=(%d,%d), center_cost=%.1f, max_nearby_cost=%.1f, unsafe_pixels=%d/%d, threshold=%.1f, weight=%.2f, dist=%.2f, consecutive_failures=%d, costmap_stamp=%d.%09d",
+                 current_color_index, current_color, c.x, c.y, mx, my, final_cost, max_nearby_cost, unsafe_count, total_check, global_safe_threshold, c.weight, c.distance, consecutive_plan_failures,
+                 global_costmap.header.stamp.sec, global_costmap.header.stamp.nsec);
+        
+        // 【调试】详细代价值分布
+        ROS_INFO("[COST_DETAIL][Color=#%d=%s] 5x5 cost grid (center at [%d,%d]):", current_color_index, current_color, mx, my);
+        std::string cost_grid = "";
+        for (int dy = -2; dy <= 2; ++dy) {
+            char row[64];
+            snprintf(row, sizeof(row), "  ");
+            for (int dx = -2; dx <= 2; ++dx) {
+                int nx = mx + dx;
+                int ny = my + dy;
+                if (nx < 0 || nx >= width || ny < 0 || ny >= height) {
+                    snprintf(row + strlen(row), sizeof(row) - strlen(row), "??? ");
+                } else {
+                    int index = ny * width + nx;
+                    unsigned char cost = static_cast<unsigned char>(global_costmap.data[index]);
+                    snprintf(row + strlen(row), sizeof(row) - strlen(row), "%3d ", cost);
+                }
+            }
+            ROS_INFO("%s", row);
+        }
+        
+        if (final_cost >= global_safe_threshold) {
+            ROS_ERROR("[COST_MISMATCH][Color=#%d=%s] Target center cost (%.1f) >= threshold (%.1f)! This point should not have been selected!",
+                      current_color_index, current_color, final_cost, global_safe_threshold);
+        }
+        if (max_nearby_cost >= global_safe_threshold) {
+            ROS_WARN("[NEARBY_HIGH_COST][Color=#%d=%s] Target has nearby high cost (%.1f)! unsafe_pixels=%d/%d",
+                     current_color_index, current_color, max_nearby_cost, unsafe_count, total_check);
+        }
+
+        // 【调试】颜色循环（8 色循环）
+        goal_color_index = (goal_color_index + 1) % 8;
     }
 
     void requestCancel()
