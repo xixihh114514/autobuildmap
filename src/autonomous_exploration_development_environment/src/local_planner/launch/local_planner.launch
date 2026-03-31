@@ -21,9 +21,21 @@
   <!-- 自动驾驶开关 -->
   <arg name="autonomyMode" default="true"/>
   <!-- 自动模式目标速度（m/s） -->
-  <arg name="autonomySpeed" default="1.0"/>
+  <arg name="autonomySpeed" default="0.7"/>
   <!-- 手柄切速延迟（s） -->
   <arg name="joyToSpeedDelay" default="2.0"/>
+
+  <!-- 窄通道/小地图调参入口 -->
+  <arg name="adjacentRange" default="3.2"/>
+  <arg name="checkRotObstacle" default="false"/>
+  <arg name="dirWeight" default="0.005"/>
+  <arg name="dirThre" default="160.0"/>
+  <arg name="minPathScale" default="0.6"/>
+  <arg name="pathCropByGoal" default="false"/>
+  <arg name="lookAheadDis" default="0.6"/>
+  <arg name="yawRateGain" default="6.0"/>
+  <arg name="stopYawRateGain" default="6.0"/>
+  <arg name="switchTimeThre" default="1.2"/>
 
   <!-- 初始目标点（map 坐标系） -->
   <arg name="goalX" default="0"/>
@@ -54,9 +66,9 @@
     <!-- 障碍检测开关 -->
     <param name="checkObstacle" type="bool" value="true" />
     <!-- 转弯时障碍检测开关 -->
-    <param name="checkRotObstacle" type="bool" value="false" />
+    <param name="checkRotObstacle" value="$(arg checkRotObstacle)" />
     <!-- 邻域检查半径（m） -->
-    <param name="adjacentRange" type="double" value="4.0" /> <!--上个版本参数3.5仅仅改到这里-->
+    <param name="adjacentRange" value="$(arg adjacentRange)" />
 
     <!-- 高度阈值相关（m） -->
     <!-- obstacleHeightThre：障碍高度阈值 -->
@@ -81,15 +93,15 @@
     <param name="maxSpeed" value="$(arg maxSpeed)" />
 
     <!-- 方向代价参数 -->
-    <param name="dirWeight" type="double" value="0.01" />
+    <param name="dirWeight" value="$(arg dirWeight)" />
     <!-- 方向差阈值（deg） -->
-    <param name="dirThre" type="double" value="140.0" />
+    <param name="dirThre" value="$(arg dirThre)" />
     <!-- 方向约束是否相对车体 -->
     <param name="dirToVehicle" type="bool" value="false" />
 
     <!-- 路径尺度参数 -->
     <param name="pathScale" type="double" value="1.0" />
-    <param name="minPathScale" type="double" value="0.75" />
+    <param name="minPathScale" value="$(arg minPathScale)" />
     <param name="pathScaleStep" type="double" value="0.25" />
     <!-- 是否按速度动态放大/缩小路径尺度 -->
     <param name="pathScaleBySpeed" type="bool" value="true" />
@@ -100,7 +112,7 @@
     <!-- 是否按速度动态调整路径长度 -->
     <param name="pathRangeBySpeed" type="bool" value="true" />
     <!-- 是否按目标点裁剪路径 -->
-    <param name="pathCropByGoal" type="bool" value="true" />
+    <param name="pathCropByGoal" value="$(arg pathCropByGoal)" />
 
     <!-- 自动模式参数 -->
     <param name="autonomyMode" value="$(arg autonomyMode)" />
@@ -127,11 +139,11 @@
     <param name="twoWayDrive" value="$(arg twoWayDrive)" />
 
     <!-- 前视距离（m） -->
-    <param name="lookAheadDis" type="double" value="0.7" />
+    <param name="lookAheadDis" value="$(arg lookAheadDis)" />
     <!-- 偏航控制增益 -->
-    <param name="yawRateGain" type="double" value="7.5" />
+    <param name="yawRateGain" value="$(arg yawRateGain)" />
     <!-- 停车时偏航控制增益 -->
-    <param name="stopYawRateGain" type="double" value="7.5" />
+    <param name="stopYawRateGain" value="$(arg stopYawRateGain)" />
     <!-- 最大角速度（deg/s） -->
     <param name="maxYawRate" type="double" value="90.0" />
 
@@ -140,7 +152,7 @@
     <param name="maxAccel" type="double" value="2.5" />
 
     <!-- 切换和方向判定阈值 -->
-    <param name="switchTimeThre" type="double" value="1.0" />
+    <param name="switchTimeThre" value="$(arg switchTimeThre)" />
     <param name="dirDiffThre" type="double" value="0.1" />
 
     <!-- 减速/停车距离阈值（m） -->

@@ -1,3 +1,183 @@
+# RobotCup 小尺度室内探索运行说明
+
+## 当前推荐用途
+
+这套配置面向平面室内/迷宫类地图，重点优化：
+
+- 窄通道通过
+- 90 度拐角切入
+- 死胡同后的倒车修正
+- 小尺度地图上的 TARE 前沿探索
+
+本轮不改 C++ 源码，只改 launch、TARE 配置和运行文档。
+
+## 启动前说明
+
+- 工作目录：`/home/lzk/robotcup2026`
+- 默认探索入口：`tare_planner/launch/explore_robotcup_indoor.launch`
+- 必须保留 terrain 两个节点，不能只开其中一个
+- `sim_terrain.launch` 默认已改为 `checkTerrainConn:=false`
+- 当前默认不使用 boundary 文件，先用无边界模式跑通室内小地图
+
+建议每个终端先执行：
+
+```bash
+cd /home/lzk/robotcup2026
+source devel/setup.bash
+```
+
+## 手动启动顺序
+
+### 终端 1：Gazebo 底盘
+
+```bash
+roslaunch car simbase.launch
+```
+
+### 终端 2：FAST_LIO
+
+```bash
+roslaunch fast_lio mapping_velodyne.launch
+```
+
+### 终端 3：车体点云裁剪
+
+```bash
+roslaunch pcl_ros vehicle_cropbox_filter.launch
+```
+
+### 终端 4：LOAM 接口桥接
+
+```bash
+roslaunch loam_interface loam_interface.launch
+```
+
+### 终端 5：地形分析
+
+`sim_terrain.launch` 会依次启动 `terrain_analysis` 和 `terrain_analysis_ext`。
+
+```bash
+roslaunch terrain_analysis_ext sim_terrain.launch
+```
+
+如需显式确认连通性检查关闭，也可以写成：
+
+```bash
+roslaunch terrain_analysis_ext sim_terrain.launch checkTerrainConn:=false
+```
+
+### 终端 6：局部规划
+
+```bash
+roslaunch local_planner local_planner.launch
+```
+
+当前 `local_planner.launch` 已切到小地图 profile，关键默认值为：
+
+- `twoWayDrive=true`
+- `autonomySpeed=0.7`
+- `adjacentRange=3.2`
+- `dirWeight=0.005`
+- `dirThre=160.0`
+- `pathCropByGoal=false`
+- `minPathScale=0.6`
+- `lookAheadDis=0.6`
+- `yawRateGain=6.0`
+- `stopYawRateGain=6.0`
+- `switchTimeThre=1.2`
+
+如需临时覆盖，可直接在命令行传参，例如：
+
+```bash
+roslaunch local_planner local_planner.launch autonomySpeed:=0.6 dirThre:=150.0
+```
+
+### 终端 7：扫描同步
+
+```bash
+roslaunch sensor_scan_generation sensor_scan_generation.launch
+```
+
+### 终端 8：探索
+
+```bash
+roslaunch tare_planner explore_robotcup_indoor.launch
+```
+
+如果不想开 RViz：
+
+```bash
+roslaunch tare_planner explore_robotcup_indoor.launch rviz:=false
+```
+
+## 新增的小地图探索 Profile
+
+### local_planner
+
+本轮把常用调参项提升成了 launch arg，重点是：
+
+- 允许倒车修正姿态
+- 放宽方向约束，优先通过拐角和窄路
+- 缩短前视距离，减小拐角切不过去的问题
+- 关闭按目标点裁剪路径，避免 waypoint 在墙后时局部路径过早截断
+
+### TARE
+
+新增场景配置：
+
+- `tare_planner/config/robotcup_indoor.yaml`
+
+新增探索入口：
+
+- `tare_planner/launch/explore_robotcup_indoor.launch`
+
+这套配置相对 `indoor.yaml` 的主要变化是：
+
+- 更短的 waypoint 外延距离
+- 更小的 TARE 前瞻距离
+- 更小的 Frontier 最小点数
+- 更密的局部视点分辨率
+- 更小的视点碰撞边距
+- 更短的关键位姿连边距离
+- 更小的传感器覆盖半径和膨胀半径
+
+目标是让 TARE 在小地图里少给“跨墙远点”，更多生成贴近局部可达空间的 waypoint。
+
+## 运行时检查
+
+建议启动完成后确认这些话题在持续发布：
+
+```bash
+rostopic list | grep -E "state_estimation|registered_scan|terrain_map|state_estimation_at_scan|way_point|path|cmd_vel"
+```
+
+重点链路应为：
+
+- `FAST_LIO -> /Odometry + /cloud_registered`
+- `vehicle_cropbox_filter -> /cloud_registered_ego_filtered`
+- `loam_interface -> /state_estimation + /registered_scan`
+- `sensor_scan_generation -> /state_estimation_at_scan + /sensor_scan`
+- `TARE -> /way_point`
+- `local_planner -> /path`
+- `pathFollower -> /cmd_vel`
+
+如果探索异常，优先检查：
+
+- `/way_point` 是否在持续刷新
+- `/path` 是否长期为空
+- `/cmd_vel` 是否持续为 0
+- `/terrain_map` 和 `/terrain_map_ext` 是否正常发布
+
+## 当前验收目标
+
+- 直角弯前不连续顶墙超过 3 秒
+- waypoint 不长期落在墙后不可达位置
+- 局部规划允许通过一次或多次倒车完成姿态修正
+- 同一拐角前后切换不连续超过 2 个往返周期
+- 单次运行尽量覆盖完整张 `robotcup_map` 主走廊与分支
+
+以下为原始历史记录，保留备查。
+
 25.11.20
 目前已经完成视觉避障内容，但是目前存在问题点云消失太慢了
 后续对move_base进行修改即可
@@ -119,7 +299,7 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
 
       影响说明：
       - 本次仅为 launch 层 TF 关系与发布参数修正，不改 FAST_LIO 建图算法本身。
-   
+
 26.3.11
    3.11.0
       当日初始版本
@@ -147,7 +327,7 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
         FAST_LIO scan_line=16、scan_rate=10
         URDF lidar 为 16 线、10Hz
       - 当前默认启动即为 Velodyne 组配置；仅在手动设置 gazebo_safe_mode:=true 时才切换到仿真安全分支
-   
+
   3.11.2
       现在有扫描数据了，但是fastlio导致零飘，且无法建图
 
@@ -180,7 +360,7 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
    3.17.0
       当日初始版本
    3.17.1
-      修改了滤波点云，增加了滤波后的点云的数量
+      修改了滤波后的点云的数量
    3.17.2
       加入了tare_planner
 
@@ -201,7 +381,7 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
    3.23.0
       目前tare需要的节点有滤波、loam、local_planner、地形检测两个节点（需要关闭地形检测，但是不能完全关掉两个点）、sensor_scan、explore（参数在garage）
       新增了快速启动脚本，完整启动路径为先分别启动simbase，然后启动sim_fast_lio，然后启动loam，然后启动sim_terrain,然后启动local_planner，再然后启动sensor_scan,最后启动explore
-   
+
    3.32.1
       解决了嵌套git的问题
 
@@ -265,3 +445,53 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       stopYawRateGain：5.0 -> 7.5
       switchTimeThre：2.0 -> 1.0
       说明：回退到3.30.2对应的参数组，保留twoWayDrive=true、autonomySpeed=1.0
+
+26.3.31
+   3.31.0
+      当日初始版本
+   3.31.1
+      版本目标：新增小尺度室内地图探索 profile，统一当前手动启动流程，给 `robotcup_map` 这类窄通道/直角弯地图准备一套独立的 launch 与 TARE 参数入口。
+
+      本次改动：
+      1) 修改 `autonomous_exploration_development_environment/src/local_planner/launch/local_planner.launch`
+         - 将局部规划关键参数提升为 launch arg，便于后续继续调参
+         - 默认值改为小地图 profile：
+           `twoWayDrive=true`
+           `autonomySpeed=0.7`
+           `adjacentRange=3.2`
+           `dirWeight=0.005`
+           `dirThre=160.0`
+           `pathCropByGoal=false`
+           `minPathScale=0.6`
+           `lookAheadDis=0.6`
+           `yawRateGain=6.0`
+           `stopYawRateGain=6.0`
+           `switchTimeThre=1.2`
+
+      2) 修改 `autonomous_exploration_development_environment/src/terrain_analysis_ext/launch/sim_terrain.launch`
+         - `checkTerrainConn` 默认值：`true -> false`
+         - 含义：小尺度室内图默认关闭连通性约束，避免可通行区域被过早裁掉
+
+      3) 新增 `tare_planner/config/robotcup_indoor.yaml`
+         - 基于 `indoor.yaml` 派生独立小地图探索配置
+         - 缩短 waypoint 外延与 lookahead
+         - 减小 frontier 最小点数
+         - 缩小视点碰撞边距
+         - 调整视点分辨率、传感器范围和覆盖膨胀半径
+
+      4) 新增 `tare_planner/launch/explore_robotcup_indoor.launch`
+         - 固定 `scenario=robotcup_indoor`
+         - 保留 `rviz`、`rosbag_record`、`use_boundary` 接口
+
+      5) 修改 `src/readme.md`
+         - 改成当前这套手动启动流程说明
+         - 固定推荐顺序为：
+           `simbase -> mapping_velodyne -> vehicle_cropbox_filter -> loam_interface -> sim_terrain -> local_planner -> sensor_scan_generation -> explore_robotcup_indoor`
+         - 保留原始历史记录，方便后续回溯
+
+      当前验证结论：
+      - 上游链路已打通：`/registered_scan`、`/terrain_map`、`/terrain_map_ext`、`/way_point`、`/path`、`/cmd_vel` 都能正常建立
+      - 当前仍存在待修问题：
+        1) `explore` 在部分地图上一进入就判断探索完成
+        2) `/path` 被 `FAST_LIO` 和 `local_planner` 同时发布，存在话题冲突
+      - 以上待修问题不属于本次版本已完成内容，后续继续处理
