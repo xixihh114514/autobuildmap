@@ -82,12 +82,26 @@ private:
     ros::Time goal_send_time;
     ros::Time cancel_request_time;
 
-    ros::Time rescue_start_time;
     double rescue_center_x;
     double rescue_center_y;
     int rescue_attempt_count;
+    
+    // 【新增】单个救援目标的计时器
+    ros::Time rescue_goal_start_time;
+    double rescue_goal_timeout;  // 单个救援目标的容忍时间（秒）
+    
+    // 【新增】救援模式计时器，用于补偿黑名单时间
+    ros::Time rescue_mode_start_time;
+    double rescue_mode_total_duration;  // 累计救援模式持续时间
 
-    int consecutive_plan_failures;  // 【新增】连续 plan failed 计数
+    // 【新增】stuck/abort 计数器位移检查
+    ros::Time last_stuck_abort_check_time;
+    geometry_msgs::Point last_robot_position;
+
+    int consecutive_plan_failures;  // 连续 plan failed 计数
+
+    // abort 累计计数（用于触发救援模式，stuck 不计入）
+    int stuck_abort_count;
 
     double last_distance;
     ros::Time last_distance_time;
@@ -133,8 +147,8 @@ private:
 
     double global_shrink_radius;      
     double global_shrink_step;        
-    double global_safe_threshold;     
-    double global_safe_window_resolution;  // 【新增】用于计算像素检测半径
+    double global_safe_threshold;
+    int global_safe_window_pixels;  // 【新增】shrink 安全检测的像素范围（半径）
 
     double rescue_trigger_timeout;
     double rescue_search_radius;
@@ -142,6 +156,9 @@ private:
     double rescue_plan_timeout;
     int rescue_max_attempts;
     int rescue_trigger_failures;  // 【新增】触发救援的连续 failed 次数阈值
+    
+    // 【新增】stuck/abort 计数触发救援的参数
+    int rescue_trigger_abort_count;  // 触发救援的 abort 累计次数阈值（stuck 不计入）
 
     double arrived_ignore_radius;
 
@@ -181,8 +198,8 @@ public:
         
         pnh.param("global_shrink_radius", global_shrink_radius, 1.5);   
         pnh.param("global_shrink_step", global_shrink_step, 0.05);      
-        pnh.param("global_safe_threshold", global_safe_threshold, 50.0);  // 恢复默认阈值 
-        pnh.param("global_safe_window_resolution", global_safe_window_resolution, 0.03);  // 【新增】
+        pnh.param("global_safe_threshold", global_safe_threshold, 50.0);
+        pnh.param("global_safe_window_pixels", global_safe_window_pixels, 1);  // 【新增/V5.7】默认 3x3 检测
 
         pnh.param("arrived_ignore_radius", arrived_ignore_radius, 0.8); 
 
@@ -192,10 +209,14 @@ public:
         pnh.param("rescue_plan_timeout", rescue_plan_timeout, 3.0);
         pnh.param("rescue_max_attempts", rescue_max_attempts, 20);
         pnh.param("rescue_trigger_failures", rescue_trigger_failures, 5);  // 【新增】默认 5 次连续 failed 触发救援
+        pnh.param("rescue_trigger_abort_count", rescue_trigger_abort_count, 10);  // 【新增】默认 10 次 abort 触发救援
+        pnh.param("rescue_goal_timeout", rescue_goal_timeout, 15.0);  // 【新增】单个救援目标的容忍时间（秒）
 
         ROS_INFO("========================================");
-        ROS_INFO("[V5.3] Rescue Mode Configuration:");
-        ROS_INFO("  - rescue_trigger_failures: %d", rescue_trigger_failures);
+        ROS_INFO("[V5.7] Rescue Mode Configuration:");
+        ROS_INFO("  - rescue_trigger_failures: %d (consecutive plan failures)", rescue_trigger_failures);
+        ROS_INFO("  - rescue_trigger_abort_count: %d (abort counter, stuck excluded)", rescue_trigger_abort_count);
+        ROS_INFO("  - rescue_goal_timeout: %.1fs (per goal timeout)", rescue_goal_timeout);
         ROS_INFO("  - rescue_max_attempts: %d", rescue_max_attempts);
         ROS_INFO("  - global_safe_threshold: %.1f", global_safe_threshold);
         ROS_INFO("  - global_shrink_radius: %.2fm", global_shrink_radius);
@@ -224,6 +245,13 @@ public:
         distance_initialized = false;
         rescue_attempt_count = 0;
         consecutive_plan_failures = 0;  // 【新增】初始化连续 failed 计数
+        stuck_abort_count = 0;  // 【新增】初始化 stuck/abort 计数器
+        rescue_goal_start_time = ros::Time(0);  // 【新增】初始化救援目标计时器
+        last_stuck_abort_check_time = ros::Time(0);  // 【新增】初始化位移检查计时器
+        last_robot_position.x = 0.0;
+        last_robot_position.y = 0.0;
+        rescue_mode_start_time = ros::Time(0);  // 【新增】初始化救援模式计时器
+        rescue_mode_total_duration = 0.0;  // 【新增】初始化累计救援时间
 
         ROS_INFO("Waiting for move_base...");
         if (!ac.waitForServer(ros::Duration(10.0))) {
@@ -231,9 +259,9 @@ public:
             ros::shutdown();
             return;
         }
-        
+
         publishRescueInfo();  // 【新增】初始发布救援信息
-        ROS_INFO("Frontier Explorer Ready (V5.3 - Failure-Based Rescue).");
+        ROS_INFO("Frontier Explorer Ready (V5.7 - Smart Rescue with Displacement Check).");
     }
 
     // 【新增】发布救援模式信息
@@ -309,7 +337,10 @@ public:
         if (!goal_active || plan_received || msg->poses.empty()) return;
         plan_received = true;
         waiting_for_plan = false;
-        goal_start_time = ros::Time::now();
+        // 【修复】救援模式下不设置 goal_start_time
+        if (!is_rescue_mode) {
+            goal_start_time = ros::Time::now();
+        }
         slow_count = 0;
     }
 
@@ -325,6 +356,14 @@ public:
         y = transform.getOrigin().y();
         yaw = tf::getYaw(transform.getRotation());
         return true;
+    }
+    
+    // 检查位移并更新参考位置
+    bool checkDisplacement(double new_x, double new_y, double &ref_x, double &ref_y, double threshold = 0.5)
+    {
+        double d = hypot(new_x - ref_x, new_y - ref_y);
+        ref_x = new_x; ref_y = new_y;
+        return d > threshold;
     }
 
     // 【修复版】shrinkOnGlobalCostmap
@@ -348,9 +387,8 @@ public:
         int width = global_costmap.info.width;
         int height = global_costmap.info.height;
 
-        // 【修复】使用 3x3 像素检测，而不是固定半径
-        int safe_window_pixels = 1;  // 3x3 窗口，中心点±1 像素
-        double safe_window_radius = global_safe_window_resolution * 1.5;  // 用于日志
+        // 【修复/V5.7】使用传入的像素范围参数，而不是硬编码
+        int safe_window_pixels = global_safe_window_pixels;  // 从参数读取，默认 1=3x3, 2=5x5, 3=7x7
 
         int mx = static_cast<int>((target_x - map_origin_x) / res);
         int my = static_cast<int>((target_y - map_origin_y) / res);
@@ -756,9 +794,10 @@ public:
         if (!getRobotPose(rx, ry, ryaw)) return FrontierCluster();
 
         ros::Time now = ros::Time::now();
+        // 【修复】使用 cool_until 字段进行逐点超时检查，而不是统一时间
         failed_frontiers.erase(
             std::remove_if(failed_frontiers.begin(), failed_frontiers.end(),
-                [&](const FailedFrontier& f){ return (now - f.stamp).toSec() > failed_frontier_timeout; }),
+                [&](const FailedFrontier& f){ return now > f.cool_until; }),
             failed_frontiers.end()
         );
 
@@ -806,9 +845,7 @@ public:
 
             bool blacklisted = false;
             for (const auto& f : failed_frontiers) {
-                if (now < f.cool_until && hypot(c.x - f.x, c.y - f.y) < failed_frontier_tolerance * 2.0) {
-                    blacklisted = true; break;
-                }
+                // 【修复】移除时间检查，只保留位置检查，让黑名单流动起来
                 if (hypot(c.x - f.x, c.y - f.y) < failed_frontier_tolerance) {
                     blacklisted = true; break;
                 }
@@ -915,7 +952,7 @@ public:
             goal.target_pose.pose.orientation = tf::createQuaternionMsgFromYaw(dist_yaw(gen));
 
             ROS_WARN_STREAM("Rescue Attempt #" << (rescue_attempt_count + 1) << ": Sending random goal (" << rand_x << ", " << rand_y << ")");
-            
+
             ac.sendGoal(goal);
             current_goal = goal;
             goal_active = true;
@@ -924,15 +961,18 @@ public:
             plan_received = false;
             waiting_for_plan = true;
             goal_send_time = ros::Time::now();
-            goal_start_time = ros::Time::now(); 
+            goal_start_time = ros::Time::now();
             
+            // 【新增】启动救援目标计时器
+            rescue_goal_start_time = ros::Time::now();
+
             rescue_attempt_count++;
             last_obstacle_check_time = ros::Time::now();
             obstacle_suspected = false;
-            distance_initialized = false; 
+            distance_initialized = false;
             last_distance = 0;
             last_distance_time = ros::Time::now();
-            
+
             publishRescueInfo();  // 【新增】每次尝试后发布
             return true;
         }
@@ -1005,7 +1045,19 @@ public:
         plan_received = false;
         waiting_for_plan = false;
         obstacle_suspected = false;
+        first_obstacle_detect_time = ros::Time(0);  // 【修复】清零障碍物检测时间
         distance_initialized = false;
+        
+        // 【修复】救援模式成功完成后清零所有计数器
+        if (is_rescue_mode) {
+            stuck_abort_count = 0;
+            consecutive_plan_failures = 0;  // 【新增】清零连续 failed 计数
+            last_stuck_abort_check_time = ros::Time(0);  // 【新增】清零位移检查计时器
+            last_robot_position.x = 0.0;  // 【新增】清零位移检查位置
+            last_robot_position.y = 0.0;
+            ROS_INFO("[Rescue Exit] All abort counters and positions reset.");
+        }
+        
         publishRescueInfo();  // 【新增】发布更新
     }
 
@@ -1048,6 +1100,30 @@ public:
                 );
                 consecutive_plan_failures++;  // 【新增】连续 failed 计数
                 ROS_WARN_STREAM("Consecutive plan failures: " << consecutive_plan_failures);
+                
+                // 【新增】move_base 主动 abort 计数 +1
+                stuck_abort_count++;
+                
+                // 【修复】检查机器人位移，第一次只记录位置，后续才比较
+                double rx, ry, ryaw;
+                if (getRobotPose(rx, ry, ryaw)) {
+                    if (!last_stuck_abort_check_time.isValid()) {
+                        // 第一次：只记录位置，不比较
+                        last_robot_position.x = rx;
+                        last_robot_position.y = ry;
+                        last_stuck_abort_check_time = ros::Time::now();
+                        ROS_INFO("[Rescue Counter] First abort, recording position (%.2f, %.2f)", rx, ry);
+                    } else if (checkDisplacement(rx, ry, last_robot_position.x, last_robot_position.y, 0.5)) {
+                        stuck_abort_count = 0;
+                        last_stuck_abort_check_time = ros::Time::now();
+                        ROS_INFO("[Rescue Counter] Robot moved >0.5m, reset stuck_abort_count to 0");
+                    }
+                    last_stuck_abort_check_time = ros::Time::now();
+                }
+                
+                ROS_INFO("[Rescue Counter] stuck_abort_count = %d/%d (move_base ABORTED)",
+                         stuck_abort_count, rescue_trigger_abort_count);
+                
                 finalizeCancel();
                 return;
             }
@@ -1086,7 +1162,7 @@ public:
             double dx = current_goal.target_pose.pose.position.x - rx;
             double dy = current_goal.target_pose.pose.position.y - ry;
             double dist = hypot(dx, dy);
-            
+
             // 【新增】救援模式内部到达判断（0.5 米内算成功）
             if (is_rescue_mode && dist <= 0.5) {
                 ROS_INFO_STREAM("Rescue internal arrival detected within 0.5m (dist=" << dist << "). Requesting cancel for handshake-confirmed exit.");
@@ -1097,7 +1173,18 @@ public:
                 return;
             }
             
-            // 正常模式的停滞检测
+            // 【新增】救援模式单个目标超时检测
+            if (is_rescue_mode && rescue_goal_start_time.isValid()) {
+                double goal_elapsed = (ros::Time::now() - rescue_goal_start_time).toSec();
+                if (goal_elapsed > rescue_goal_timeout) {
+                    ROS_WARN("[Rescue Timeout] Goal timeout (%.1fs > %.1fs), trying new rescue point...",
+                             goal_elapsed, rescue_goal_timeout);
+                    requestCancel();  // 取消当前目标，尝试新目标
+                    return;
+                }
+            }
+            
+            // 正常模式的停滞检测和总超时检测
             if (!is_rescue_mode) {
                 if (distance_initialized && (ros::Time::now()-last_distance_time).toSec() > goal_check_interval) {
                     if (last_distance - dist < distance_change_threshold) {
@@ -1110,6 +1197,32 @@ public:
                                 ros::Time::now(),
                                 ros::Time::now() + ros::Duration(failed_frontier_cool_down)
                             );
+                            
+                            // 【修复】stuck 时不计入 stuck_abort_count，只检查位移
+                            double rx, ry, ryaw;
+                            if (getRobotPose(rx, ry, ryaw)) {
+                                if (!last_stuck_abort_check_time.isValid()) {
+                                    // 第一次：只记录位置
+                                    last_robot_position.x = rx;
+                                    last_robot_position.y = ry;
+                                    last_stuck_abort_check_time = ros::Time::now();
+                                    ROS_INFO("[Stuck] First stuck, recording position (%.2f, %.2f)", rx, ry);
+                                    requestCancel();
+                                    return;
+                                }
+                                
+                                if (checkDisplacement(rx, ry, last_robot_position.x, last_robot_position.y, 0.5)) {
+                                    ROS_INFO("[Rescue Counter] Robot moved >0.5m during stuck, not counting");
+                                    last_stuck_abort_check_time = ros::Time::now();
+                                    requestCancel();
+                                    return;
+                                }
+                                last_robot_position.x = rx;
+                                last_robot_position.y = ry;
+                                last_stuck_abort_check_time = ros::Time::now();
+                            }
+                            
+                            // stuck 不计入 stuck_abort_count，直接 cancel
                             requestCancel();
                             return;
                         }
@@ -1130,10 +1243,12 @@ public:
                         ros::Time::now(),
                         ros::Time::now() + ros::Duration(failed_frontier_cool_down)
                     );
-                    requestCancel();
+                    requestCancel();  // 节点内部 cancel，不计入 stuck_abort_count
                     return;
                 }
 
+                // 【修复】救援模式下跳过障碍物检测，减少性能开销
+                // 救援点本身经过 shrink 检查，都是安全点，无需重复检测
                 if ((ros::Time::now() - last_obstacle_check_time).toSec() > obstacle_check_interval) {
                     last_obstacle_check_time = ros::Time::now();
                     if (checkNearbyObstacleRunning()) {
@@ -1173,13 +1288,31 @@ public:
             distance_initialized = false;
             consecutive_plan_failures = 0;  // 【新增】成功时重置连续 failed 计数
 
-            // 【修复】只有在完成一次救援后才退出救援模式
+            // 【新增】目标完成后清零 stuck/abort 计数器
+            stuck_abort_count = 0;
+            ROS_INFO("[Rescue Counter] Goal completed, stuck_abort_count reset to 0");
+
+            // 【修改】只有在完成一次救援后才退出救援模式
             if (is_rescue_mode) {
-                ROS_WARN("Rescue goal completed. Exiting rescue mode.");
+                ROS_WARN("Rescue goal completed successfully. Exiting rescue mode.");
+                
+                // 【新增】计算救援模式持续时间并补偿黑名单计时
+                double rescue_duration = (ros::Time::now() - rescue_mode_start_time).toSec();
+                rescue_mode_total_duration += rescue_duration;
+                for (auto& f : failed_frontiers) {
+                    f.cool_until += ros::Duration(rescue_duration);
+                }
+                ROS_INFO("[Rescue Exit] Added %.1fs rescue duration to blacklist timers (total: %.1fs).",
+                         rescue_duration, rescue_mode_total_duration);
+                
                 is_rescue_mode = false;
                 rescue_attempt_count = 0;
-                rescue_center_x = 0.0;
-                rescue_center_y = 0.0;
+                rescue_goal_start_time = ros::Time(0);
+                rescue_mode_start_time = ros::Time(0);
+                // 【新增】清零 stuck/abort 位移检查状态
+                last_stuck_abort_check_time = ros::Time(0);
+                last_robot_position.x = 0.0;
+                last_robot_position.y = 0.0;
                 publishRescueInfo();  // 【新增】发布退出信息
             }
             return;
@@ -1203,9 +1336,16 @@ public:
                 if (!is_rescue_mode && consecutive_plan_failures >= rescue_trigger_failures) {
                     ROS_WARN_STREAM("Consecutive plan failures reached " << consecutive_plan_failures
                         << ". Activating ULTIMATE RESCUE MODE.");
+                    
+                    // 【修复】进入救援模式前清零所有计数器
+                    consecutive_plan_failures = 0;
+                    stuck_abort_count = 0;
+                    
                     is_rescue_mode = true;
                     rescue_attempt_count = 0;
-                    rescue_start_time = ros::Time::now();
+                    // 【修复】进入救援模式时不启动计时器，只在 attemptRescueGoal 时启动
+                    // rescue_goal_start_time = ros::Time::now();  ← 删除此行
+                    rescue_mode_start_time = ros::Time::now();  // 【新增】记录救援模式开始时间
                     // 计算救援中心
                     double sum_x = 0, sum_y = 0;
                     for (const auto& p : frontier_buffer) {
@@ -1248,29 +1388,67 @@ public:
 
                 // 救援模式重新选点逻辑
                 if (is_rescue_mode) {
+                    // 【修复】保留 rescue_max_attempts 作为安全保护机制
                     if (rescue_attempt_count >= rescue_max_attempts) {
                         ROS_ERROR("Rescue Max Attempts Reached (%d). Exiting Rescue Mode.", rescue_max_attempts);
+                        
+                        // 【新增】计算救援模式持续时间并补偿黑名单计时
+                        double rescue_duration = (ros::Time::now() - rescue_mode_start_time).toSec();
+                        rescue_mode_total_duration += rescue_duration;
+                        for (auto& f : failed_frontiers) {
+                            f.cool_until += ros::Duration(rescue_duration);
+                        }
+                        ROS_INFO("[Rescue Exit] Added %.1fs rescue duration to blacklist timers (total: %.1fs).",
+                                 rescue_duration, rescue_mode_total_duration);
+                        
                         is_rescue_mode = false;
                         rescue_attempt_count = 0;
-                        rescue_center_x = 0.0;
-                        rescue_center_y = 0.0;
-                        ros::Time now = ros::Time::now();
-                        size_t before = failed_frontiers.size();
-                        failed_frontiers.erase(
-                            std::remove_if(failed_frontiers.begin(), failed_frontiers.end(),
-                                [&](const FailedFrontier& f){ return (now - f.stamp).toSec() > failed_frontier_timeout; }),
-                            failed_frontiers.end()
-                        );
-                        ROS_INFO("Cleaned %zu expired failed frontiers.", before - failed_frontiers.size());
-                        publishRescueInfo();  // 【新增】发布退出信息
-                    } else {
-                        if (!attemptRescueGoal()) {
-                            ROS_WARN_THROTTLE(2.0, "Rescue: Failed to generate point (Attempt %d/%d). Retrying...",
-                                              rescue_attempt_count, rescue_max_attempts);
-                        }
+                        rescue_goal_start_time = ros::Time(0);
+                        rescue_mode_start_time = ros::Time(0);
+                        // 【新增】清零 stuck/abort 位移检查状态
+                        last_stuck_abort_check_time = ros::Time(0);
+                        last_robot_position.x = 0.0;
+                        last_robot_position.y = 0.0;
+                        // 清零计数器，防止立即再次触发
+                        stuck_abort_count = 0;
+                        consecutive_plan_failures = 0;
+                        ROS_INFO("[Rescue Exit] Max attempts reached, counters reset.");
+                        publishRescueInfo();
+                    } else if (!attemptRescueGoal()) {
+                        ROS_WARN_THROTTLE(2.0, "Rescue: Failed to generate point (Attempt %d/%d). Retrying...",
+                                          rescue_attempt_count, rescue_max_attempts);
                     }
                 }
             }
+            
+            // 【新增】检查 abort 计数是否达到救援触发阈值（只统计 move_base 主动 ABORTED）
+            if (!is_rescue_mode && stuck_abort_count >= rescue_trigger_abort_count) {
+                ROS_WARN_STREAM("Stuck/Abort count reached " << stuck_abort_count 
+                    << " (move_base ABORTED). Activating RESCUE MODE (dual-trigger).");
+                
+                // 【修复】进入救援模式前清零所有计数器
+                stuck_abort_count = 0;
+                consecutive_plan_failures = 0;
+                
+                is_rescue_mode = true;
+                rescue_attempt_count = 0;
+                // 【修复】进入救援模式时不启动计时器，只在 attemptRescueGoal 时启动
+                // rescue_goal_start_time = ros::Time::now();  ← 删除此行
+                rescue_mode_start_time = ros::Time::now();  // 【新增】记录救援模式开始时间
+                
+                // 计算救援中心
+                double sum_x = 0, sum_y = 0;
+                for (const auto& p : frontier_buffer) {
+                    sum_x += p.point.x;
+                    sum_y += p.point.y;
+                }
+                rescue_center_x = sum_x / frontier_buffer.size();
+                rescue_center_y = sum_y / frontier_buffer.size();
+                ROS_WARN_STREAM(">>> RESCUE MODE ACTIVATED <<< Center: (" 
+                    << rescue_center_x << ", " << rescue_center_y << ")");
+                publishRescueInfo();
+            }
+            
             ros::spinOnce();
             r.sleep();
         }
