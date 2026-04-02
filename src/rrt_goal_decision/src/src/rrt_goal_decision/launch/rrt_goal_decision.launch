@@ -1,0 +1,169 @@
+<launch>
+    <!-- ================================================ -->
+    <!-- Frontier Goal Manager 启动文件 (V5.7 - Smart Rescue with Displacement Check) -->
+    <!-- 功能：智能前沿点探索，基于双触发机制（连续 plan failed/abort 计数）触发救援模式 -->
+    <!-- ================================================ -->
+
+    <!-- ===================== -->
+    <!-- Goal Visualizer (Python GUI) -->
+    <!-- ===================== -->
+    <node pkg="rrt_goal_decision"
+          type="goal_visualizer.py"
+          name="goal_visualizer"
+          output="screen" >
+    </node>
+
+    <node name="frontier_goal_node"
+          pkg="rrt_goal_decision"
+          type="rrt_goal_decision"
+          output="screen">
+
+        <!-- ================================================================== -->
+        <!-- 1. 基础聚类与权重参数 (Frontier Clustering & Weighting)            -->
+        <!-- ================================================================== -->
+
+        <!-- 聚类半径 (米) -->
+        <param name="cluster_radius" value="0.3"/>
+
+        <!-- 方向搜索半径 (米) -->
+        <param name="orientation_search_radius" value="0.3" />
+
+        <!-- 数量权重 -->
+        <param name="num_weight" value="1.0"/>
+
+        <!-- 距离权重 -->
+        <param name="distance_weight" value="-2.0"/>
+
+        <!-- 期望未知比例 -->
+        <param name="expected_unknow_proportion" value="0.5" />
+
+        <!-- 未知比例惩罚系数 -->
+        <param name="known_area_punishment" value="4.0" />
+
+        <!-- 未知区域搜索半径 (米) -->
+        <param name="known_area_search_radius" value="0.3" />
+
+        <!-- ================================================================== -->
+        <!-- 2. 运动监测与中止参数 (Motion Monitoring & Abortion)               -->
+        <!-- ================================================================== -->
+
+        <!-- 目标检查间隔 (秒) -->
+        <param name="goal_check_interval" value="0.5"/>
+
+        <!-- 距离变化阈值 (米) -->
+        <param name="distance_change_threshold" value="0.01"/>
+
+        <!-- 最大缓慢次数 -->
+        <param name="slow_count_limit" value="8"/>
+
+        <!-- 任务最大超时时间 (秒) -->
+        <param name="abort_timeout" value="60.0"/>
+
+        <!-- 规划等待超时 (秒) -->
+        <param name="plan_timeout" value="2.0"/>
+
+        <!-- ================================================================== -->
+        <!-- 3. 黑名单与复活机制 (Blacklist & Revive)                           -->
+        <!-- ================================================================== -->
+
+        <!-- 黑名单容忍半径 (米) -->
+        <param name="failed_frontier_tolerance" value="0.3"/>
+
+        <!-- 黑名单总有效期 (秒) -->
+        <param name="failed_frontier_timeout" value="40.0"/>
+
+        <!-- 强制冷却时间 (秒) -->
+        <param name="failed_frontier_cool_down" value="5.0"/>
+
+        <!-- 【已移除】复活超时 (秒) - V5.1 中已被移除 -->
+        <!-- <param name="revive_timeout" value="5.0" /> -->
+
+        <!-- ================================================================== -->
+        <!-- 4. 近距离障碍物检测 (Nearby Obstacle Detection) - V5.0 修改版      -->
+        <!-- 统一使用全局代价地图，但增加了距离门控限制                         -->
+        <!-- ================================================================== -->
+
+        <!-- 障碍检查间隔 (秒) -->
+        <param name="obstacle_check_interval" value="3.5"/>
+
+        <!-- 【重命名】近距离障碍物阈值 (0-255) -->
+        <!-- 原 local_cost_threshold。作用于全局地图，但仅在近距离内生效 -->
+        <param name="nearby_obstacle_threshold" value="50"/>
+
+        <!-- 【重命名】近距离障碍确认延迟 (秒) -->
+        <!-- 原 local_obstacle_confirm_delay -->
+        <param name="nearby_obstacle_confirm_delay" value="7.0" />
+
+        <!-- 【新增】近距离检测半径 (米) - V5.1 核心参数 -->
+        <!-- 只有距离机器人此范围内的目标点，才会被检查代价值是否过高 -->
+        <!-- 作用：模拟原局部地图的“范围限制”，避免远处高代价点误触发 -->
+        <param name="nearby_check_radius" value="2.0" />
+
+        <!-- ================================================================== -->
+        <!-- 5. 全局地图安全收缩配置 (Global Map Shrink Config) - V4.0/5.0      -->
+        <!-- 用于在发送目标前，将位于高代价区的目标点向回“收缩”到安全位置         -->
+        <!-- ================================================================== -->
+
+        <!-- 最大回缩距离：如果目标点在墙里，最多往回退多少米寻找安全点 -->
+        <param name="global_shrink_radius" value="0.6" />
+        
+        <!-- 回缩步长：每次尝试移动的距离 -->
+        <param name="global_shrink_step" value="0.05" />
+
+        <!-- shrink 成功后额外向机器人方向再收缩的距离 -->
+        <param name="global_extra_shrink_distance" value="0.1" />
+        
+        <!-- 安全阈值：全局地图代价值低于此值才认为是安全的 -->
+        <param name="global_safe_threshold" value="10" />
+
+        <!-- 【新增/V5.7】shrink 安全检测的像素范围（半径），默认 1 表示 3x3 像素 -->
+        <!-- 例如：2=5x5, 3=7x7, 以此类推 -->
+        <param name="global_safe_window_pixels" value="1" />
+
+        <!-- ================================================================== -->
+        <!-- 6. 终极脱困模式参数 (Ultimate Rescue Mode) - V5.7                  -->
+        <!-- 【双触发机制】连续 plan failed 或 abort 累计次数均可触发             -->
+        <!-- 【智能退出】只通过成功完成救援点退出，单个目标有独立超时            -->
+        <!-- 【位移检测】abort 计数器增加机器人位移检查，避免误判                -->
+        <!-- 【时间补偿】救援模式期间暂停黑名单计时，退出时补偿持续时间          -->
+        <!-- ================================================================== -->
+
+        <!-- 【已移除】脱困触发超时 (秒) - V5.3 中已被废弃 -->
+        <!-- <param name="rescue_trigger_timeout" value="10.0" /> -->
+
+        <!-- 【核心】触发救援模式所需的连续 plan failed 次数 -->
+        <param name="rescue_trigger_failures" value="5" />
+
+        <!-- 【新增/V5.4】触发救援模式所需的 abort 累计次数（stuck 不计入） -->
+        <param name="rescue_trigger_stuck_abort_count" value="3" />
+
+        <!-- 【新增/V5.5】单个救援目标的容忍时间（秒），超时后尝试新目标 -->
+        <param name="rescue_goal_timeout" value="8.0" />
+
+        <!-- 脱困最大尝试次数（安全保护机制） -->
+        <param name="rescue_max_attempts" value="20" />
+
+        <!-- 脱困搜索半径 (米) -->
+        <param name="rescue_search_radius" value="1.5" />
+
+        <!-- 脱困最大全局代价值 (0-255) -->
+        <param name="rescue_max_global_cost" value="100" />
+
+        <!-- 脱困单次规划超时 (秒) -->
+        <param name="rescue_plan_timeout" value="1.5" />
+
+        <!-- 救援模式最短持续时间 (秒) -->
+        
+        <!-- ================================================================== -->
+        <!-- 7. 安全取消机制 (Safe Cancellation)                                -->
+        <!-- ================================================================== -->
+
+        <!-- 取消请求超时 (秒) -->
+        <param name="cancel_timeout" value="3.0"/>
+        
+        <!-- 到达忽略半径 (米) -->
+        <!-- 距离小于此值的目标点会被直接忽略，防止在原地打转 -->
+        <param name="arrived_ignore_radius" value="0.8" />
+
+    </node>
+</launch>

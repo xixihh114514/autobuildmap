@@ -1,0 +1,5 @@
+<launch>
+    <node name="path_optimizer" pkg="path_optimizer" type="path_optimizer.py" output="screen">
+        <rosparam file="$(find path_optimizer)/config/optimizer_params.yaml" command="load" />
+    </node>
+</launch>

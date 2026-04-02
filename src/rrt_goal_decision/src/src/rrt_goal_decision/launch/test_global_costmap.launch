@@ -1,0 +1,8 @@
+<launch>    
+    <!-- 全局代价地图独立测试节点（C++ 版本，与 rrt_goal_node 完全一致） -->
+    <!-- 订阅 /move_base/global_costmap/costmap 并发布到独立话题用于 rviz 查看 -->
+    <node name="global_costmap_tester" pkg="rrt_goal_decision" type="global_costmap_tester" output="screen">
+        <param name="input_topic" value="/move_base/global_costmap/costmap"/>
+        <param name="output_topic" value="/global_costmap_tester/visualize"/>
+    </node>
+</launch>

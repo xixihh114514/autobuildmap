@@ -60,7 +60,7 @@
         <param name="abort_timeout" value="60.0"/>
 
         <!-- 规划等待超时 (秒) -->
-        <param name="plan_timeout" value="3.0"/>
+        <param name="plan_timeout" value="2.0"/>
 
         <!-- ================================================================== -->
         <!-- 3. 黑名单与复活机制 (Blacklist & Revive)                           -->
@@ -135,22 +135,22 @@
         <param name="rescue_trigger_failures" value="5" />
 
         <!-- 【新增/V5.4】触发救援模式所需的 abort 累计次数（stuck 不计入） -->
-        <param name="rescue_trigger_abort_count" value="10" />
+        <param name="rescue_trigger_stuck_abort_count" value="3" />
 
         <!-- 【新增/V5.5】单个救援目标的容忍时间（秒），超时后尝试新目标 -->
-        <param name="rescue_goal_timeout" value="15.0" />
+        <param name="rescue_goal_timeout" value="8.0" />
 
         <!-- 脱困最大尝试次数（安全保护机制） -->
         <param name="rescue_max_attempts" value="20" />
 
         <!-- 脱困搜索半径 (米) -->
-        <param name="rescue_search_radius" value="2.0" />
+        <param name="rescue_search_radius" value="1.5" />
 
         <!-- 脱困最大全局代价值 (0-255) -->
         <param name="rescue_max_global_cost" value="100" />
 
         <!-- 脱困单次规划超时 (秒) -->
-        <param name="rescue_plan_timeout" value="3.0" />
+        <param name="rescue_plan_timeout" value="1.5" />
 
         <!-- 救援模式最短持续时间 (秒) -->
         

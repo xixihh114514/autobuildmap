@@ -1,0 +1,123 @@
+# =====================================================
+# 全局代价地图（Global Costmap）参数配置文件
+# 适用于 move_base + A* 全局规划 + TEB 局部规划
+#膨胀半径修改为0.30，原始0.05
+# =====================================================
+
+global_frame: map
+  # 全局坐标系（地图坐标系）
+  # 所有障碍物、路径、目标点都以这个坐标系为基准
+  # 必须与 SLAM 输出的 map_frame 一致（gmapping 默认就是 map）
+
+robot_base_frame: base_link
+  # 机器人底盘中心坐标系
+  # 所有传感器数据、足迹、膨胀都以这个坐标系为原点
+
+update_frequency: 5.0
+  # 代价地图更新频率（Hz）
+  # 数值越大越实时，但 CPU 占用越高
+  # 建议：仿真 3.0~5.0，实机 1.0~2.0
+
+publish_frequency: 2.0
+  # 代价地图发布频率（用于 RViz 可视化）
+  # 可低于 update_frequency，节省带宽
+  # 设为 0 表示不发布（调试时可关闭）
+
+rolling_window: false
+  # 是否启用“滚动窗口”模式
+  # false → 全局地图（配合静态/动态 map）
+  # true  → 局部滚动地图（通常用于 local_costmap）
+  # 全局代价地图必须为 false
+
+footprint: [[0.335, 0.25], [0.335, -0.25], [-0.335, -0.25], [-0.335, 0.25]]
+  # 机器人足迹（外轮廓）—— 多边形顶点坐标（单位：米）
+  # 顺序：顺时针或逆时针均可，建议从右前角开始
+  # 示例：长 0.67m，宽 0.5m 的矩形机器人
+  # 可通过 URDF 的 <footprint> 或此参数二选一
+
+footprint_padding: 0.05
+  # 足迹外扩安全距离（单位：米）
+  # 防止机器人紧贴墙壁或因浮点误差卡住
+  # 建议：0.01 ~ 0.05，过大导致“穿墙”失败
+
+# =====================================================
+# 障碍物层（Obstacle Layer）—— 动态障碍检测
+# =====================================================
+obstacle_layer:
+  enabled: true
+    # 是否启用障碍物层
+
+  obstacle_range: 6.0
+    # 检测障碍物的最大距离（m）
+    # 激光点在此范围内会被标记为障碍
+    # 建议比激光最大量程略小
+
+  raytrace_range: 6.5
+    # 清除障碍物的最大射线距离（m）
+    # 激光射线穿过区域会清除旧障碍
+    # 通常比 obstacle_range 略大 0.5m
+
+  max_obstacle_height: 2.0
+    # 障碍物最大高度（m），高于此高度的点被忽略
+    # 用于过滤天花板、吊灯等
+
+  min_obstacle_height: 0.0
+    # 障碍物最小高度（m），低于此高度的点被忽略
+    # 用于过滤地面噪声、桌底
+
+  observation_sources: laser_scan_sensor 
+  # visual_obstacle_cloud  #自主建图可以删掉视觉内容
+    # 数据源列表（可多个，用空格分隔）
+
+  laser_scan_sensor:
+    sensor_frame: lidar
+      # 激光雷达坐标系（TF 中必须存在）
+      # 确保 TF: map → odom → base_link → radar 完整发布
+    data_type: LaserScan
+      # 数据类型：LaserScan 或 PointCloud2
+    topic: /scan_filtered
+      # 激光点云话题
+    marking: true
+      # 是否用该传感器“标记”障碍（添加黑点）
+    clearing: true
+      # 是否用该传感器“清除”障碍（射线擦除）
+
+  # visual_obstacle_cloud:                     # 必须有这整段！
+  #   topic: /visual_obstacle_cloud
+  #   sensor_frame: camera_depth_optical_frame   # 必须是 optical frame！不是 camera_link！
+  #   data_type: PointCloud2
+  #   marking: true
+  #   clearing: false
+  #   min_obstacle_height: 0.10
+  #   max_obstacle_height: 2.0
+  #   obstacle_range: 5.0
+  #   raytrace_range: 5.5
+
+# =====================================================
+# 膨胀层（Inflation Layer）—— 安全膨胀区
+# =====================================================
+inflation_layer:
+  enabled: true
+    # 是否启用膨胀层（必须开！否则机器人会撞墙）
+
+  cost_scaling_factor: 10
+    # 代价衰减速率（越大衰减越快，膨胀区越小）
+    # 公式：cost = exp(-1.0 * cost_scaling_factor * (distance - inflation_radius))
+    # 推荐范围：5.0 ~ 20.0
+
+  inflation_radius: 0.30
+    # 最大膨胀半径（m）
+    # 机器人中心到障碍物的最小安全距离
+    # 建议：略大于 footprint_padding + 实际误差（如 0.3~0.6）
+
+# =====================================================
+# 静态层（Static Layer）—— 静态地图层
+# =====================================================
+static_layer:
+  enabled: true
+    # 是否启用静态地图层
+
+  map_topic: /map
+    # 订阅的地图话题（来自 gmapping / map_server）
+    # 若为 "" 则使用服务 /static_map（旧方式）
+    # 推荐使用 /map 话题方式（支持动态更新）

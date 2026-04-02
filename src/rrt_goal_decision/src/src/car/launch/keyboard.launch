@@ -1,0 +1,11 @@
+<launch>
+  <!-- 设置参数 -->
+  <arg name="cmd_vel_topic" default="cmd_vel" />
+  <arg name="model" default="turtle" />
+  
+  <!-- 启动键盘控制节点 -->
+  <node pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" name="keyboard_teleop" output="screen">
+    <param name="cmd_vel" value="$(arg cmd_vel_topic)" />
+    <param name="model" value="$(arg model)" />
+  </node>
+</launch>

@@ -1,0 +1,28 @@
+<launch>
+    <!-- 路径优化 + TEB 集成启动文件 -->
+    <!-- 使用方法：roslaunch path_optimizer path_optimizer_with_teb.launch -->
+    
+    <!-- 1. 路径优化器 -->
+    <node name="path_optimizer" pkg="path_optimizer" type="path_optimizer.py" output="screen">
+        <rosparam file="$(find path_optimizer)/config/optimizer_params.yaml" command="load" />
+        
+        <!-- 性能优化参数 -->
+        <param name="cost_threshold" value="40.0" />
+        <param name="dilate_iterations" value="1" />
+        <param name="slice_interval" value="0.4" />
+        <param name="slice_width" value="0.25" />
+        <param name="noise_threshold" value="0.15" />
+        <param name="smooth_window" value="7" />
+    </node>
+    
+    <!-- 2. 重映射 TEB 的全局路径话题 -->
+    <!-- TEB 默认订阅 /move_base/TrajectoryPlannerROS/global_plan -->
+    <!-- 我们将其重映射到优化后的路径 -->
+    <node pkg="topic_tools" type="relay" name="global_plan_relay"
+          args="/path_optimizer/optimized_plan /move_base/TrajectoryPlannerROS/global_plan" />
+    
+    <!-- 3. RViz 可视化（可选） -->
+    <!-- 
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find path_optimizer)/rviz/path_optimizer.rviz" />
+    -->
+</launch>
