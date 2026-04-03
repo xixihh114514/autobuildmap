@@ -10,7 +10,7 @@ GlobalPlanner:
     # 规划器插件完整类名
 
   # ------------------- 核心算法开关 -------------------
-  use_dijkstra: true
+  use_dijkstra: false
     # 是否使用 Dijkstra 算法
     # false → 使用 A*（更快、更智能）
     # true  → Dijkstra（更保守，但路径更长）

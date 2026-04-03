@@ -144,7 +144,7 @@
         <param name="rescue_max_attempts" value="20" />
 
         <!-- 脱困搜索半径 (米) -->
-        <param name="rescue_search_radius" value="1.5" />
+        <param name="rescue_search_radius" value="1.0" />
 
         <!-- 脱困最大全局代价值 (0-255) -->
         <param name="rescue_max_global_cost" value="100" />

@@ -1,5 +1,49 @@
 # RobotCup 2026 项目更新日志
 
+## 26.4.3 - V5.7.2 - 代码重构与归一化修复
+
+### 代码重构
+1. **消除重复代码，提取 5 个辅助函数**
+   - `resetRescueModeState()` — 统一重置救援模式所有状态（消除 3 处重复）
+   - `computeRescueCenter()` — 统一计算救援中心坐标（消除 3 处重复）
+   - `activateRescueMode()` — 统一进入救援模式的完整流程（消除 2 处重复）
+   - `worldToMapCoords()` — 统一世界坐标到地图网格转换（消除 4 处重复）
+   - `markGoalAsFailed()` — 统一标记目标失败并加入黑名单（消除 5 处重复）
+
+2. **重构涉及的函数**
+   - `finalizeCancel()` — 使用新辅助函数
+   - `monitorGoal()` — 5 处失败记录改用 `markGoalAsFailed()`
+   - `spin()` — 两处救援触发改用 `activateRescueMode()`
+   - `attemptRescueGoal()` — 使用 `computeRescueCenter()`
+   - `getCost()` / `checkNearbyObstacleRunning()` / `isNearbyCostSafe()` — 使用 `worldToMapCoords()`
+
+### Bug 修复
+3. **修复救援模式刚进入就退出的问题**
+   - 根因：`activateRescueMode()` 设置 `is_rescue_mode = true` 后，前一个 goal 的 cancel 确认进入 `finalizeCancel()`，误判为救援完成并调用 `resetRescueModeState()`
+   - 修复：移除 `finalizeCancel()` 中的救援模式重置逻辑，只在救援成功或达到最大尝试次数时重置
+
+4. **修复 `num_weight` 归一化值过小的问题**
+   - 根因：`max_num` 在所有 cluster 中计算，包括被 shrink_fail/obstacle_fail/blacklist_fail 过滤掉的超大 cluster，导致 valid cluster 的 `raw_num` 被严重压缩
+   - 修复：改为两遍扫描，先过滤出 valid cluster，再在其中计算 `max_num`，确保归一化基准正确
+
+5. **修复地图坐标转换的圆心对齐问题**
+   - 根因：`static_cast<int>` 向下取整导致物理圆心偏移到相邻像素
+   - 修复：所有世界坐标到地图网格的转换改用 `std::round` 四舍五入
+   - 涉及函数：`worldToMapCoords()`、`shrinkOnGlobalCostmap()`（3 处）、`calculateUnknownProportion()`、`calculateFrontierOrientation()`
+
+6. **修复搜索半径被截断缩小的问题**
+   - 根因：`static_cast<int>(radius / res)` 向下取整导致搜索范围缩小
+   - 修复：`calculateUnknownProportion()` 和 `calculateFrontierOrientation()` 中的半径计算改用 `std::ceil` 向上取整
+
+7. **删除未使用的变量 `select_time`**
+
+### 代码清理
+8. **移除 `selectGoal()` 中的调试统计变量**
+   - 删除 `total_points`、`shrink_fail`、`obstacle_fail`、`blacklist_fail`、`valid_count`
+   - 简化过滤逻辑，保留核心功能
+
+---
+
 ## 26.4.1 - V5.7.1 - 死胡同脱困优化
 
 ### 性能优化
