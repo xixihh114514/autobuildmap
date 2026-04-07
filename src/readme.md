@@ -6,7 +6,7 @@
 
 - 窄通道通过
 - 90 度拐角切入
-- 死胡同后的倒车修正
+- 丁字路口减小前后/左右振荡
 - 小尺度地图上的 TARE 前沿探索
 
 本轮不改 C++ 源码，只改 launch、TARE 配置和运行文档。
@@ -72,16 +72,18 @@ roslaunch terrain_analysis_ext sim_terrain.launch checkTerrainConn:=false
 roslaunch local_planner local_planner.launch
 ```
 
-当前 `local_planner.launch` 已切到小地图 profile，关键默认值为：
+当前 `local_planner.launch` 已切到小地图 profile，当前先做第一步稳丁字路口，关键默认值为：
 
-- `twoWayDrive=true`
+- `twoWayDrive=false`
 - `autonomySpeed=0.7`
 - `adjacentRange=3.2`
-- `dirWeight=0.005`
-- `dirThre=160.0`
+- `dirWeight=0.01`
+- `dirThre=120.0`
 - `pathCropByGoal=false`
+- `pathRangeBySpeed=false`
 - `minPathScale=0.6`
 - `lookAheadDis=0.6`
+- `dirDiffThre=0.2`
 - `yawRateGain=6.0`
 - `stopYawRateGain=6.0`
 - `switchTimeThre=1.2`
@@ -116,9 +118,10 @@ roslaunch tare_planner explore_robotcup_indoor.launch rviz:=false
 
 本轮把常用调参项提升成了 launch arg，重点是：
 
-- 允许倒车修正姿态
-- 放宽方向约束，优先通过拐角和窄路
-- 缩短前视距离，减小拐角切不过去的问题
+- 默认关闭倒车，先压住丁字路口的前后切换
+- 收紧方向约束，减少路口左右选路抖动
+- 固定路径前向检测范围，不再随速度放大
+- 放宽跟踪加速门槛，减少拐角前反复停走
 - 关闭按目标点裁剪路径，避免 waypoint 在墙后时局部路径过早截断
 
 ### TARE
@@ -495,3 +498,26 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
         1) `explore` 在部分地图上一进入就判断探索完成
         2) `/path` 被 `FAST_LIO` 和 `local_planner` 同时发布，存在话题冲突
       - 以上待修问题不属于本次版本已完成内容，后续继续处理
+
+26.4.7
+   4.7.1
+      版本目标：local_planner先做第一步调参，默认关闭倒车，优先压住丁字路口前后切换和左右振荡。
+
+      本次改动：
+      1) 修改 `autonomous_exploration_development_environment/src/local_planner/launch/local_planner.launch`
+         - `twoWayDrive`：`true -> false`
+         - `dirWeight`：`0.005 -> 0.01`
+         - `dirThre`：`160.0 -> 120.0`
+         - 新增 launch arg：`pathRangeBySpeed=false`
+         - 新增 launch arg：`dirDiffThre=0.2`
+         - `localPlanner/pathRangeBySpeed`：`true -> false`
+         - `pathFollower/dirDiffThre`：`0.1 -> 0.2`
+
+      2) 修改 `src/readme.md`
+         - 更新当前推荐用途
+         - 更新 `local_planner.launch` 当前默认值说明
+         - 追加本轮第一步调参记录
+
+      说明：
+      - 本轮按当前需求不保留倒车修正能力，先观察丁字路口是否停止来回换向
+      - 1.2m 直角弯的通过性暂不在本轮处理，后续再做第二步
