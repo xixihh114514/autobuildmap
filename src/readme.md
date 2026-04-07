@@ -1,183 +1,4 @@
-# RobotCup 小尺度室内探索运行说明
 
-## 当前推荐用途
-
-这套配置面向平面室内/迷宫类地图，重点优化：
-
-- 窄通道通过
-- 90 度拐角切入
-- 丁字路口减小前后/左右振荡
-- 小尺度地图上的 TARE 前沿探索
-
-本轮不改 C++ 源码，只改 launch、TARE 配置和运行文档。
-
-## 启动前说明
-
-- 工作目录：`/home/lzk/robotcup2026`
-- 默认探索入口：`tare_planner/launch/explore_robotcup_indoor.launch`
-- 必须保留 terrain 两个节点，不能只开其中一个
-- `sim_terrain.launch` 默认已改为 `checkTerrainConn:=false`
-- 当前默认不使用 boundary 文件，先用无边界模式跑通室内小地图
-
-建议每个终端先执行：
-
-```bash
-cd /home/lzk/robotcup2026
-source devel/setup.bash
-```
-
-## 手动启动顺序
-
-### 终端 1：Gazebo 底盘
-
-```bash
-roslaunch car simbase.launch
-```
-
-### 终端 2：FAST_LIO
-
-```bash
-roslaunch fast_lio mapping_velodyne.launch
-```
-
-### 终端 3：车体点云裁剪
-
-```bash
-roslaunch pcl_ros vehicle_cropbox_filter.launch
-```
-
-### 终端 4：LOAM 接口桥接
-
-```bash
-roslaunch loam_interface loam_interface.launch
-```
-
-### 终端 5：地形分析
-
-`sim_terrain.launch` 会依次启动 `terrain_analysis` 和 `terrain_analysis_ext`。
-
-```bash
-roslaunch terrain_analysis_ext sim_terrain.launch
-```
-
-如需显式确认连通性检查关闭，也可以写成：
-
-```bash
-roslaunch terrain_analysis_ext sim_terrain.launch checkTerrainConn:=false
-```
-
-### 终端 6：局部规划
-
-```bash
-roslaunch local_planner local_planner.launch
-```
-
-当前 `local_planner.launch` 已切到小地图 profile，当前先做第一步稳丁字路口，关键默认值为：
-
-- `twoWayDrive=false`
-- `autonomySpeed=0.7`
-- `adjacentRange=3.2`
-- `dirWeight=0.01`
-- `dirThre=120.0`
-- `pathCropByGoal=false`
-- `pathRangeBySpeed=false`
-- `minPathScale=0.6`
-- `lookAheadDis=0.6`
-- `dirDiffThre=0.2`
-- `yawRateGain=6.0`
-- `stopYawRateGain=6.0`
-- `switchTimeThre=1.2`
-
-如需临时覆盖，可直接在命令行传参，例如：
-
-```bash
-roslaunch local_planner local_planner.launch autonomySpeed:=0.6 dirThre:=150.0
-```
-
-### 终端 7：扫描同步
-
-```bash
-roslaunch sensor_scan_generation sensor_scan_generation.launch
-```
-
-### 终端 8：探索
-
-```bash
-roslaunch tare_planner explore_robotcup_indoor.launch
-```
-
-如果不想开 RViz：
-
-```bash
-roslaunch tare_planner explore_robotcup_indoor.launch rviz:=false
-```
-
-## 新增的小地图探索 Profile
-
-### local_planner
-
-本轮把常用调参项提升成了 launch arg，重点是：
-
-- 默认关闭倒车，先压住丁字路口的前后切换
-- 收紧方向约束，减少路口左右选路抖动
-- 固定路径前向检测范围，不再随速度放大
-- 放宽跟踪加速门槛，减少拐角前反复停走
-- 关闭按目标点裁剪路径，避免 waypoint 在墙后时局部路径过早截断
-
-### TARE
-
-新增场景配置：
-
-- `tare_planner/config/robotcup_indoor.yaml`
-
-新增探索入口：
-
-- `tare_planner/launch/explore_robotcup_indoor.launch`
-
-这套配置相对 `indoor.yaml` 的主要变化是：
-
-- 更短的 waypoint 外延距离
-- 更小的 TARE 前瞻距离
-- 更小的 Frontier 最小点数
-- 更密的局部视点分辨率
-- 更小的视点碰撞边距
-- 更短的关键位姿连边距离
-- 更小的传感器覆盖半径和膨胀半径
-
-目标是让 TARE 在小地图里少给“跨墙远点”，更多生成贴近局部可达空间的 waypoint。
-
-## 运行时检查
-
-建议启动完成后确认这些话题在持续发布：
-
-```bash
-rostopic list | grep -E "state_estimation|registered_scan|terrain_map|state_estimation_at_scan|way_point|path|cmd_vel"
-```
-
-重点链路应为：
-
-- `FAST_LIO -> /Odometry + /cloud_registered`
-- `vehicle_cropbox_filter -> /cloud_registered_ego_filtered`
-- `loam_interface -> /state_estimation + /registered_scan`
-- `sensor_scan_generation -> /state_estimation_at_scan + /sensor_scan`
-- `TARE -> /way_point`
-- `local_planner -> /path`
-- `pathFollower -> /cmd_vel`
-
-如果探索异常，优先检查：
-
-- `/way_point` 是否在持续刷新
-- `/path` 是否长期为空
-- `/cmd_vel` 是否持续为 0
-- `/terrain_map` 和 `/terrain_map_ext` 是否正常发布
-
-## 当前验收目标
-
-- 直角弯前不连续顶墙超过 3 秒
-- waypoint 不长期落在墙后不可达位置
-- 局部规划允许通过一次或多次倒车完成姿态修正
-- 同一拐角前后切换不连续超过 2 个往返周期
-- 单次运行尽量覆盖完整张 `robotcup_map` 主走廊与分支
 
 以下为原始历史记录，保留备查。
 
@@ -521,3 +342,38 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       说明：
       - 本轮按当前需求不保留倒车修正能力，先观察丁字路口是否停止来回换向
       - 1.2m 直角弯的通过性暂不在本轮处理，后续再做第二步
+   4.7.2
+      版本目标：重置 TARE 的全部前置节点启动链路，并将 `loam_interface` 并入 `terrain` 的一键启动入口，减少手动分段启动。
+
+      本次改动：
+      1) 修改 `autonomous_exploration_development_environment/src/terrain_analysis_ext/launch/sim_terrain.launch`
+         - 统一为地形链路一键启动入口
+         - 启动顺序调整为：
+           `loam_interface.launch` 立即启动
+           `terrain_analysis.launch` 延迟 5 秒启动
+           `terrain_analysis_ext.launch` 延迟 10 秒启动
+         - `terrain_analysis_ext` 的 `checkTerrainConn` 固定为 `false`
+
+      2) 修改 `autonomous_exploration_development_environment/src/terrain_analysis/launch/terrain_analysis.launch`
+         - 新增 `delay_sec` 接口
+         - 支持被组合 launch 调用时延迟启动
+
+      3) 修改 `autonomous_exploration_development_environment/src/terrain_analysis_ext/launch/terrain_analysis_ext.launch`
+         - 保留 `checkTerrainConn` 接口
+         - 新增 `delay_sec` 接口
+         - 支持被组合 launch 调用时延迟启动
+
+      4) 修改 `src/readme.md`
+         - 追加本轮启动链路重置记录
+
+      当前前置节点说明：
+      - 本轮将 TARE 使用到的前置节点重新整理为：
+        `vehicle_cropbox_filter -> sim_terrain(内含 loam_interface + terrain_analysis + terrain_analysis_ext) -> local_planner -> sensor_scan_generation`
+      - 其中 `sim_terrain` 现在已经包含 `loam_interface`，不需要再单独手动启动 loam
+
+      当前用法：
+      - 地形链路直接运行：
+        `roslaunch terrain_analysis_ext sim_terrain.launch`
+
+      说明：
+      - 本轮重点是整理和重置 TARE 上游前置节点的启动方式，不涉及 TARE 本体参数修改

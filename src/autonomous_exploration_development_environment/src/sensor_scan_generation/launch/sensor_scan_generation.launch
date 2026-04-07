@@ -1,8 +1,5 @@
 <launch>
 
-  <!-- 启动传感器扫描生成节点：把同步后的里程计与点云处理成 /sensor_scan 等输出 -->
-  <!-- output="screen"：日志直接打印到终端，便于调试 -->
-  <!-- required="true"：该节点异常退出时，整个 launch 会一起退出 -->
   <node pkg="sensor_scan_generation" type="sensorScanGeneration" name="sensorScanGeneration" output="screen" required="true"/>
 
 </launch>

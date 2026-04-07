@@ -1,70 +1,38 @@
 <launch>
 
-  <!--
-    terrain_analysis 作用：
-    1) 订阅 /registered_scan 与 /state_estimation
-    2) 进行地形/障碍分析
-    3) 发布 /terrain_map（供 local_planner / tare_planner 等下游使用）
-  -->
-  <node pkg="terrain_analysis" type="terrainAnalysis" name="terrainAnalysis" output="screen" required="true">
-    <!-- 点云下采样体素大小（m），越大越稀疏、计算更省 -->
+  <arg name="delay_sec" default="0"/>
+
+  <node pkg="terrain_analysis"
+        type="terrainAnalysis"
+        name="terrainAnalysis"
+        output="screen"
+        required="true"
+        launch-prefix="bash -c 'sleep $(arg delay_sec); exec &quot;$0&quot; &quot;$@&quot;'">
     <param name="scanVoxelSize" type="double" value="0.05" />
-
-    <!-- 地图点衰减时间（s） -->
     <param name="decayTime" type="double" value="1.5" />
-    <!-- 距离机器人小于该值时不衰减（m） -->
     <param name="noDecayDis" type="double" value="4.0" />
-    <!-- 清图半径（m），用于地图清除逻辑 -->
     <param name="clearingDis" type="double" value="10.0" />
-
-    <!-- 是否对高度样本排序后再做统计 -->
     <param name="useSorting" type="bool" value="false" />
-    <!-- 地面估计分位数（0~1），越小越贴近“最低点” -->
     <param name="quantileZ" type="double" value="0.2" />
-    <!-- 是否考虑掉落/落差场景 -->
     <param name="considerDrop" type="bool" value="true" />
-
-    <!-- 是否限制地面抬升速度（避免地面基准突然跳变） -->
     <param name="limitGroundLift" type="bool" value="false" />
-    <!-- 地面最大抬升阈值（m） -->
     <param name="maxGroundLift" type="double" value="0.2" />
-
-    <!-- 动态障碍剔除开关 -->
     <param name="clearDyObs" type="bool" value="true" />
-    <!-- 动态障碍判定最小距离（m） -->
     <param name="minDyObsDis" type="double" value="0.2" />
-    <!-- 动态障碍判定最小水平夹角（deg） -->
     <param name="minDyObsAngle" type="double" value="10" />
-    <!-- 动态障碍判定最小相对高度（m） -->
     <param name="minDyObsRelZ" type="double" value="-0.3" />
-    <!-- 动态障碍绝对相对高度阈值（m） -->
     <param name="absDyObsRelZThre" type="double" value="0.2" />
-    <!-- 动态障碍判定垂直视场下限（deg） -->
     <param name="minDyObsVFOV" type="double" value="-16.0" />
-    <!-- 动态障碍判定垂直视场上限（deg） -->
     <param name="maxDyObsVFOV" type="double" value="16.0" />
-    <!-- 动态障碍最少点数 -->
     <param name="minDyObsPointNum" type="int" value="5" />
-
-    <!-- 无回波区域是否按障碍处理 -->
     <param name="noDataObstacle" type="bool" value="false" />
-    <!-- 无数据块跳过数量 -->
     <param name="noDataBlockSkipNum" type="int" value="0" />
-    <!-- 判定块有效的最小点数 -->
     <param name="minBlockPointNum" type="int" value="10" />
-
-    <!-- 车辆高度（m），用于高度参考 -->
     <param name="vehicleHeight" type="double" value="0.3" />
-
-    <!-- 体素触发更新最小点数 -->
     <param name="voxelPointUpdateThre" type="int" value="100" />
-    <!-- 体素触发更新时间阈值（s） -->
     <param name="voxelTimeUpdateThre" type="double" value="2.0" />
-
-    <!-- 相对高度保留范围（m），超出范围的点会被过滤 -->
     <param name="minRelZ" type="double" value="-0.2" />
     <param name="maxRelZ" type="double" value="0.2" />
-    <!-- 距离相关高度放宽比例 -->
     <param name="disRatioZ" type="double" value="0.2" />
   </node>
 
