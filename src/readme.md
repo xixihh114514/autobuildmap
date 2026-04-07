@@ -424,3 +424,53 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       - 先分别验证 `useTerrainAnalysis=true/false` 两种模式下 `/path` 是否能稳定输出
       - 如果 `false` 模式异常，优先联查 `/registered_scan`、`minRelZ`、`maxRelZ`、`obstacleHeightThre`
       - 现阶段优先把 `useTerrainAnalysis` 当成“规划输入模式切换开关”来看，而不是普通功能开关
+
+26.4.7
+   4.7.4
+      版本目标：为 `robotcup_map` 新增一套独立的 TARE 探索入口，并针对“小尺度室内迷宫 + 窄通道入口容易直接判探索完成”的问题做专用调参记录。
+
+      本次改动：
+      1) 新增 `tare_planner/launch/explore_robocup.launch`
+         - 固定加载 `robocup` 场景参数
+         - 保留 `rviz`、`rosbag_record`、`use_boundary` 接口
+         - 默认 bag 前缀为 `tare_robocup`
+
+      2) 新增 `tare_planner/config/robocup.yaml`
+         - 参数方向按 `robotcup_map` 当前形态单独收敛
+         - 场景特征按“小尺度室内迷宫、窄通道、连续转角、入口较窄”处理
+         - 相比 `indoor.yaml`，重点做了以下调整：
+           `frontier` 保留条件放宽
+           `viewpoint` 采样更密
+           `lookahead` 与 waypoint 外延距离缩短
+           `keypose graph` 连边距离缩短
+           `grid world` 中 covered/exploring 切换门槛降低
+
+      3) `robocup.yaml` 第二轮继续收紧参数
+         - `kFrontierClusterMinSize` 继续下调
+         - `kMinAddPointNumSmall`、`kMinAddPointNumBig`、`kMinAddFrontierPointNum` 继续下调
+         - `kViewPointCollisionMargin` 继续减小
+         - `viewpoint_manager` 分辨率继续加密
+         - `kLookAheadDistance`、`kExtendWayPointDistanceBig/Small` 继续缩短
+         - 目的不是让车更激进，而是避免在窄道入口附近过早把可探索区域判成 covered
+
+      当前地图判断：
+      - `~/.gazebo/models/robotcup_map/model.sdf` 中墙体基本由 `1.25 x 0.15 x 2.5` 的小段拼接组成
+      - 该地图不适合直接沿用 `garage` 一类偏开阔场景的参数
+      - 当前更接近“窄口连接的小尺度室内探索”而不是“大空间覆盖”
+
+      当前验证现象：
+      - 使用 `explore_robocup.launch` 后，原先“一启动或一到入口就立刻结束探索”的问题已有所缓解
+      - 但当前仍会在部分窄道入口提示“探索完成”
+      - 说明问题已从“完全不适配”缩小到“入口附近 frontier / candidate viewpoint 仍不足或仍被筛掉”
+
+      当前建议：
+      - 当前专用入口统一使用：
+        `roslaunch tare_planner explore_robocup.launch`
+      - 后续排查优先观察：
+        `filtered_frontier_cloud`
+        candidate viewpoints
+        exploring cell marker
+      - 若后续仍在入口结束，优先判断是：
+        1) frontier 本身没有留下
+        2) viewpoint 因碰撞/连通性被筛空
+        3) cell 在入口被过早切到 covered
