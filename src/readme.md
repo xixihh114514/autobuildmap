@@ -1,7 +1,3 @@
-
-
-以下为原始历史记录，保留备查。
-
 25.11.20
 目前已经完成视觉避障内容，但是目前存在问题点云消失太慢了
 后续对move_base进行修改即可
@@ -377,3 +373,54 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
 
       说明：
       - 本轮重点是整理和重置 TARE 上游前置节点的启动方式，不涉及 TARE 本体参数修改
+
+26.4.7
+   4.7.3
+      版本目标：补充当前 local_planner 版本记录，统一说明本轮已确认内容，并重点记录当前怀疑参数 `useTerrainAnalysis`。
+
+      本次改动：
+      1) 修改 `autonomous_exploration_development_environment/src/local_planner/launch/local_planner.launch`
+         - 按功能对参数重新分组
+         - 补充逐项中文注释
+         - 修正 XML 注释格式，保证 launch 文件可正常解析
+         - 当前已确认默认外参：
+           `sensorOffsetX=0.1555`
+           `sensorOffsetY=-0.0010002`
+           `cameraOffsetZ=-0.07187`
+         - 当前已确认车体包络参数：
+           `vehicleLength=0.70`
+           `vehicleWidth=0.52`
+
+      2) 修改 `src/readme.md`
+         - 按现有版本记录风格补充本轮说明
+         - 去掉顶部大段说明文写法，改回“版本号 + 改了什么”的形式
+         - 单独记录当前最值得怀疑的参数 `useTerrainAnalysis`
+
+      本轮已确认内容：
+      - `local_planner` 运行时通过 `/way_point` 接收目标点，不是自己发布目标点
+      - `sensorOffsetX`、`sensorOffsetY` 与 `car/urdf/car.urdf` 中 `lidar_joint` 的安装位姿一致
+      - `vehicleLength=0.70`、`vehicleWidth=0.52` 与 `car/urdf/car.urdf` 中 `base_link` 网格包围盒尺寸基本一致
+      - `local_planner` 内部将车体近似为以 `vehicle` 参考点为中心的矩形包络，不是从车头或车尾单边开始量
+
+      当前链路：
+      - `loam_interface` 输出 `/state_estimation` 和 `/registered_scan`
+      - `terrain_analysis_ext` 输出 `/terrain_map`
+      - `local_planner` 读取定位、目标点和环境信息，输出 `/path`
+      - `pathFollower` 跟踪 `/path`，输出 `/cmd_vel`
+      - `sensor_scan_generation` 与 `tare_planner` 继续负责探索链路
+
+      当前重点怀疑参数：
+      - `useTerrainAnalysis=true`
+      - 该参数不是简单的“是否开地形增强”，而是直接决定 `local_planner` 使用哪一路环境输入
+      - 当 `useTerrainAnalysis=true` 时，`local_planner` 主要使用 `/terrain_map`
+      - 当 `useTerrainAnalysis=false` 时，代码理论上会退回 `/registered_scan` 分支，而不是设计上完全不能运行
+
+      当前怀疑点：
+      - 历史现象是“不打开地形检测时无法运行”
+      - 但从代码逻辑看，`useTerrainAnalysis=false` 不应该直接让 `local_planner` 完全失效
+      - 更可能的问题在于 `/registered_scan` 当前效果、`minRelZ/maxRelZ` 高度筛选，或者 `obstacleHeightThre` 等阈值与 scan 分支不匹配
+
+      当前建议：
+      - 先分别验证 `useTerrainAnalysis=true/false` 两种模式下 `/path` 是否能稳定输出
+      - 如果 `false` 模式异常，优先联查 `/registered_scan`、`minRelZ`、`maxRelZ`、`obstacleHeightThre`
+      - 现阶段优先把 `useTerrainAnalysis` 当成“规划输入模式切换开关”来看，而不是普通功能开关
