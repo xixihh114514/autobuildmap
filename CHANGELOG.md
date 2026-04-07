@@ -1,5 +1,36 @@
 # RobotCup 2026 项目更新日志
 
+## 26.4.7 - V5.7.3 - 架构重构与逻辑优化
+
+### 架构重构 (工程化)
+1. **分离代码结构**
+   - 将庞大的 `rrt_goal_node.cpp` 拆分为标准的 `main()` 入口、类头文件 (`frontier_goal_manager.h`) 和实现文件 (`.cpp`)
+2. **提取工具函数**
+   - 将通用函数 `worldToMapCoords` (坐标转换) 和 `checkDisplacement` (位移检查) 提取到 `frontier_utils.h/cpp` 中
+3. **参数管理重构**
+   - 提取了 30+ 个 ROS 参数到 `frontier_params.h/cpp`，定义 `FrontierParams` 结构体统一管理，类内部只保留一个 `params` 实例，代码更整洁
+
+### 核心逻辑修复
+1. **修复救援模式误退出**
+   - 解决了救援模式激活瞬间，因旧目标的 Cancel 确认触发 `finalizeCancel()` 导致立即重置状态退出的 Bug
+2. **修复权重归一化 Bug**
+   - 修复了 `num_weight` 归一化时 `max_num` 包含无效（被过滤）Cluster 导致有效点权重过小的问题
+   - 改为“先过滤，再计算 max"的两遍扫描逻辑
+3. **修复坐标映射偏移**
+   - 将所有地图坐标转网格的逻辑从 `static_cast<int>`（截断）改为 `std::round`（四舍五入），半径计算改为 `std::ceil`，解决了圆心对齐误差
+4. **已访问点清理**
+   - 目标成功后直接从 `frontier_buffer` 中删除对应的点，不再只是加入黑名单，避免内存浪费和重复扫描
+
+### 救援触发器统一
+1. **重命名计数器**
+   - 将 `stuck_abort_count` 更名为 `rescue_trigger_count`，明确其统计三种情况的含义
+2. **新增 Timeout 触发**
+   - 将 **Goal Total Timeout**（目标总超时）也纳入救援触发条件
+3. **函数抽象**
+   - 提取了 `incrementRescueTriggerCount(reason)` 函数，统一处理三种触发源（ABORTED, Stuck, Timeout）的位移检查和计数逻辑，消除了大量重复代码
+
+---
+
 ## 26.4.3 - V5.7.2 - 代码重构与归一化修复
 
 ### 代码重构

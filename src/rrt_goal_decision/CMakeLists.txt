@@ -110,7 +110,7 @@ find_package(Eigen3 REQUIRED)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+  INCLUDE_DIRS include
 #  LIBRARIES rrt_goal_decision
 #  CATKIN_DEPENDS geometry_msgs nav_msgs roscpp std_msgs tf visualization_msgs
 #  DEPENDS system_lib
@@ -133,6 +133,9 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(rrt_goal_decision
   src/rrt_goal_node.cpp
+  src/frontier_goal_manager.cpp
+  src/frontier_utils.cpp
+  src/frontier_params.cpp
 )
 
 add_executable(global_costmap_tester

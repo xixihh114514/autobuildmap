@@ -1,9 +1,0 @@
-# 路径优化器参数配置
-
-PathOptimizer:
-  cost_threshold: 50.0
-  dilate_iterations: 2
-  slice_interval: 0.3
-  slice_width: 0.5
-  noise_threshold: 0.3
-  smooth_window: 3

@@ -134,7 +134,7 @@
         <!-- 【核心】触发救援模式所需的连续 plan failed 次数 -->
         <param name="rescue_trigger_failures" value="5" />
 
-        <!-- 【新增/V5.4】触发救援模式所需的 abort 累计次数（stuck 不计入） -->
+        <!-- 【V5.7.2】触发救援模式所需的累计次数（统计三种情况：move_base ABORTED、Robot Stuck、Goal Total Timeout） -->
         <param name="rescue_trigger_stuck_abort_count" value="3" />
 
         <!-- 【新增/V5.5】单个救援目标的容忍时间（秒），超时后尝试新目标 -->
