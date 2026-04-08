@@ -22,8 +22,8 @@
   <node pkg="local_planner" type="localPlanner" name="localPlanner" output="screen" required="true"> <!-- 根据环境与目标点生成局部路径 /path -->
     <!-- 路径库与车体几何 -->
     <param name="pathFolder" type="string" value="$(find local_planner)/paths" /> <!-- 预生成路径库文件所在目录 -->
-    <param name="vehicleLength" type="double" value="0.70" /> <!-- 车体长度（m） -->
-    <param name="vehicleWidth" type="double" value="0.52" /> <!-- 车体宽度（m） -->
+    <param name="vehicleLength" type="double" value="0.73" /> <!-- 车体长度（m） -->
+    <param name="vehicleWidth" type="double" value="0.56" /> <!-- 车体宽度（m） -->
 
     <!-- 传感器外参与底盘运动模式 -->
     <param name="sensorOffsetX" value="$(arg sensorOffsetX)" /> <!-- 使用共享的 sensor X 偏移 -->
@@ -81,7 +81,7 @@
 
     <!-- 指令发布与前视跟踪 -->
     <param name="pubSkipNum" type="int" value="1" /> <!-- 每隔多少个控制周期发布一次 /cmd_vel -->
-    <param name="lookAheadDis" type="double" value="1.5" /> <!-- 路径跟踪的前视距离（m） -->
+    <param name="lookAheadDis" type="double" value="0.6" /> <!-- 路径跟踪的前视距离（m） -->
 
     <!-- 转向与速度控制器 -->
     <param name="yawRateGain" type="double" value="7.5" /> <!-- 常规跟踪时的航向角速度增益 -->

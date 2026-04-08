@@ -474,3 +474,20 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
         1) frontier 本身没有留下
         2) viewpoint 因碰撞/连通性被筛空
         3) cell 在入口被过早切到 covered
+
+26.4.8
+   4.8.0
+      针对当前实车尺寸与路径跟踪参数继续调整 local_planner
+      修改了 local_planner.launch：
+      vehicleLength：0.70 -> 0.73
+      vehicleWidth：0.52 -> 0.56
+      lookAheadDis：1.5 -> 0.6
+
+      说明：
+      - 将车体长宽调整为更接近当前实车尺寸
+      - 将前视距离缩短，尝试让路径跟踪更贴近局部路径
+
+      当前发现的问题：
+      - 车辆存在转向过度问题
+      - 该问题在修改前存在，修改后仍然存在
+      - 目前判断转向过度并非仅由车体尺寸或 lookAheadDis 引起，后续还需要结合 yawRateGain、stopYawRateGain、maxYawRate 以及车速相关参数继续排查
