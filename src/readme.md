@@ -491,3 +491,27 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       - 车辆存在转向过度问题
       - 该问题在修改前存在，修改后仍然存在
       - 目前判断转向过度并非仅由车体尺寸或 lookAheadDis 引起，后续还需要结合 yawRateGain、stopYawRateGain、maxYawRate 以及车速相关参数继续排查
+
+26.4.9
+   4.9.0
+      针对 local_planner 过于贴墙的问题继续调参
+      修改了 local_planner.launch：
+      vehicleLength：0.73 -> 0.72
+      vehicleWidth：0.56 -> 0.54
+      lookAheadDis：0.6 -> 0.3
+      yawRateGain：7.5 -> 8.5
+      stopYawRateGain：7.5 -> 8.5
+      maxYawRate：90.0 -> 60.0
+
+      说明：
+      - 适当减小车体包络尺寸，避免局部规划中过早贴近障碍边界
+      - 通过减小前视距离提高路径跟踪动态性，以适应更复杂的环境和更急的局部转向
+      - 通过增大角速度增益抑制转向响应偏慢导致的过度转向问题
+      - 同时降低最大角速度上限，避免控制输出过猛
+
+      当前效果：
+      - 主要改善了 local_planner 过于贴墙的问题
+
+      当前结论：
+      - `lookAheadDis` 不能继续减小到 `0.2`
+      - 当 `lookAheadDis=0.2` 时，车辆不会运动
