@@ -515,3 +515,17 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       当前结论：
       - `lookAheadDis` 不能继续减小到 `0.2`
       - 当 `lookAheadDis=0.2` 时，车辆不会运动
+
+   4.9.1
+      继续微调 local_planner 的车体包络尺寸，并补充 robocup 参数文件中文注释
+      修改了 local_planner.launch：
+      vehicleLength：0.72 -> 0.70
+      vehicleWidth：0.54 -> 0.53
+
+      修改了 robocup.yaml：
+      - 为 robocup 场景参数补充了中文注释
+      - 对话题接口、行为开关、前沿探索、滚动栅格、关键位姿图、视点管理、Grid World、可视化等部分增加了中文说明
+
+      说明：
+      - 本次尺寸调整继续朝更贴近实际车体包络的方向收敛
+      - `robocup.yaml` 本次以可读性整理为主，便于后续针对窄通道、入口、探索完成判定等问题继续调参

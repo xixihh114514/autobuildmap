@@ -22,8 +22,8 @@
   <node pkg="local_planner" type="localPlanner" name="localPlanner" output="screen" required="true"> <!-- 根据环境与目标点生成局部路径 /path -->
     <!-- 路径库与车体几何 -->
     <param name="pathFolder" type="string" value="$(find local_planner)/paths" /> <!-- 预生成路径库文件所在目录 -->
-    <param name="vehicleLength" type="double" value="0.72" /> <!-- 车体长度（m） -->
-    <param name="vehicleWidth" type="double" value="0.54" /> <!-- 车体宽度（m） -->
+    <param name="vehicleLength" type="double" value="0.70" /> <!-- 车体长度（m） -->
+    <param name="vehicleWidth" type="double" value="0.53" /> <!-- 车体宽度（m） -->
 
     <!-- 传感器外参与底盘运动模式 -->
     <param name="sensorOffsetX" value="$(arg sensorOffsetX)" /> <!-- 使用共享的 sensor X 偏移 -->

@@ -1,118 +1,236 @@
-# Sensor Coverage Planner Ground
+# ===============================
+# TARE Planner - robocup 场景配置
+# 适用场景：小尺度室内迷宫、窄通道、连续转角、入口较窄
+# 当前目标：尽量避免在窄道入口附近过早判探索完成，同时降低入口左右抖动
+# ===============================
+
+# ----------- 话题接口（订阅）-----------
+# 外部启动探索指令
 sub_start_exploration_topic_ : /start_exploration
+# 近场地形图
 sub_terrain_map_topic_ : /terrain_map
+# 远场/扩展地形图
 sub_terrain_map_ext_topic_ : /terrain_map_ext
+# 与扫描时刻对齐的状态估计
 sub_state_estimation_topic_ : /state_estimation_at_scan
+# 已配准点云
 sub_registered_scan_topic_ : /registered_scan
+# 覆盖边界
 sub_coverage_boundary_topic_ : /sensor_coverage_planner/coverage_boundary
+# 视点/导航边界
 sub_viewpoint_boundary_topic_ : /navigation_boundary
+# 禁入区域边界
 sub_nogo_boundary_topic_ : /sensor_coverage_planner/nogo_boundary
+# 手柄输入
 sub_joystick_topic_ : /joy
+# 外部复位 waypoint 指令
 sub_reset_waypoint_topic_ : /reset_waypoint
+
+# ----------- 话题接口（发布）-----------
+# 探索完成标志
 pub_exploration_finish_topic_ : exploration_finish
+# 各模块运行时统计
 pub_runtime_breakdown_topic_ : runtime_breakdown
+# 总运行时间
 pub_runtime_topic_ : /runtime
+# 输出给 local_planner 的导航目标点
 pub_waypoint_topic_ : /way_point
+# 动量模式触发次数
 pub_momentum_activation_count_topic_ : momentum_activation_count
 
+# ===============================
+# 行为开关与核心阈值
+# ===============================
+# 启动后自动开始探索
 kAutoStart : true
+# 探索尾声是否快速回家
 kRushHome : true
+# robocup 平面迷宫场景下不依赖地形高度给视点抬高
 kUseTerrainHeight : false
+# 保留地形碰撞检查，避免窄道内误穿墙
 kCheckTerrainCollision : true
+# 是否对最终 waypoint 做前向外延
 kExtendWayPoint : true
+# 当前场景关闭“仅视线内前瞻点”策略，避免窄口频繁卡在入口
 kUseLineOfSightLookAheadPoint : false
+# 不允许“没有探索直接回家”的退化策略
 kNoExplorationReturnHome : true
+
+# waypoint 外延距离（较大 / 较小）
+# 当前值偏保守，避免窄口前给出过深目标导致摆头
 kExtendWayPointDistanceBig : 2.0
 kExtendWayPointDistanceSmall : 1.0
+
+# 关键位姿点云降采样体素大小
 kKeyposeCloudDwzFilterLeafSize : 0.2
+
+# 回家距离阈值
 kRushHomeDist : 2.5
+# 到家判定阈值
 kAtHomeDistThreshold : 0.5
+# 地形点被视作碰撞障碍的强度阈值
 kTerrainCollisionThreshold : 0.5
+# 全局/局部前瞻距离
 kLookAheadDistance : 2.5
+
+# 是否启用动量模式（避免方向频繁切换）
 kUseMomentum : false
+# 触发动量模式的方向切换次数阈值
 kDirectionChangeCounterThr : 6
+# 退出动量模式的连续稳定次数阈值
 kDirectionNoChangeCounterThr : 5
+
+# 手柄用于 reset waypoint 的轴编号
 kResetWaypointJoystickAxesID : 2
 
-# PlanningEnv
+
+# ===============================
+# PlanningEnv（前沿与目标生成）
+# ===============================
+# 是否使用 frontier 驱动探索
 kUseFrontier : true
+# frontier 聚类距离阈值
 kFrontierClusterTolerance : 0.8
+# frontier 最小簇点数
+# 该值已专门下调，避免窄门口的小 frontier 被直接滤掉
 kFrontierClusterMinSize : 4
+# 是否使用 coverage 边界过滤 frontier
 kUseCoverageBoundaryOnFrontier : false
+# 是否使用 coverage 边界过滤物体表面
 kUseCoverageBoundaryOnObjectSurface : false
 
-# Rolling occupancy grid
+
+# ===============================
+# Rolling Occupancy Grid（滚动占据栅格）
+# ===============================
+# 占据栅格分辨率
+# 当前值比常规室内更细，用于保留窄道入口附近的细节
 rolling_occupancy_grid/resolution_x : 0.15
 rolling_occupancy_grid/resolution_y : 0.15
 rolling_occupancy_grid/resolution_z : 0.15
 
+# 点云表面降采样分辨率
 kSurfaceCloudDwzLeafSize : 0.15
+# 碰撞点云降采样分辨率
 kCollisionCloudDwzLeafSize : 0.12
+# 关键位姿点云栈数量
 kKeyposeCloudStackNum : 5
+# 点云管理器网格尺寸（行/列/层）
 kPointCloudRowNum : 40
 kPointCloudColNum : 40
 kPointCloudLevelNum : 20
+# 单个格子最大点数
 kMaxCellPointNum : 100000
+# 点云管理器单元尺寸
 kPointCloudCellSize : 12
+# 点云管理器单元高度
 kPointCloudCellHeight : 1.8
+# 邻域单元数量
 kPointCloudManagerNeighborCellNum : 5
+# 覆盖判定时的 Z 方向压缩比例
 kCoverCloudZSqueezeRatio : 2.0
 
-# KeyposeGraph
+
+# ===============================
+# KeyposeGraph（关键位姿图）
+# ===============================
+# 新增关键位姿最小距离
 keypose_graph/kAddNodeMinDist : 0.5
+# 新增非关键关键位姿节点最小距离
 keypose_graph/kAddNonKeyposeNodeMinDist : 0.25
+# 图中新增连边距离阈值
 keypose_graph/kAddEdgeConnectDistThr : 1.5
+# 与上一个关键位姿连边距离阈值
 keypose_graph/kAddEdgeToLastKeyposeDistThr : 1.5
+# 允许连边的垂直高度差阈值
 keypose_graph/kAddEdgeVerticalThreshold : 0.8
+# 连边碰撞检查分辨率
 keypose_graph/kAddEdgeCollisionCheckResolution : 0.2
+# 连边碰撞检查半径
 keypose_graph/kAddEdgeCollisionCheckRadius : 0.25
+# 判定连边被阻塞所需的最小碰撞点数
 keypose_graph/kAddEdgeCollisionCheckPointNumThr : 1
 
-# ViewPointManager
+
+# ===============================
+# ViewPointManager（视点采样与局部路径）
+# ===============================
+# 视点网格数量
+# 当前场景专门加密，尽量让窄道入口内外都能找到候选点
 viewpoint_manager/number_x : 48
 viewpoint_manager/number_y : 48
 viewpoint_manager/number_z : 1
+# 视点网格分辨率
 viewpoint_manager/resolution_x : 0.35
 viewpoint_manager/resolution_y : 0.35
 viewpoint_manager/resolution_z : 0.0
+
+# 连通性高度差阈值
 kConnectivityHeightDiffThr : 0.2
+# greedy 选点时的候选采样范围
 kGreedyViewPointSampleRange : 5
+# 局部路径优化最大迭代次数
 kLocalPathOptimizationItrMax : 12
+
+# 视点碰撞边界
+# 当前值已减小，避免 1 米级窄道入口附近没有任何可用视点
 kViewPointCollisionMargin : 0.18
 kViewPointCollisionMarginZPlus : 0.25
 kViewPointCollisionMarginZMinus : 0.25
+
+# 视点碰撞栅格参数
 kCollisionGridZScale : 1.0
 kCollisionGridResolutionX : 0.12
 kCollisionGridResolutionY : 0.12
 kCollisionGridResolutionZ : 0.0
+# 一个视点被视为碰撞所需的最少碰撞点数
 kCollisionPointThr : 1
+
+# 碰到障碍时是否在最近障碍处截断 LOS
 kLineOfSightStopAtNearestObstacle : false
+# 视点相对地形抬高高度
 kViewPointHeightFromTerrain : 0.65
+# 视点高度发生重置的阈值
 kViewPointHeightFromTerrainChangeThreshold : 0.4
+# 是否检查动态障碍物碰撞
 kCheckDynamicObstacleCollision : false
+# 连续多少帧碰撞后才将该视点稳定判为碰撞
 kCollisionFrameCountMax : 2
 
+# 传感器覆盖模型参数
 kSensorRange : 5.5
 kNeighborRange : 2.2
 kCoverageOcclusionThr : 0.25
 kCoverageDilationRadius : 0.15
 
-# Grid World
+
+# ===============================
+# Grid World（全局离散子空间）
+# ===============================
 kGridWorldXNum : 121
 kGridWorldYNum : 121
 kGridWorldZNum : 121
 kGridWorldCellHeight : 3.0
 kGridWorldNearbyGridNum : 5
+
+# 单个视点至少需要新增多少覆盖点才算有价值
+# 当前值已专门降低，避免窄口前“有效信息太少”被直接判探索完成
 kMinAddPointNumSmall : 12
 kMinAddPointNumBig : 22
 kMinAddFrontierPointNum : 3
+
+# 子空间状态切换阈值
+# 当前值偏低，目的是让入口附近 cell 更容易重新进入 exploring
 kCellExploringToCoveredThr : 1
 kCellCoveredToExploringThr: 2
 kCellExploringToAlmostCoveredThr: 3
 kCellAlmostCoveredToExploringThr: 5
 kCellUnknownToExploringThr: 1
 
-# Visualization
+
+# ===============================
+# Visualization（可视化）
+# ===============================
 kExploringSubspaceMarkerColorGradientAlpha : true
 kExploringSubspaceMarkerColorMaxAlpha : 0.8
 kExploringSubspaceMarkerColorR : 0.0
