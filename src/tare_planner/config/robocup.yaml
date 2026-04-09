@@ -71,14 +71,14 @@ kAtHomeDistThreshold : 0.5
 # 地形点被视作碰撞障碍的强度阈值
 kTerrainCollisionThreshold : 0.5
 # 全局/局部前瞻距离
-kLookAheadDistance : 2.5
+kLookAheadDistance : 3.0
 
 # 是否启用动量模式（避免方向频繁切换）
-kUseMomentum : false
+kUseMomentum : true
 # 触发动量模式的方向切换次数阈值
-kDirectionChangeCounterThr : 6
+kDirectionChangeCounterThr : 2
 # 退出动量模式的连续稳定次数阈值
-kDirectionNoChangeCounterThr : 5
+kDirectionNoChangeCounterThr : 8
 
 # 手柄用于 reset waypoint 的轴编号
 kResetWaypointJoystickAxesID : 2
@@ -168,13 +168,13 @@ viewpoint_manager/resolution_z : 0.0
 # 连通性高度差阈值
 kConnectivityHeightDiffThr : 0.2
 # greedy 选点时的候选采样范围
-kGreedyViewPointSampleRange : 5
+kGreedyViewPointSampleRange : 1
 # 局部路径优化最大迭代次数
-kLocalPathOptimizationItrMax : 12
+kLocalPathOptimizationItrMax : 4
 
 # 视点碰撞边界
 # 当前值已减小，避免 1 米级窄道入口附近没有任何可用视点
-kViewPointCollisionMargin : 0.18
+kViewPointCollisionMargin : 0.22
 kViewPointCollisionMarginZPlus : 0.25
 kViewPointCollisionMarginZMinus : 0.25
 
@@ -195,7 +195,7 @@ kViewPointHeightFromTerrainChangeThreshold : 0.4
 # 是否检查动态障碍物碰撞
 kCheckDynamicObstacleCollision : false
 # 连续多少帧碰撞后才将该视点稳定判为碰撞
-kCollisionFrameCountMax : 2
+kCollisionFrameCountMax : 3
 
 # 传感器覆盖模型参数
 kSensorRange : 5.5

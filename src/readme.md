@@ -529,3 +529,38 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       说明：
       - 本次尺寸调整继续朝更贴近实际车体包络的方向收敛
       - `robocup.yaml` 本次以可读性整理为主，便于后续针对窄通道、入口、探索完成判定等问题继续调参
+
+   4.9.2
+      针对 `robotcup_map` 中“宽路进入窄入口时路线犹豫、双入口前反复试探”的问题，先做第一轮 TARE 参数收敛
+
+      修改了 robocup.yaml：
+      - `kLookAheadDistance`：`2.5 -> 3.0`
+      - `kUseMomentum`：`false -> true`
+      - `kDirectionChangeCounterThr`：`6 -> 2`
+      - `kDirectionNoChangeCounterThr`：`5 -> 8`
+      - `kGreedyViewPointSampleRange`：`5 -> 1`
+      - `kLocalPathOptimizationItrMax`：`12 -> 4`
+      - `kViewPointCollisionMargin`：`0.18 -> 0.22`
+      - `kCollisionFrameCountMax`：`2 -> 3`
+
+      说明：
+      - 这一轮不再继续动 `local_planner`，而是把问题定位到 TARE 的 `/way_point` 决策层
+      - 调参目标不是让车更激进，而是减少双入口前随机换边、降低局部视点重选带来的来回犹豫
+      - 其中：
+        `kGreedyViewPointSampleRange` 与 `kLocalPathOptimizationItrMax` 主要用于降低局部视点选择的随机性
+        `kUseMomentum` 与方向切换阈值主要用于抑制反复改主意
+        `kViewPointCollisionMargin` 与 `kCollisionFrameCountMax` 主要用于让入口附近候选视点稳定一些
+
+      当前结果：
+      - 相比上一轮，入口前的犹豫和左右试探有所收敛
+      - 但当前仍会出现掉头返回的情况
+
+      当前问题判断：
+      - 现阶段问题已不再主要表现为“进不去窄入口”
+      - 更像是 TARE 在局部探索过程中仍会把“回头/换边”视为可接受动作
+      - 对当前这台车来说，迷宫内部掉头空间很差，实际代价明显高于算法当前默认假设
+
+      当前结论：
+      - 下一轮不建议继续一味收紧 frontier、viewpoint 或碰撞门槛
+      - 若继续沿这个方向收紧，风险是重新退回“可以减少犹豫，但又进不去迷宫窄道”
+      - 后续调参更适合沿“增强已选方向延续性、减少回头收益”的方向继续做，而不是继续压缩入口可选空间
