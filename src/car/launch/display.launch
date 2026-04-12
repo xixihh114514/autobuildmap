@@ -1,4 +1,16 @@
 <launch>
+
+ <node
+    name="tf_footprint_base"
+    pkg="tf"
+    type="static_transform_publisher"
+    args="0 0 0 0 0 0 base_footprint base_link 50" />
+  <node
+    name="tf_body_footprint"
+    pkg="tf"
+    type="static_transform_publisher"
+    args="-0.254900 0.003761 -0.228830 0 0 0 body base_footprint 50" />
+
   <arg name="model" />
   <arg name="delay_sec" default="0" />
 

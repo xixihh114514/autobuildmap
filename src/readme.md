@@ -218,6 +218,26 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       当日初始版本
    3.30.1
       local_planner先做诊断性调参，验证窄通道和90度弯卡住是否主要由方向约束过强导致
+
+26.4.12
+   4.12.0
+      FAST_LIO 在使用 mapping_velodyne.launch 运行时，出现“启动正常、运行一段时间后崩溃”的问题。
+      终端典型报错为：
+      malloc(): mismatching next->prev_size (unsorted)
+      [laserMapping-1] process has died, exit code -6
+
+      当前现象记录：
+      1) 不是启动即崩，而是运行一段时间后才出现。
+      2) 崩溃前可能出现 “No point, skip this scan!”。
+      3) 当前使用 fast_lio/config/velodyne.yaml 与 fast_lio/launch/mapping_velodyne.launch。
+      4) 当前参数核对后，velodyne.yaml 中 preprocess/timestamp_unit=0 与 rs_to_velodyne 输出 time 的秒单位是匹配的，因此不能简单认为是 velodyne.yaml 写错导致。
+
+      当前判断：
+      1) 该报错更像堆内存被提前破坏后的延迟报错，不一定是 malloc 当场出错。
+      2) 更可疑位置在 FAST_LIO 的 Velodyne 特征提取路径，而不是 velodyne.yaml 单独配置错误。
+      3) src/fast_lio/src/preprocess.cpp 中 give_feature() 对异常 ring/坏帧的边界保护不足，怀疑存在越界访问风险。
+      4) 当前 launch 中 feature_extract_enable=1，属于较敏感路径，异常帧更容易在该路径触发问题。
+      5) velodyne.yaml 中 pcd_save_en=true 且 interval=-1 会造成长时间运行时内存持续累积，但更像长期内存压力问题，不像本次 unsorted 报错的直接根因。
       修改了local_planner.launch：
       checkRotObstacle：true -> false
       dirWeight：0.02 -> 0.005

@@ -1,6 +1,6 @@
 common:
     lid_topic:  "/velodyne_points"   # FAST-LIO输入原始雷达点云；后置滤波请使用 /cloud_registered 等FAST-LIO输出
-    imu_topic:  "/camera/imu"        # IMU 话题
+    imu_topic:  "/imu/data"        # IMU 话题
     time_sync_en: false              # 仅当无法进行外部硬件时间同步时才建议开启
     time_offset_lidar_to_imu: 0.0    # LiDAR 相对 IMU 的时间偏移（秒），即使 time_sync_en=false 也会生效
                                      # 若外参/时延未精确标定，建议保持 0.0
@@ -20,7 +20,7 @@ mapping:
     fov_degree:    360           # 有效视场角（度）
     det_range:     50.0         # 有效探测距离（米）
     extrinsic_est_en:  false     # 是否在线估计 IMU-LiDAR 外参（建议已标定时关闭）
-    extrinsic_T: [ -0.087660, 0.008281, 0.066770 ]   # LiDAR 在 IMU 坐标系下的平移
+    extrinsic_T: [ 0, 0 ,0.075 ]   # LiDAR 在 IMU 坐标系下的平移
     extrinsic_R: [ 1, 0, 0,
                    0, 1, 0,
                    0, 0, 1]      # LiDAR 在 IMU 坐标系下的旋转（行优先 3x3）
