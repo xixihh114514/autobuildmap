@@ -584,3 +584,35 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       - 下一轮不建议继续一味收紧 frontier、viewpoint 或碰撞门槛
       - 若继续沿这个方向收紧，风险是重新退回“可以减少犹豫，但又进不去迷宫窄道”
       - 后续调参更适合沿“增强已选方向延续性、减少回头收益”的方向继续做，而不是继续压缩入口可选空间
+
+26.4.14
+   4.14.0
+      当日初始版本
+
+   4.14.1
+      新增了视觉目标检测包，并补充了与之配套的相机深度对齐和 FAST_LIO 点云保存参数调整
+
+      本次改动：
+      1) 新增 `visual_obstacle_detector`
+         - 新增 `person_global_localizer.launch`
+         - 新增 `person_global_localizer.py`
+         - 使用 YOLO 对彩色图像进行目标检测
+         - 结合对齐后的深度图与相机内参，恢复目标在相机坐标系下的 3D 位置
+         - 发布目标点云、Marker 和调试图像，便于后续接入避障或可视化
+
+      2) 修改 `car/launch/sensor.launch`
+         - Realsense 启动参数增加 `align_depth:=true`
+         - 使视觉节点可以直接使用 `/camera/aligned_depth_to_color/image_raw`
+
+      3) 修改 `fast_lio/config/velodyne.yaml`
+         - `pcd_save/interval`：`-1 -> 0`
+
+      说明：
+      - 当前视觉节点默认输入为彩色图、对齐深度图和相机内参
+      - 当前检测结果按脚本实现发布在相机坐标系下，后续如需接入全局避障或全局标记，还需要继续补全坐标变换链
+      - 当前默认识别类别为 `victim`
+      - `interval=0` 后，不再按固定帧数切分保存 PCD，退出时仍会统一输出累计点云
+
+      当前用途：
+      - 为后续视觉避障 / 人员目标定位提供基础输入
+      - 便于在 RViz 中直接观察检测框、深度取样结果和目标位置

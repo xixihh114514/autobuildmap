@@ -22,7 +22,7 @@
     name="rs_camera_launch"
     pkg="car"
     type="delayed_roslaunch.sh"
-    args="realsense2_camera rs_camera.launch"
+    args="realsense2_camera rs_camera.launch align_depth:=true"
     output="screen"
     launch-prefix="bash -c 'sleep $(arg camera_delay_sec); exec &quot;$0&quot; &quot;$@&quot;'" />
 </launch>

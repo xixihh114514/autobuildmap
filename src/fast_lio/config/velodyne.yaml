@@ -33,5 +33,5 @@ publish:
 
 pcd_save:
     pcd_save_en: true            # 是否保存 PCD
-    interval: -1                 # 每个 PCD 文件保存的帧数
+    interval: 0                 # 每个 PCD 文件保存的帧数
                                  # -1 表示所有帧保存到同一个文件（长时运行可能占用大量内存）
