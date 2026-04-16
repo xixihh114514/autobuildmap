@@ -564,3 +564,66 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       - 下一轮不建议继续一味收紧 frontier、viewpoint 或碰撞门槛
       - 若继续沿这个方向收紧，风险是重新退回“可以减少犹豫，但又进不去迷宫窄道”
       - 后续调参更适合沿“增强已选方向延续性、减少回头收益”的方向继续做，而不是继续压缩入口可选空间
+
+   4.9.3
+      针对 `robotcup_map` 中丁字路口仍有左右犹豫、选边后不够果断的问题，继续沿 TARE `/way_point` 决策层收敛参数
+
+      修改了 robocup.yaml：
+      - `kExtendWayPointDistanceBig`：`2.0 -> 2.5`
+      - `kLookAheadDistance`：`3.0 -> 3.5`
+
+      说明：
+      - 这一轮仍不继续动 `local_planner`，先增强 TARE 在局部分支选择后的方向延续性
+      - `kExtendWayPointDistanceBig` 上调后，发布给下游的 `/way_point` 会更愿意落到已选分支更深处
+      - `kLookAheadDistance` 上调后，局部路径上的前瞻点会更靠前，减少在丁字路口入口附近反复重选左右分支
+      - 这次调参目标不是压缩可选空间，而是让“已经选了一边”之后更不容易马上改主意
+
+      观察重点：
+      - 如果丁字路口左右试探明显减少，说明问题主要还是 TARE 的局部分支延续性不足
+      - 如果 `/way_point` 已经稳定落进某一侧，但车体仍在入口前摇头或切不进去，下一轮就该回到 `local_planner` 继续调跟踪参数
+
+      当前效果：
+      - 当前回环区域已经可以完整探索，说明这一轮对已选方向延续性的增强是有效的
+      - 但在完成当前回环后，车辆还无法继续切换到回环外侧的另一个回环区域
+
+      当前问题判断：
+      - 当前问题已不再主要表现为丁字路口局部左右犹豫
+      - 更像是 TARE 在完成一个闭环区域后，对外侧另一处可探索回环的切换与延伸能力仍然不足
+
+      当前结论：
+      - 下一轮不应继续只盯着丁字路口局部延续性
+      - 更适合优先排查全局层面的 frontier 选择、global path 延伸，或回环外目标区域的可达性判定
+
+26.4.16
+   4.16.0
+      版本目标：整理当前控制与感知相关改动，补充达妙底盘控制入口，并统一记录本轮包级调整内容。
+
+      本次改动：
+      1) 新增 `control` 包下的达妙差速底盘控制节点
+         - 新增 `damiao_diff_chassis_node`
+         - 支持速度模式与 MIT 模式
+         - 通过 `control_mode_config.h` 切换控制模式
+         - 将底盘公共参数、速度模式参数、MIT 模式参数分别拆到独立配置头文件
+         - 启动时按官方文档先设置模式，再使能，再订阅 `/cmd_vel` 发送左右轮电机速度
+         - 增加寄存器写入回执校验和使能状态反馈确认
+
+      2) 在 `control` 包中补充达妙官方协议文档
+         - 新增 `DM-J10010L-2EC减速电机说明书V1.1.pdf`
+         - 新增 `调试助手使用说明书（达妙驱动控制协议）V1.4.pdf`
+
+      3) 调整 `visual_obstacle_detector`
+         - 删除旧的 `visual_detector.py`
+         - 新增 `person_global_localizer.py`
+         - 新增对应 launch 文件与模型文件入口
+         - 补充 `tf`、`marker`、`message_filters` 等依赖声明
+
+      4) 清理 `imu_run` 包
+         - 删除原有云台/电机控制节点、键盘控制脚本和 launch
+
+      5) 其他同步修改
+         - `rplidar_a3.launch` 串口改为 `/dev/ttyUSB1`
+         - `robocup.yaml` 继续调整 `kExtendWayPointDistanceBig` 与 `kLookAheadDistance`
+
+      当前说明：
+      - `control` 当前默认保留速度模式入口，如需切到 MIT 模式，修改 `control_mode_config.h` 即可
+      - 达妙使能/失能、速度帧和 MIT 控制帧均已按本轮核对过的官方协议实现

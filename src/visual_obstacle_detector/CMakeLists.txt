@@ -9,8 +9,14 @@ project(visual_obstacle_detector)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   cv_bridge
+  geometry_msgs
+  message_filters
   rospy
   sensor_msgs
+  std_msgs
+  tf2_geometry_msgs
+  tf2_ros
+  visualization_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -103,10 +109,16 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES visual_obstacle_detector
-#  CATKIN_DEPENDS cv_bridge rospy sensor_msgs ultralytics
-#  DEPENDS system_lib
+  CATKIN_DEPENDS
+    cv_bridge
+    geometry_msgs
+    message_filters
+    rospy
+    sensor_msgs
+    std_msgs
+    tf2_geometry_msgs
+    tf2_ros
+    visualization_msgs
 )
 
 ###########
@@ -159,10 +171,10 @@ include_directories(
 
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
-# catkin_install_python(PROGRAMS
-#   scripts/my_python_script
-#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+catkin_install_python(PROGRAMS
+  scripts/person_global_localizer.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
