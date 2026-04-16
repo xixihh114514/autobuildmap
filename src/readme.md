@@ -627,3 +627,16 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       当前说明：
       - `control` 当前默认保留速度模式入口，如需切到 MIT 模式，修改 `control_mode_config.h` 即可
       - 达妙使能/失能、速度帧和 MIT 控制帧均已按本轮核对过的官方协议实现
+   4.16.1
+      继续调整local_planner，目标是让局部规划在窄通道和直角弯里更灵活，减少完全卡死
+      修改了local_planner.launch：
+      dirToVehicle：false -> true
+      minPathRange：1.0 -> 0.3
+      pathRangeStep：0.5 -> 0.1
+      说明：
+      1) dirToVehicle改为true后，局部候选路径筛选更贴近车体当前朝向，整体响应会更动态
+      2) minPathRange减小后，局部规划在狭窄位置可以退到更短的动作，不会一上来就因为路径长度不够而卡住
+      3) pathRangeStep减小后，搜索失败时会更细粒度地缩短路径，提升直角弯和死胡同口附近的可尝试空间
+      当前效果：
+      1) local规划表现比之前更动态
+      2) 在直角弯道处完全卡死的情况有所减少
