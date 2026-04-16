@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>visual_calibration</name>
+  <version>0.0.1</version>
+  <description>YOLO ONNX inference and visualization for camera calibration workflows.</description>
+
+  <maintainer email="codex@example.com">Codex</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>cv_bridge</depend>
+  <depend>image_transport</depend>
+  <depend>roscpp</depend>
+  <depend>roslib</depend>
+  <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
+
+  <export/>
+</package>

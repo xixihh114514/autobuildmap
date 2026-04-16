@@ -1,0 +1,33 @@
+<launch>
+  <arg name="image_topic" default="/camera/color/image_raw"/>
+  <arg name="cloud_topic" default="/camera/depth_registered/points"/>
+  <arg name="model_path" default="$(find visual_calibration)/models/yolo.onnx"/>
+  <arg name="rotate_180" default="true"/>
+  <arg name="visualization_topic" default="/visual_calibration/visualization"/>
+  <arg name="detection_cloud_topic" default="/visual_calibration/detection_points"/>
+  <arg name="detection_cloud_frame" default="camera_depth_frame"/>
+  <arg name="inference_device" default="AUTO:GPU,CPU"/>
+  <arg name="conf_threshold" default="0.65"/>
+  <arg name="nms_threshold" default="0.45"/>
+  <arg name="input_size" default="640"/>
+  <arg name="enable_profiling_log" default="true"/>
+  <arg name="profiling_log_interval" default="30"/>
+
+  <node pkg="visual_calibration" type="isual_callibration" name="visual_calibration" output="screen">
+    <env name="LD_LIBRARY_PATH"
+         value="/home/rera/robocup_nano_visual/third_party/l_openvino_toolkit_ubuntu20_2024.6.0.17404.4c0f47d2335_x86_64/runtime/lib/intel64:/home/rera/robocup_nano_visual/third_party/l_openvino_toolkit_ubuntu20_2024.6.0.17404.4c0f47d2335_x86_64/runtime/3rdparty/tbb/lib:$(optenv LD_LIBRARY_PATH)"/>
+    <param name="image_topic" value="$(arg image_topic)"/>
+    <param name="cloud_topic" value="$(arg cloud_topic)"/>
+    <param name="model_path" value="$(arg model_path)"/>
+    <param name="rotate_180" value="$(arg rotate_180)"/>
+    <param name="visualization_topic" value="$(arg visualization_topic)"/>
+    <param name="detection_cloud_topic" value="$(arg detection_cloud_topic)"/>
+    <param name="detection_cloud_frame" value="$(arg detection_cloud_frame)"/>
+    <param name="inference_device" value="$(arg inference_device)"/>
+    <param name="conf_threshold" value="$(arg conf_threshold)"/>
+    <param name="nms_threshold" value="$(arg nms_threshold)"/>
+    <param name="input_size" value="$(arg input_size)"/>
+    <param name="enable_profiling_log" value="$(arg enable_profiling_log)"/>
+    <param name="profiling_log_interval" value="$(arg profiling_log_interval)"/>
+  </node>
+</launch>
