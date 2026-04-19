@@ -10,9 +10,9 @@ namespace chassis_common_config
 constexpr char kCanInterface[] = "can0";
 
 // 左轮电机 CAN ID。
-constexpr uint32_t kLeftMotorId = 1;
+constexpr uint32_t kLeftMotorId = 5;
 // 右轮电机 CAN ID。
-constexpr uint32_t kRightMotorId = 2;
+constexpr uint32_t kRightMotorId = 7;
 
 // 左电机方向符号，用来和底盘前进方向对齐。
 constexpr int kLeftMotorDirection = 1;
@@ -38,7 +38,8 @@ constexpr double kControlPeriodSec = 0.02;
 constexpr double kStartupDelaySec = 0.05;
 
 // 反馈帧与寄存器写入回执使用的 Master ID，需与驱动参数保持一致。
-constexpr canid_t kMasterId = 0x000;
+// 当前这套驱动实测通过 0x006 返回反馈与寄存器写入回执。
+constexpr canid_t kMasterId = 0x006;
 // 等待寄存器写入回执的超时时间，单位毫秒。
 constexpr int kRegisterAckTimeoutMs = 100;
 // 等待使能/失能状态反馈的超时时间，单位毫秒。

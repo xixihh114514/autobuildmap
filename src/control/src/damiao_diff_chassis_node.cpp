@@ -2,7 +2,9 @@
 #include <cmath>
 #include <cstdint>
 #include <cstring>
+#include <iomanip>
 #include <poll.h>
+#include <sstream>
 #include <string>
 
 #include <control/chassis_common_config.h>
@@ -91,6 +93,25 @@ struct MitPackedCommand
   uint16_t kd = 0;
   uint16_t torque = 0;
 };
+
+// 把 CAN 帧格式化成便于日志查看的十六进制字符串。
+std::string formatCanFrame(const struct can_frame& frame)
+{
+  std::ostringstream oss;
+  oss << "id=0x" << std::hex << frame.can_id << std::dec
+      << ", dlc=" << static_cast<int>(frame.can_dlc) << ", data=[";
+  for (int i = 0; i < frame.can_dlc; ++i)
+  {
+    if (i > 0)
+    {
+      oss << ' ';
+    }
+    oss << "0x" << std::hex << std::setw(2) << std::setfill('0')
+        << static_cast<int>(frame.data[i]) << std::dec;
+  }
+  oss << "]";
+  return oss.str();
+}
 
 // 判断当前是否选择了 MIT 模式。
 bool isMitModeSelected()
@@ -417,6 +438,9 @@ public:
   {
     const ros::WallTime deadline =
         ros::WallTime::now() + ros::WallDuration(static_cast<double>(timeout_ms) / 1000.0);
+    bool saw_frame = false;
+    struct can_frame last_frame;
+    std::memset(&last_frame, 0, sizeof(last_frame));
 
     while (ros::WallTime::now() < deadline)
     {
@@ -427,6 +451,8 @@ public:
       {
         continue;
       }
+      saw_frame = true;
+      last_frame = frame;
 
       if (frame.can_id != master_id || frame.can_dlc < 8)
       {
@@ -457,6 +483,15 @@ public:
       return true;
     }
 
+    if (saw_frame)
+    {
+      ROS_WARN_STREAM("等待寄存器写入回执超时, expected_feedback_id=0x" << std::hex
+                      << master_id << std::dec << ", motor_id=" << motor_id
+                      << ", register_id=" << static_cast<int>(register_id)
+                      << ", expected_value=" << expected_value
+                      << ", last_received_frame={" << formatCanFrame(last_frame) << "}");
+    }
+
     return false;
   }
 
@@ -466,6 +501,9 @@ public:
   {
     const ros::WallTime deadline =
         ros::WallTime::now() + ros::WallDuration(static_cast<double>(timeout_ms) / 1000.0);
+    bool saw_frame = false;
+    struct can_frame last_frame;
+    std::memset(&last_frame, 0, sizeof(last_frame));
 
     while (ros::WallTime::now() < deadline)
     {
@@ -476,6 +514,8 @@ public:
       {
         continue;
       }
+      saw_frame = true;
+      last_frame = frame;
 
       if (frame.can_id != master_id || frame.can_dlc < 1)
       {
@@ -493,6 +533,14 @@ public:
         continue;
       }
       return true;
+    }
+
+    if (saw_frame)
+    {
+      ROS_WARN_STREAM("等待电机状态反馈超时, expected_feedback_id=0x" << std::hex
+                      << master_id << std::dec << ", motor_id=" << motor_id
+                      << ", expected_state=" << static_cast<int>(expected_state)
+                      << ", last_received_frame={" << formatCanFrame(last_frame) << "}");
     }
 
     return false;
@@ -585,6 +633,9 @@ public:
                     << ", can=" << common_config_.can_interface
                     << ", left_id=" << common_config_.left_motor_id
                     << ", right_id=" << common_config_.right_motor_id
+                    << ", feedback_id=0x" << std::hex << common_config_.master_id
+                    << ", register_frame_id=0x" << common_config_.register_frame_id
+                    << std::dec
                     << ", control_mode_code=" << common_config_.control_mode
                     << ", track=" << common_config_.wheel_track_meters
                     << " m, wheelbase=" << common_config_.wheelbase_meters
