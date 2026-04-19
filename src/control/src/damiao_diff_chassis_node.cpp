@@ -1,8 +1,10 @@
 #include <cerrno>
+#include <clocale>
 #include <cmath>
 #include <cstdint>
 #include <cstring>
 #include <iomanip>
+#include <locale>
 #include <poll.h>
 #include <sstream>
 #include <string>
@@ -933,6 +935,10 @@ private:
 // 节点入口，初始化 ROS 后启动达妙差速底盘控制器。
 int main(int argc, char** argv)
 {
+  // 让 ROS 日志按系统 UTF-8 locale 输出，避免中文被替换成 '?'。
+  std::setlocale(LC_ALL, "");
+  std::locale::global(std::locale(""));
+
   ros::init(argc, argv, "damiao_diff_chassis_node");
 
   DamiaoDiffChassisController controller;
