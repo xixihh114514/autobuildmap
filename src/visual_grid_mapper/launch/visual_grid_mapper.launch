@@ -1,0 +1,21 @@
+<launch>
+  <arg name="point_cloud_topic" default="/visual_calibration/detection_points"/>
+  <arg name="map_topic" default="/map"/>
+  <arg name="marker_topic" default="/visual_calibration/grid_marks"/>
+  <arg name="target_frame" default="map"/>
+  <arg name="tf_timeout" default="0.6"/>
+  <arg name="marker_lifetime" default="0.0"/>
+  <arg name="marker_z_offset" default="0.03"/>
+  <arg name="dedup_radius" default="1.0"/>
+
+  <node pkg="visual_grid_mapper" type="visual_grid_mapper_node" name="visual_grid_mapper" output="screen">
+    <param name="point_cloud_topic" value="$(arg point_cloud_topic)"/>
+    <param name="map_topic" value="$(arg map_topic)"/>
+    <param name="marker_topic" value="$(arg marker_topic)"/>
+    <param name="target_frame" value="$(arg target_frame)"/>
+    <param name="tf_timeout" value="$(arg tf_timeout)"/>
+    <param name="marker_lifetime" value="$(arg marker_lifetime)"/>
+    <param name="marker_z_offset" value="$(arg marker_z_offset)"/>
+    <param name="dedup_radius" value="$(arg dedup_radius)"/>
+  </node>
+</launch>

@@ -1,0 +1,8 @@
+prefix=/home/rera/robocup2026/devel
+
+Name: rrt_goal_decision
+Description: Description of rrt_goal_decision
+Version: 0.0.0
+Cflags: -I/home/rera/robocup2026/src/rrt_goal_decision/include
+Libs: -L${prefix}/lib 
+Requires: 

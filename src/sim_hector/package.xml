@@ -58,6 +58,8 @@
   <exec_depend>roscpp</exec_depend>
   <exec_depend>rospy</exec_depend>
   <exec_depend>std_msgs</exec_depend>
+  <exec_depend>hector_geotiff</exec_depend>
+  <exec_depend>visual_grid_mapper</exec_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

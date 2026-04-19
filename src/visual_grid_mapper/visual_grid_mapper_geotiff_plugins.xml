@@ -1,0 +1,7 @@
+<library path="lib/libvisual_grid_mapper_geotiff_plugins">
+  <class name="visual_grid_mapper/VisualCalibrationGeotiffPlugin" type="visual_grid_mapper::VisualCalibrationGeotiffPlugin" base_class_type="hector_geotiff::MapWriterPluginInterface">
+    <description>
+      Draws accumulated visual calibration grid markers as blue points in Hector GeoTIFF maps.
+    </description>
+  </class>
+</library>

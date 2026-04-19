@@ -1,0 +1,8 @@
+prefix=/home/rera/robocup2026/devel
+
+Name: sim_hector
+Description: Description of sim_hector
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>visual_grid_mapper</name>
+  <version>0.0.1</version>
+  <description>Map visual calibration point clouds onto an occupancy grid for visualization.</description>
+
+  <maintainer email="codex@example.com">Codex</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>geometry_msgs</depend>
+  <depend>hector_geotiff</depend>
+  <depend>nav_msgs</depend>
+  <depend>pluginlib</depend>
+  <depend>roscpp</depend>
+  <depend>sensor_msgs</depend>
+  <depend>tf2</depend>
+  <depend>tf2_geometry_msgs</depend>
+  <depend>tf2_ros</depend>
+  <depend>visualization_msgs</depend>
+
+  <export>
+    <hector_geotiff plugin="${prefix}/visual_grid_mapper_geotiff_plugins.xml"/>
+  </export>
+</package>

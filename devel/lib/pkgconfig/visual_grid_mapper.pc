@@ -1,0 +1,8 @@
+prefix=/home/rera/robocup2026/devel
+
+Name: visual_grid_mapper
+Description: Description of visual_grid_mapper
+Version: 0.0.1
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: geometry_msgs nav_msgs roscpp sensor_msgs tf2 tf2_geometry_msgs tf2_ros visualization_msgs

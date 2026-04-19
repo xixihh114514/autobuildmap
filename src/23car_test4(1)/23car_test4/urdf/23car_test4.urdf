@@ -1,0 +1,630 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.6.0-4-g7f85cfe  Build Version: 1.6.7995.38578
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot
+  name="23car_test4">
+  <link
+    name="zhengche">
+    <inertial>
+      <origin
+        xyz="0.000242992066664532 -0.00653447053537559 0.110444365960748"
+        rpy="0 0 0" />
+      <mass
+        value="14.5049759407965" />
+      <inertia
+        ixx="0.0489203579806679"
+        ixy="4.20769710683532E-05"
+        ixz="-6.95903600616511E-07"
+        iyy="0.0488678386286656"
+        iyz="0.000587582172115045"
+        izz="0.0787028226185663" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://23car_test4/meshes/zhengche.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://23car_test4/meshes/zhengche.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link
+    name="baibi1">
+    <inertial>
+      <origin
+        xyz="-0.0145131403555471 0.152815765842152 0.0700063697256281"
+        rpy="0 0 0" />
+      <mass
+        value="1.59994666091541" />
+      <inertia
+        ixx="0.0114572721968805"
+        ixy="7.87969735488581E-08"
+        ixz="3.61013921912426E-08"
+        iyy="0.00301043169234694"
+        iyz="-0.00325842658363855"
+        izz="0.00863030834962193" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://23car_test4/meshes/baibi1.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://23car_test4/meshes/baibi1.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="baibi1"
+    type="continuous">
+    <origin
+      xyz="-0.2515 0.267109528305508 0.0649930169157672"
+      rpy="1.5707963267949 0 3.14159265358979" />
+    <parent
+      link="zhengche" />
+    <child
+      link="baibi1" />
+    <axis
+      xyz="-1 0 0" />
+  </joint>
+  <link
+    name="baibi2">
+    <inertial>
+      <origin
+        xyz="-0.0145131411491585 0.136985925671935 -0.0974084506497851"
+        rpy="0 0 0" />
+      <mass
+        value="1.59994666091541" />
+      <inertia
+        ixx="0.0114572721968805"
+        ixy="7.06378145037426E-08"
+        ixz="-5.02252198632069E-08"
+        iyy="0.00440756954506309"
+        iyz="0.00406412254083762"
+        izz="0.00723317049690598" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://23car_test4/meshes/baibi2.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://23car_test4/meshes/baibi2.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="baibi2"
+    type="continuous">
+    <origin
+      xyz="-0.249000000000455 -0.266889266928036 0.0661273337114438"
+      rpy="1.5707963267949 0 3.14159265358979" />
+    <parent
+      link="zhengche" />
+    <child
+      link="baibi2" />
+    <axis
+      xyz="-1 0 0" />
+  </joint>
+  <link
+    name="baibi3">
+    <inertial>
+      <origin
+        xyz="0.0145131403555436 0.150438448033176 0.0749788199663907"
+        rpy="0 0 0" />
+      <mass
+        value="1.59994666091558" />
+      <inertia
+        ixx="0.0114572721968805"
+        ixy="-7.75740604766822E-08"
+        ixz="-3.8659264017305E-08"
+        iyy="0.00322990854334353"
+        iyz="-0.00343549218374419"
+        izz="0.00841083149862512" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://23car_test4/meshes/baibi3.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://23car_test4/meshes/baibi3.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="baibi3"
+    type="continuous">
+    <origin
+      xyz="0.251499999999997 0.267109528305623 0.064993016915769"
+      rpy="1.5707963267949 0 -3.14159265358979" />
+    <parent
+      link="zhengche" />
+    <child
+      link="baibi3" />
+    <axis
+      xyz="1 0 0" />
+  </joint>
+  <link
+    name="baibi4">
+    <inertial>
+      <origin
+        xyz="0.0145131403555152 0.136832435577331 -0.097623945136837"
+        rpy="0 0 0" />
+      <mass
+        value="1.59994666091772" />
+      <inertia
+        ixx="0.0114572721968805"
+        ixy="-7.05547210990607E-08"
+        ixz="5.03418800253557E-08"
+        iyy="0.00442049439343818"
+        iyz="0.00406859256243609"
+        izz="0.00722024564853093" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://23car_test4/meshes/baibi4.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://23car_test4/meshes/baibi4.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="baibi4"
+    type="continuous">
+    <origin
+      xyz="0.251499999999997 -0.266889266941522 0.0661273337114879"
+      rpy="1.5707963267949 0 -3.14159265358979" />
+    <parent
+      link="zhengche" />
+    <child
+      link="baibi4" />
+    <axis
+      xyz="1 0 0" />
+  </joint>
+  <link
+    name="wheel1">
+    <inertial>
+      <origin
+        xyz="-7.41767758327683E-15 -2.90323320939478E-14 1.36025357644343E-11"
+        rpy="0 0 0" />
+      <mass
+        value="0.0766649138440825" />
+      <inertia
+        ixx="4.71427888210032E-05"
+        ixy="1.62546205140122E-21"
+        ixz="5.18152225724961E-22"
+        iyy="2.61268915386377E-05"
+        iyz="-1.36818689078923E-21"
+        izz="2.61268915386377E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://23car_test4/meshes/wheel1.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://23car_test4/meshes/wheel1.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="wheel1"
+    type="continuous">
+    <origin
+      xyz="-0.216000000000004 0.174999278050617 0.0131885595980792"
+      rpy="1.5707963267949 0 3.14159265358979" />
+    <parent
+      link="zhengche" />
+    <child
+      link="wheel1" />
+    <axis
+      xyz="-1 0 0" />
+  </joint>
+  <link
+    name="wheel2">
+    <inertial>
+      <origin
+        xyz="-7.38298311375729E-15 -2.68118860446975E-14 1.36023969865562E-11"
+        rpy="0 0 0" />
+      <mass
+        value="0.0766649138440825" />
+      <inertia
+        ixx="4.71427888210032E-05"
+        ixy="1.66316272213357E-21"
+        ixz="4.10529981541107E-22"
+        iyy="2.61268915386377E-05"
+        iyz="-3.02539962718674E-22"
+        izz="2.61268915386377E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://23car_test4/meshes/wheel2.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://23car_test4/meshes/wheel2.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="wheel2"
+    type="continuous">
+    <origin
+      xyz="-0.216000000000004 -0.174999932317364 0.0139320256626821"
+      rpy="1.5707963267949 0 3.14159265358979" />
+    <parent
+      link="zhengche" />
+    <child
+      link="wheel2" />
+    <axis
+      xyz="-1 0 0" />
+  </joint>
+  <link
+    name="wheel3">
+    <inertial>
+      <origin
+        xyz="-5.55111512312578E-17 5.55111512312578E-17 0"
+        rpy="0 0 0" />
+      <mass
+        value="0.0766649138440825" />
+      <inertia
+        ixx="4.71427888210033E-05"
+        ixy="1.44315563663137E-21"
+        ixz="1.38136987148034E-22"
+        iyy="2.61268915386377E-05"
+        iyz="2.80031590558142E-35"
+        izz="2.61268915386377E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://23car_test4/meshes/wheel3.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://23car_test4/meshes/wheel3.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="wheel3"
+    type="continuous">
+    <origin
+      xyz="0.215999999999997 0.174999278050727 0.013188559598079"
+      rpy="1.5707963267949 0 -3.14159265358979" />
+    <parent
+      link="zhengche" />
+    <child
+      link="wheel3" />
+    <axis
+      xyz="1 0 0" />
+  </joint>
+  <link
+    name="wheel4">
+    <inertial>
+      <origin
+        xyz="5.55111512312578E-17 4.67321526326225E-06 -0.00219999503659868"
+        rpy="0 0 0" />
+      <mass
+        value="0.0766649138440825" />
+      <inertia
+        ixx="4.71427888210033E-05"
+        ixy="1.55972120514441E-21"
+        ixz="-7.82752645264428E-22"
+        iyy="2.61268915386377E-05"
+        iyz="5.24888319341997E-21"
+        izz="2.61268915386377E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://23car_test4/meshes/wheel4.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://23car_test4/meshes/wheel4.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="wheel4"
+    type="continuous">
+    <origin
+      xyz="0.215999999999997 -0.172799937280656 0.0139273524474186"
+      rpy="1.5707963267949 0 -3.14159265358979" />
+    <parent
+      link="zhengche" />
+    <child
+      link="wheel4" />
+    <axis
+      xyz="1 0 0" />
+  </joint>
+  <link
+    name="IMU">
+    <inertial>
+      <origin
+        xyz="0.0019263 -0.012533 -5.5511E-17"
+        rpy="0 0 0" />
+      <mass
+        value="0.041404" />
+      <inertia
+        ixx="7.1879E-06"
+        ixy="-2.4188E-07"
+        ixz="-5.7834E-21"
+        iyy="1.2823E-05"
+        iyz="-1.0153E-21"
+        izz="9.8649E-06" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://23car_test4/meshes/IMU.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.2 0.2 0.2 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://23car_test4/meshes/IMU.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="IMU"
+    type="fixed">
+    <origin
+      xyz="0 -0.095 0.261"
+      rpy="1.5708 0 3.1416" />
+    <parent
+      link="zhengche" />
+    <child
+      link="IMU" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="radar">
+    <inertial>
+      <origin
+        xyz="0 0.004508 0"
+        rpy="0 0 0" />
+      <mass
+        value="0.1808" />
+      <inertia
+        ixx="8.7802E-05"
+        ixy="3.1032E-21"
+        ixz="-1.5119E-20"
+        iyy="0.0001245"
+        iyz="-8.4703E-22"
+        izz="8.7802E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://23car_test4/meshes/radar.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://23car_test4/meshes/radar.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="radar"
+    type="fixed">
+    <origin
+      xyz="0.00083897 -0.18046 0.38393"
+      rpy="1.5925 -0.0032179 3.1415" />
+    <parent
+      link="zhengche" />
+    <child
+      link="radar" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="aobizhongguang">
+    <inertial>
+      <origin
+        xyz="3.8997E-10 -4.5946E-11 0.018486"
+        rpy="0 0 0" />
+      <mass
+        value="0.22447" />
+      <inertia
+        ixx="5.0782E-05"
+        ixy="2.4278E-13"
+        ixz="-3.0018E-12"
+        iyy="0.00058009"
+        iyz="3.6208E-13"
+        izz="0.00057281" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://23car_test4/meshes/aobizhongguang.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://23car_test4/meshes/aobizhongguang.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="aobizhongguang"
+    type="fixed">
+    <origin
+      xyz="0 -0.308 0.228"
+      rpy="1.5708 0 3.1416" />
+    <parent
+      link="zhengche" />
+    <child
+      link="aobizhongguang" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+</robot>

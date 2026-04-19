@@ -56,7 +56,7 @@ include_directories(
   ${OpenCV_INCLUDE_DIRS}
 )
 
-add_executable(isual_callibration src/isual_callibration.cpp)
+add_executable(isual_callibration src/visual_callibration.cpp)
 target_link_libraries(isual_callibration
   ${catkin_LIBRARIES}
   ${OpenCV_LIBS}

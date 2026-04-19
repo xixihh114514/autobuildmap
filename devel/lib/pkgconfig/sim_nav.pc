@@ -1,0 +1,8 @@
+prefix=/home/rera/robocup2026/devel
+
+Name: sim_nav
+Description: Description of sim_nav
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

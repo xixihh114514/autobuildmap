@@ -1,0 +1,8 @@
+prefix=/home/rera/robocup2026/install
+
+Name: car
+Description: Description of car
+Version: 1.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

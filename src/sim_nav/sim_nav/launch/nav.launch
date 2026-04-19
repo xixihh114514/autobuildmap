@@ -3,7 +3,7 @@
     <arg name="namespace" default="" />               <!-- 可选命名空间 -->
     <!-- 自主建图需要注释掉 map_file -->
     <!-- <arg name="map_file" default="$(find sim_nav)/maps/my_map.yaml" /> -->
-    <arg name="use_sim_time" default="true" />       <!-- Gazebo 必须开启 -->
+    <arg name="use_sim_time" default="false" />       <!-- Gazebo 必须开启 -->
     
     <!-- ==================== 局部规划器选择 ==================== -->
     <!-- 可选值：teb_local_planner/TebLocalPlannerROS 或 dwa_local_planner/DWAPlannerROS -->
