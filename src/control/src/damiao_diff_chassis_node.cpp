@@ -29,7 +29,7 @@ namespace mode_cfg = control_mode_config;
 struct CommonControlConfig
 {
   const char* can_interface = "";
-  canid_t master_id = 0;
+  canid_t feedback_id_offset = 0;
   uint32_t left_motor_id = 0;
   uint32_t right_motor_id = 0;
   uint32_t control_mode = 0;
@@ -113,6 +113,13 @@ std::string formatCanFrame(const struct can_frame& frame)
   return oss.str();
 }
 
+// 根据当前电机 ID 计算预期反馈/回执帧 ID。
+canid_t makeExpectedFeedbackFrameId(const CommonControlConfig& common_config,
+                                    const uint32_t motor_id)
+{
+  return static_cast<canid_t>(motor_id + common_config.feedback_id_offset);
+}
+
 // 判断当前是否选择了 MIT 模式。
 bool isMitModeSelected()
 {
@@ -133,7 +140,7 @@ CommonControlConfig makeCommonControlConfig()
   if (isMitModeSelected())
   {
     config.can_interface = common_cfg::kCanInterface;
-    config.master_id = common_cfg::kMasterId;
+    config.feedback_id_offset = common_cfg::kFeedbackIdOffset;
     config.left_motor_id = common_cfg::kLeftMotorId;
     config.right_motor_id = common_cfg::kRightMotorId;
     config.control_mode = mit_mode_config::kControlMode;
@@ -158,7 +165,7 @@ CommonControlConfig makeCommonControlConfig()
   }
 
   config.can_interface = common_cfg::kCanInterface;
-  config.master_id = common_cfg::kMasterId;
+  config.feedback_id_offset = common_cfg::kFeedbackIdOffset;
   config.left_motor_id = common_cfg::kLeftMotorId;
   config.right_motor_id = common_cfg::kRightMotorId;
   config.control_mode = speed_mode_config::kControlMode;
@@ -432,7 +439,7 @@ public:
   }
 
   // 等待寄存器写入回执，确认驱动器已真正接受参数。
-  bool waitForWriteAck(const canid_t master_id, const uint32_t motor_id,
+  bool waitForWriteAck(const canid_t expected_feedback_id, const uint32_t motor_id,
                        const uint8_t write_register_cmd, const uint8_t register_id,
                        const uint32_t expected_value, const int timeout_ms)
   {
@@ -454,7 +461,7 @@ public:
       saw_frame = true;
       last_frame = frame;
 
-      if (frame.can_id != master_id || frame.can_dlc < 8)
+      if (frame.can_id != expected_feedback_id || frame.can_dlc < 8)
       {
         continue;
       }
@@ -486,7 +493,7 @@ public:
     if (saw_frame)
     {
       ROS_WARN_STREAM("等待寄存器写入回执超时, expected_feedback_id=0x" << std::hex
-                      << master_id << std::dec << ", motor_id=" << motor_id
+                      << expected_feedback_id << std::dec << ", motor_id=" << motor_id
                       << ", register_id=" << static_cast<int>(register_id)
                       << ", expected_value=" << expected_value
                       << ", last_received_frame={" << formatCanFrame(last_frame) << "}");
@@ -496,7 +503,7 @@ public:
   }
 
   // 等待反馈帧进入目标状态，用于确认使能或失能已生效。
-  bool waitForFeedbackState(const canid_t master_id, const uint32_t motor_id,
+  bool waitForFeedbackState(const canid_t expected_feedback_id, const uint32_t motor_id,
                             const uint8_t expected_state, const int timeout_ms)
   {
     const ros::WallTime deadline =
@@ -517,7 +524,7 @@ public:
       saw_frame = true;
       last_frame = frame;
 
-      if (frame.can_id != master_id || frame.can_dlc < 1)
+      if (frame.can_id != expected_feedback_id || frame.can_dlc < 1)
       {
         continue;
       }
@@ -538,7 +545,7 @@ public:
     if (saw_frame)
     {
       ROS_WARN_STREAM("等待电机状态反馈超时, expected_feedback_id=0x" << std::hex
-                      << master_id << std::dec << ", motor_id=" << motor_id
+                      << expected_feedback_id << std::dec << ", motor_id=" << motor_id
                       << ", expected_state=" << static_cast<int>(expected_state)
                       << ", last_received_frame={" << formatCanFrame(last_frame) << "}");
     }
@@ -633,7 +640,8 @@ public:
                     << ", can=" << common_config_.can_interface
                     << ", left_id=" << common_config_.left_motor_id
                     << ", right_id=" << common_config_.right_motor_id
-                    << ", feedback_id=0x" << std::hex << common_config_.master_id
+                    << ", feedback_id_offset=0x" << std::hex
+                    << common_config_.feedback_id_offset
                     << ", register_frame_id=0x" << common_config_.register_frame_id
                     << std::dec
                     << ", control_mode_code=" << common_config_.control_mode
@@ -690,7 +698,7 @@ private:
       ROS_ERROR_STREAM("设置电机 " << motor_id << " 模式失败");
       return false;
     }
-    if (!can_bus_.waitForWriteAck(common_config_.master_id, motor_id,
+    if (!can_bus_.waitForWriteAck(makeExpectedFeedbackFrameId(common_config_, motor_id), motor_id,
                                   common_config_.write_register_cmd,
                                   common_config_.control_mode_register,
                                   common_config_.control_mode,
@@ -722,9 +730,9 @@ private:
       ROS_ERROR_STREAM("发送电机 " << motor_id << " 初始指令失败");
       return false;
     }
-    if (!can_bus_.waitForFeedbackState(common_config_.master_id, motor_id,
-                                       common_cfg::kEnabledStateCode,
-                                       common_config_.status_feedback_timeout_ms))
+    if (!can_bus_.waitForFeedbackState(
+            makeExpectedFeedbackFrameId(common_config_, motor_id), motor_id,
+            common_cfg::kEnabledStateCode, common_config_.status_feedback_timeout_ms))
     {
       ROS_ERROR_STREAM("未收到电机 " << motor_id << " 的使能状态反馈");
       return false;
@@ -748,7 +756,8 @@ private:
     {
       uint32_t raw_value = 0;
       std::memcpy(&raw_value, &mit_config_.position_map_max_rad, sizeof(raw_value));
-      if (!can_bus_.waitForWriteAck(common_config_.master_id, motor_id,
+      if (!can_bus_.waitForWriteAck(makeExpectedFeedbackFrameId(common_config_, motor_id),
+                                    motor_id,
                                     common_config_.write_register_cmd,
                                     mit_config_.p_max_register, raw_value,
                                     common_config_.register_ack_timeout_ms))
@@ -772,7 +781,8 @@ private:
     {
       uint32_t raw_value = 0;
       std::memcpy(&raw_value, &mit_config_.velocity_map_max_rad_per_sec, sizeof(raw_value));
-      if (!can_bus_.waitForWriteAck(common_config_.master_id, motor_id,
+      if (!can_bus_.waitForWriteAck(makeExpectedFeedbackFrameId(common_config_, motor_id),
+                                    motor_id,
                                     common_config_.write_register_cmd,
                                     mit_config_.v_max_register, raw_value,
                                     common_config_.register_ack_timeout_ms))
@@ -796,7 +806,8 @@ private:
     {
       uint32_t raw_value = 0;
       std::memcpy(&raw_value, &mit_config_.torque_map_max, sizeof(raw_value));
-      if (!can_bus_.waitForWriteAck(common_config_.master_id, motor_id,
+      if (!can_bus_.waitForWriteAck(makeExpectedFeedbackFrameId(common_config_, motor_id),
+                                    motor_id,
                                     common_config_.write_register_cmd,
                                     mit_config_.t_max_register, raw_value,
                                     common_config_.register_ack_timeout_ms))

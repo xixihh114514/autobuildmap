@@ -663,3 +663,26 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       - 达妙 CAN 固定波特率为 `1Mbps`
       - 本轮 `Network is down` 问题属于系统侧 `can0` 未正常 up，不是节点发帧逻辑本身错误
       - 当前反馈帧里电机 ID 仍按低 4 位校验，电机 `5/7` 可正常使用；若后续电机 ID 改到大于 `15`，需重新核对反馈匹配规则
+   4.19.1
+      版本目标：继续整理达妙底盘反馈 ID 匹配逻辑，把“固定反馈 ID”改为“按电机 ID 偏移计算反馈 ID”，避免把控制帧 ID 与反馈帧 ID 混为一类。
+
+      本次改动：
+      1) 调整 `control` 包下反馈 ID 配置方式
+         - `chassis_common_config.h` 中由固定 `kMasterId` 改为 `kFeedbackIdOffset`
+         - 当前按 `expected_feedback_id = motor_id + kFeedbackIdOffset` 匹配回执与状态反馈
+         - 现阶段偏移量配置为 `0x001`
+
+      2) 调整 `damiao_diff_chassis_node` 中等待回包的实现
+         - 模式写入回执等待改为按当前电机 ID 计算预期反馈帧 ID
+         - MIT 模式下 `PMAX/VMAX/TMAX` 写入回执等待也同步改为按当前电机 ID 计算
+         - 使能状态反馈等待同样改为按当前电机 ID 计算
+
+      3) 同步更新启动日志与文档说明
+         - 启动日志中的 `feedback_id` 改为 `feedback_id_offset`
+         - 明确当前逻辑不是按“发送帧 ID + 1”等待回包
+         - 实际采用的是“电机 CAN ID + 1”作为反馈/回执帧 ID
+
+      当前说明：
+      - 当前寄存器写入帧仍使用 `0x7FF`
+      - 速度模式控制帧仍使用 `0x200 + ID`
+      - 当前抓包已确认电机 `5 -> 0x006`，按同样规则右电机 `7` 的预期反馈帧 ID 为 `0x008`

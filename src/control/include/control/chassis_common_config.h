@@ -37,9 +37,9 @@ constexpr double kControlPeriodSec = 0.02;
 // 启动阶段配置 CAN 命令之间的等待时间。
 constexpr double kStartupDelaySec = 0.05;
 
-// 反馈帧与寄存器写入回执使用的 Master ID，需与驱动参数保持一致。
-// 当前这套驱动实测通过 0x006 返回反馈与寄存器写入回执。
-constexpr canid_t kMasterId = 0x006;
+// 反馈帧与寄存器写入回执的期望 ID 偏移量。
+// 当前这套驱动实测反馈/回执帧 ID = 电机 CAN ID + 1。
+constexpr canid_t kFeedbackIdOffset = 0x001;
 // 等待寄存器写入回执的超时时间，单位毫秒。
 constexpr int kRegisterAckTimeoutMs = 100;
 // 等待使能/失能状态反馈的超时时间，单位毫秒。
