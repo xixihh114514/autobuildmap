@@ -40,10 +40,10 @@ constexpr double kStartupDelaySec = 0.05;
 // 反馈帧与寄存器写入回执的期望 ID 偏移量。
 // 当前这套驱动实测反馈/回执帧 ID = 电机 CAN ID + 1。
 constexpr canid_t kFeedbackIdOffset = 0x001;
-// 等待寄存器写入回执的超时时间，单位毫秒，设为 0 表示一直等待。
-constexpr int kRegisterAckTimeoutMs = 0;
-// 等待使能/失能状态反馈的超时时间，单位毫秒，设为 0 表示一直等待。
-constexpr int kStatusFeedbackTimeoutMs = 0;
+// 等待寄存器写入回执的超时时间，单位毫秒。
+constexpr int kRegisterAckTimeoutMs = 100;
+// 等待使能/失能状态反馈的超时时间，单位毫秒。
+constexpr int kStatusFeedbackTimeoutMs = 100;
 
 // 官方文档里的寄存器写入帧 ID。
 constexpr canid_t kRegisterFrameId = 0x7FF;

@@ -724,3 +724,18 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       当前说明：
       - 启动后如果 CAN 总线一直没有目标回执或状态反馈，节点现在会持续等待，需人工介入排查
       - 本轮未做远端推送，仅保留本地版本记录与代码变更
+   4.20.1
+      版本目标：恢复达妙底盘节点中“上位机等待回包”的超时为非 0，保留 `cmd_vel` 自动停车超时关闭状态。
+
+      本次改动：
+      1) 调整 `control` 包下达妙底盘回包等待超时配置
+         - `chassis_common_config.h` 中 `kRegisterAckTimeoutMs`：`0 -> 100`
+         - `chassis_common_config.h` 中 `kStatusFeedbackTimeoutMs`：`0 -> 100`
+
+      2) 当前保留不变的配置
+         - `chassis_common_config.h` 中 `kCmdTimeoutSec` 继续保持 `0.0`
+         - 本轮没有新增“写入电机寄存器的 timeout 参数”这类寄存器写入项
+
+      当前效果：
+      - 模式写入、MIT 参数写入和使能状态确认重新回到“有限时间等待回包”的行为
+      - 运行阶段仍不会因为 `cmd_vel` 长时间未更新而自动停车
