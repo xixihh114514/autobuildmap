@@ -701,3 +701,26 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
 
       当前说明：
       - 本轮修改只影响日志输出编码，不改变 CAN 协议、控制逻辑和底盘参数
+26.4.20
+   4.20.0
+      版本目标：统一关闭达妙底盘控制节点中的 timeout 配置，并明确 `0` 的实际语义，避免把 `0` 当成立刻超时。
+
+      本次改动：
+      1) 调整 `control` 包下达妙底盘公共超时配置
+         - `chassis_common_config.h` 中 `kCmdTimeoutSec`：`0.3 -> 0.0`
+         - `chassis_common_config.h` 中 `kRegisterAckTimeoutMs`：`100 -> 0`
+         - `chassis_common_config.h` 中 `kStatusFeedbackTimeoutMs`：`100 -> 0`
+
+      2) 调整 `damiao_diff_chassis_node` 对 timeout=0 的处理语义
+         - 寄存器写入回执等待中，`timeout_ms <= 0` 改为一直等待，不再视为超时
+         - 电机状态反馈等待中，`timeout_ms <= 0` 改为一直等待，不再视为超时
+         - `cmd_vel` 超时停车逻辑中，只有 `cmd_timeout_sec > 0` 时才启用超时判定
+
+      当前效果：
+      - 达妙底盘节点当前已统一为“timeout=0 表示关闭超时限制”
+      - 不会再因为把超时参数改成 `0` 导致启动阶段立刻判超时
+      - 运行阶段不会再因为超过 `0.3s` 未收到新的 `cmd_vel` 自动置零停车
+
+      当前说明：
+      - 启动后如果 CAN 总线一直没有目标回执或状态反馈，节点现在会持续等待，需人工介入排查
+      - 本轮未做远端推送，仅保留本地版本记录与代码变更

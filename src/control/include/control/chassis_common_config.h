@@ -30,8 +30,8 @@ constexpr double kWheelRadiusMeters = 0.075;
 constexpr double kPi = 3.14159265358979323846;
 // 电机速度限幅，按说明书中的空载最大转速换算得到。
 constexpr double kMaxMotorSpeedRadPerSec = 200.0 * 2.0 * kPi / 60.0;
-// 超过这个时间没有收到 cmd_vel 就停车。
-constexpr double kCmdTimeoutSec = 0.3;
+// 超过这个时间没有收到 cmd_vel 就停车，设为 0 表示不启用指令超时。
+constexpr double kCmdTimeoutSec = 0.0;
 // 主控制循环周期。
 constexpr double kControlPeriodSec = 0.02;
 // 启动阶段配置 CAN 命令之间的等待时间。
@@ -40,10 +40,10 @@ constexpr double kStartupDelaySec = 0.05;
 // 反馈帧与寄存器写入回执的期望 ID 偏移量。
 // 当前这套驱动实测反馈/回执帧 ID = 电机 CAN ID + 1。
 constexpr canid_t kFeedbackIdOffset = 0x001;
-// 等待寄存器写入回执的超时时间，单位毫秒。
-constexpr int kRegisterAckTimeoutMs = 100;
-// 等待使能/失能状态反馈的超时时间，单位毫秒。
-constexpr int kStatusFeedbackTimeoutMs = 100;
+// 等待寄存器写入回执的超时时间，单位毫秒，设为 0 表示一直等待。
+constexpr int kRegisterAckTimeoutMs = 0;
+// 等待使能/失能状态反馈的超时时间，单位毫秒，设为 0 表示一直等待。
+constexpr int kStatusFeedbackTimeoutMs = 0;
 
 // 官方文档里的寄存器写入帧 ID。
 constexpr canid_t kRegisterFrameId = 0x7FF;

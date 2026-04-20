@@ -445,17 +445,27 @@ public:
                        const uint8_t write_register_cmd, const uint8_t register_id,
                        const uint32_t expected_value, const int timeout_ms)
   {
+    const bool wait_forever = timeout_ms <= 0;
     const ros::WallTime deadline =
-        ros::WallTime::now() + ros::WallDuration(static_cast<double>(timeout_ms) / 1000.0);
+        wait_forever
+            ? ros::WallTime()
+            : ros::WallTime::now() + ros::WallDuration(static_cast<double>(timeout_ms) / 1000.0);
     bool saw_frame = false;
     struct can_frame last_frame;
     std::memset(&last_frame, 0, sizeof(last_frame));
 
-    while (ros::WallTime::now() < deadline)
+    while (ros::ok())
     {
+      if (!wait_forever && ros::WallTime::now() >= deadline)
+      {
+        break;
+      }
+
       struct can_frame frame;
-      const int remaining_ms = std::max(
-          0, static_cast<int>((deadline - ros::WallTime::now()).toSec() * 1000.0));
+      const int remaining_ms =
+          wait_forever
+              ? -1
+              : std::max(0, static_cast<int>((deadline - ros::WallTime::now()).toSec() * 1000.0));
       if (!readFrame(frame, remaining_ms))
       {
         continue;
@@ -508,17 +518,27 @@ public:
   bool waitForFeedbackState(const canid_t expected_feedback_id, const uint32_t motor_id,
                             const uint8_t expected_state, const int timeout_ms)
   {
+    const bool wait_forever = timeout_ms <= 0;
     const ros::WallTime deadline =
-        ros::WallTime::now() + ros::WallDuration(static_cast<double>(timeout_ms) / 1000.0);
+        wait_forever
+            ? ros::WallTime()
+            : ros::WallTime::now() + ros::WallDuration(static_cast<double>(timeout_ms) / 1000.0);
     bool saw_frame = false;
     struct can_frame last_frame;
     std::memset(&last_frame, 0, sizeof(last_frame));
 
-    while (ros::WallTime::now() < deadline)
+    while (ros::ok())
     {
+      if (!wait_forever && ros::WallTime::now() >= deadline)
+      {
+        break;
+      }
+
       struct can_frame frame;
-      const int remaining_ms = std::max(
-          0, static_cast<int>((deadline - ros::WallTime::now()).toSec() * 1000.0));
+      const int remaining_ms =
+          wait_forever
+              ? -1
+              : std::max(0, static_cast<int>((deadline - ros::WallTime::now()).toSec() * 1000.0));
       if (!readFrame(frame, remaining_ms))
       {
         continue;
@@ -871,8 +891,12 @@ private:
   {
     WheelSpeeds wheel_speeds = target_wheel_speeds_;
 
-    if (!last_cmd_time_.isValid() ||
-        (ros::Time::now() - last_cmd_time_).toSec() > common_config_.cmd_timeout_sec)
+    if (!last_cmd_time_.isValid())
+    {
+      wheel_speeds = WheelSpeeds();
+    }
+    else if (common_config_.cmd_timeout_sec > 0.0 &&
+             (ros::Time::now() - last_cmd_time_).toSec() > common_config_.cmd_timeout_sec)
     {
       wheel_speeds = WheelSpeeds();
     }
