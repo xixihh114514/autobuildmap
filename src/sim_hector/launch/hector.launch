@@ -17,10 +17,10 @@
   <node pkg="hector_mapping" type="hector_mapping" name="hector_mapping" output="screen">
     
     <!-- 激光雷达话题名称，订阅传感器数据 -->
-    <remap from="scan" to="/scan_filtered"/>
+    <remap from="scan" to="/scan"/>
     
     <!-- 地图发布频率（Hz），建议10-40 -->
-    <param name="pub_map_odom_transform" value="true"/>
+    <param name="pub_map_odom_transform" value="false"/>
     <param name="map_update_distance_thresh" value="0.2"/>
     <param name="map_update_angle_thresh" value="0.5"/>
     <param name="map_resolution" value="0.03"/> <!-- 地图分辨率，单位：米/格 -->

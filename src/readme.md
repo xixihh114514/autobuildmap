@@ -739,3 +739,23 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       当前效果：
       - 模式写入、MIT 参数写入和使能状态确认重新回到“有限时间等待回包”的行为
       - 运行阶段仍不会因为 `cmd_vel` 长时间未更新而自动停车
+26.4.21
+   4.21.0
+      版本目标：补齐 robocup 仿真下“已配准点云 -> 二维 LaserScan -> hector 建图”的链路，并避免 hector 额外发布 TF 干扰当前坐标关系。
+
+      本次改动：
+      1) 新增 `pointcloud_to_laserscan/launch/registered_scan_to_scan.launch`
+         - 默认订阅 `vehicle_cropbox_filter` 输出的 `/cloud_registered_ego_filtered`
+         - 输出二维激光话题 `/scan`
+         - 默认目标坐标系设为 `lidar`
+         - 高度切片范围设为 `-0.10 ~ 0.30`
+         - 量程范围设为 `0.3 ~ 30.0`
+
+      2) 调整 `sim_hector/launch/hector.launch`
+         - `scan` remap：`/scan_filtered -> /scan`
+         - `pub_map_odom_transform`：`true -> false`
+
+      当前说明：
+      - 当前 hector 直接使用 `registered_scan_to_scan.launch` 输出的 `/scan` 做二维建图
+      - 关闭 `pub_map_odom_transform` 后，hector 不再额外发布 `map -> odom`，避免和当前链路里的 TF 关系打架
+      - 当前 `hector.launch` 里 `odom_frame` 仍保持 `base_link`，本轮主要是统一 scan 输入与 TF 发布行为
