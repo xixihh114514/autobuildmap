@@ -52,13 +52,13 @@
     <param name="maxSpeed" value="$(arg maxSpeed)" /> <!-- 使用共享的最大速度，供搜索范围按速度缩放 -->
     <param name="dirWeight" type="double" value="0.02" /> <!-- 方向误差在路径评分中的权重 -->
     <param name="dirThre" type="double" value="120.0" /> <!-- 允许搜索的方向阈值（度） -->
-    <param name="dirToVehicle" type="bool" value="false" /> <!-- false 按期望方向筛选，true 按车体朝向筛选 -->
+    <param name="dirToVehicle" type="bool" value="true" /> <!-- false 按期望方向筛选，true 按车体朝向筛选 -->
     <param name="pathScale" type="double" value="1.0" /> <!-- 默认路径尺度系数 -->
     <param name="minPathScale" type="double" value="0.75" /> <!-- 搜索失败时允许缩小到的最小路径尺度 -->
     <param name="pathScaleStep" type="double" value="0.25" /> <!-- 路径尺度逐步缩放的步长 -->
     <param name="pathScaleBySpeed" type="bool" value="true" /> <!-- 是否根据当前速度调整路径尺度 -->
-    <param name="minPathRange" type="double" value="1.0" /> <!-- 搜索失败时允许缩短到的最小路径长度（m） -->
-    <param name="pathRangeStep" type="double" value="0.5" /> <!-- 路径长度逐步减小的步长（m） -->
+    <param name="minPathRange" type="double" value="0.3" /> <!-- 搜索失败时允许缩短到的最小路径长度（m） -->
+    <param name="pathRangeStep" type="double" value="0.1" /> <!-- 路径长度逐步减小的步长（m） -->
     <param name="pathRangeBySpeed" type="bool" value="true" /> <!-- 是否根据当前速度调整路径长度 -->
     <param name="pathCropByGoal" type="bool" value="true" /> <!-- 是否按目标距离裁剪局部路径 -->
 

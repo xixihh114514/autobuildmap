@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+
+<launch>
+
+    <!-- 该 launch 用于把输入点云压成二维 LaserScan。 -->
+    <!-- 这里默认订阅 vehicle_cropbox_filter 的输出 /cloud_registered_ego_filtered。 -->
+    <arg name="cloud_topic" default="/cloud_registered_ego_filtered" /> <!-- 输入点云话题，默认接 vehicle_cropbox_filter 的 output_topic -->
+    <arg name="scan_topic" default="/scan" /> <!-- 输出二维激光话题 -->
+    <arg name="target_frame" default="lidar" /> <!-- 先把点云变换到哪个坐标系再做降维；留空则直接使用输入点云原坐标系 -->
+
+    <!-- TF 相关与高度切片参数 -->
+    <arg name="transform_tolerance" default="0.05" /> <!-- TF 查询容忍时间，单位 s -->
+    <arg name="min_height" default="-0.10" /> <!-- 保留点的最小高度，低于该值的点会被丢弃，单位 m -->
+    <arg name="max_height" default="0.30" /> <!-- 保留点的最大高度，高于该值的点会被丢弃，单位 m -->
+
+    <!-- 二维激光的角度与量程参数 -->
+    <arg name="angle_min" default="-3.1415926" /> <!-- 起始角，单位 rad -->
+    <arg name="angle_max" default="3.1415926" /> <!-- 结束角，单位 rad -->
+    <arg name="angle_increment" default="0.00872665" /> <!-- 角分辨率，约 0.5 度，单位 rad -->
+    <arg name="scan_time" default="0.1" /> <!-- 一帧 scan 的时间，单位 s -->
+    <arg name="range_min" default="0.3" /> <!-- 最小测距，近于该值的点会被丢弃，单位 m -->
+    <arg name="range_max" default="30.0" /> <!-- 最大测距，远于该值的点会被丢弃，单位 m -->
+    <arg name="use_inf" default="true" /> <!-- 没有命中障碍物的方向是否填充为 inf -->
+    <arg name="inf_epsilon" default="1.0" /> <!-- use_inf=false 时，用 range_max + inf_epsilon 填充空射线 -->
+    <arg name="concurrency_level" default="1" /> <!-- 并发线程数；1 表示单线程 -->
+
+    <!-- 点云转 LaserScan 节点 -->
+    <node pkg="pointcloud_to_laserscan"
+          type="pointcloud_to_laserscan_node"
+          name="registered_scan_to_laserscan"
+          output="screen"
+          clear_params="true">
+
+        <remap from="cloud_in" to="$(arg cloud_topic)"/> <!-- 订阅输入点云 -->
+        <remap from="scan" to="$(arg scan_topic)"/> <!-- 发布输出 scan -->
+
+        <!-- 将上面的 launch 参数传给节点 -->
+        <param name="target_frame" value="$(arg target_frame)"/>
+        <param name="transform_tolerance" value="$(arg transform_tolerance)"/>
+        <param name="min_height" value="$(arg min_height)"/>
+        <param name="max_height" value="$(arg max_height)"/>
+        <param name="angle_min" value="$(arg angle_min)"/>
+        <param name="angle_max" value="$(arg angle_max)"/>
+        <param name="angle_increment" value="$(arg angle_increment)"/>
+        <param name="scan_time" value="$(arg scan_time)"/>
+        <param name="range_min" value="$(arg range_min)"/>
+        <param name="range_max" value="$(arg range_max)"/>
+        <param name="use_inf" value="$(arg use_inf)"/>
+        <param name="inf_epsilon" value="$(arg inf_epsilon)"/>
+        <param name="concurrency_level" value="$(arg concurrency_level)"/>
+
+    </node>
+
+</launch>

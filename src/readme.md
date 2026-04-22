@@ -616,3 +616,39 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       当前用途：
       - 为后续视觉避障 / 人员目标定位提供基础输入
       - 便于在 RViz 中直接观察检测框、深度取样结果和目标位置
+
+26.4.22
+   4.22.0
+      新增实车底盘控制包，并补充点云转 LaserScan 与 Hector SLAM 的 2D 建图链路，同时对 local_planner 做一轮更贴近车体的调参
+
+      本次改动：
+      1) 新增 `control`
+         - 新增 `damiao_diff_chassis_node`
+         - 通过 SocketCAN 下发差速底盘左右轮控制
+         - 当前保留速度模式与 MIT 模式两套配置，默认使用速度模式
+         - 当前底盘参数记录为：
+           `can0`、左电机 ID `5`、右电机 ID `7`
+           轮距 `0.36m`、轴距 `0.40m`、轮半径 `0.075m`
+
+      2) 新增 `pointcloud_to_laserscan`
+         - 补充标准点云转 LaserScan 功能包
+         - 便于将 3D 点云链路接入 `/scan`，供 2D 建图或定位节点使用
+
+      3) 新增 `hector_slam/hector_slam_launch/launch/hector.launch`
+         - 新增 Hector SLAM 建图启动文件
+         - 当前订阅 `/scan`
+         - 当前 `use_sim_time=true`
+         - 当前关闭 `pub_map_odom_transform`，开启 `pub_map_scanmatch_transform`
+
+      4) 修改 `autonomous_exploration_development_environment/src/local_planner/launch/local_planner.launch`
+         - `dirToVehicle`：`false -> true`
+         - `minPathRange`：`1.0 -> 0.3`
+         - `pathRangeStep`：`0.5 -> 0.1`
+
+      调整目的：
+      - 让局部规划更按车体朝向筛选可行方向
+      - 在窄通道、贴障或掉头困难场景下，允许更短路径与更细步长逐步收缩搜索范围
+
+      当前用途：
+      - 为 `real_car_3D` 分支补齐实车底盘控制与 2D 建图验证链路
+      - 便于后续联调 `cmd_vel -> 底盘控制 -> /scan -> hector_slam`
