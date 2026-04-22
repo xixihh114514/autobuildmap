@@ -17,8 +17,8 @@
     <arg name="angle_min" default="-3.1415926" /> <!-- 起始角，单位 rad -->
     <arg name="angle_max" default="3.1415926" /> <!-- 结束角，单位 rad -->
     <arg name="angle_increment" default="0.00872665" /> <!-- 角分辨率，约 0.5 度，单位 rad -->
-    <arg name="scan_time" default="0.1" /> <!-- 一帧 scan 的时间，单位 s -->
-    <arg name="range_min" default="0.3" /> <!-- 最小测距，近于该值的点会被丢弃，单位 m -->
+    <arg name="scan_time" default="0.05" /> <!-- 一帧 scan 的时间，单位 s -->
+    <arg name="range_min" default="0.1" /> <!-- 最小测距，近于该值的点会被丢弃，单位 m -->
     <arg name="range_max" default="30.0" /> <!-- 最大测距，远于该值的点会被丢弃，单位 m -->
     <arg name="use_inf" default="true" /> <!-- 没有命中障碍物的方向是否填充为 inf -->
     <arg name="inf_epsilon" default="1.0" /> <!-- use_inf=false 时，用 range_max + inf_epsilon 填充空射线 -->

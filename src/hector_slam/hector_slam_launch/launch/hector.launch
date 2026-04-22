@@ -4,7 +4,7 @@
 
   <!-- ========== 全局参数设置 ========== -->
   <!-- 设置是否使用仿真时间（如果使用gazebo等仿真环境，则设为true；真实机器人通常为false） -->
-  <param name="/use_sim_time" value="true"/>
+  <param name="/use_sim_time" value="false"/>
 
   <!-- 设置地图坐标系名称，通常为"map" -->
   <param name="map_frame" value="map"/>
@@ -53,20 +53,20 @@
   </node>
 
   <!-- ========== 启动hector_trajectory_server（可选，用于保存轨迹） ========== -->
-  <!-- <node pkg="hector_trajectory_server" type="hector_trajectory_server" name="hector_trajectory_server" output="screen">
+  <node pkg="hector_trajectory_server" type="hector_trajectory_server" name="hector_trajectory_server" output="screen">
     <param name="target_frame_name" value="map"/>
     <param name="source_frame_name" value="base_link"/>
     <param name="trajectory_update_rate" value="4"/>
     <param name="trajectory_publish_rate" value="4"/>
-  </node> -->
+  </node>
 
   <!-- ========== 启动hector_geotiff地图保存节点（用于保存地图为GeoTIFF格式） ========== -->
-  <!-- <node pkg="hector_geotiff" type="geotiff_node" name="hector_geotiff_node" output="screen">
+  <node pkg="hector_geotiff" type="geotiff_node" name="hector_geotiff_node" output="screen">
     <remap from="map" to="/map"/>
-    <param name="map_file_path" value="$(find your_package_name)/maps"/>
+    <param name="map_file_path" value="$(find hector_geotiff)/maps"/>
     <param name="map_file_base_name" value="hector_map"/>
     <param name="geotiff_save_period" value="0"/>
-  </node> -->
+  </node>
 
   <!-- ========== 启动RViz可视化（可选，便于调试） ========== -->
   <!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(find hector_slam_launch)/rviz_cfg/mapping_demo.rviz"/> -->

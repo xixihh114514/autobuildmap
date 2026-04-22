@@ -652,3 +652,26 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       当前用途：
       - 为 `real_car_3D` 分支补齐实车底盘控制与 2D 建图验证链路
       - 便于后续联调 `cmd_vel -> 底盘控制 -> /scan -> hector_slam`
+
+   4.22.1
+      针对实车 2D 建图链路继续补充参数调整与运行记录，完善 Hector SLAM 与点云转 LaserScan 的默认配置
+
+      本次改动：
+      1) 修改 `hector_slam/hector_slam_launch/launch/hector.launch`
+         - `/use_sim_time`：`true -> false`
+         - 启用 `hector_trajectory_server`
+         - 启用 `hector_geotiff_node`
+         - `map_file_path`：`$(find your_package_name)/maps -> $(find hector_geotiff)/maps`
+
+      2) 修改 `pointcloud_to_laserscan/launch/registered_scan_to_scan.launch`
+         - `scan_time`：`0.1 -> 0.05`
+         - `range_min`：`0.3 -> 0.1`
+
+      调整目的：
+      - 将 Hector SLAM 默认时间源切换到实车模式，避免继续沿用仿真时间
+      - 让 `/scan` 能保留更近距离障碍物，并以更高频率参与 2D 建图
+      - 让建图链路在默认启动时同时具备轨迹发布与 GeoTIFF 地图导出能力
+
+      说明：
+      - 当前 GeoTIFF 输出目录使用 `hector_geotiff` 自带 `maps` 目录，避免示例占位包名导致 launch 解析失败
+      - 如需回到 Gazebo 仿真，应将 `/use_sim_time` 改回 `true`
