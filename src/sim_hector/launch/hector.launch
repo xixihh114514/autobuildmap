@@ -70,7 +70,7 @@
     <arg name="dedup_radius" value="1.0"/>
   </include>
 
-  <!-- ========== 启动hector_geotiff地图保存节点，并把视觉标定蓝点写入GeoTIFF ========== -->
+  <!-- ========== 启动hector_geotiff地图保存节点，并把轨迹和视觉标定点写入GeoTIFF ========== -->
   <node if="$(arg enable_geotiff_save)" pkg="hector_geotiff" type="geotiff_node" name="hector_geotiff_node" output="screen">
     <remap from="map" to="/dynamic_map"/>
     <param name="use_map_topic" type="bool" value="false"/>
@@ -81,7 +81,11 @@
     <param name="use_elapsed_autosave_names" type="bool" value="true"/>
     <param name="draw_background_checkerboard" type="bool" value="true"/>
     <param name="draw_free_space_grid" type="bool" value="true"/>
-    <param name="plugins" type="string" value="visual_grid_mapper/VisualCalibrationGeotiffPlugin"/>
+    <param name="plugins" type="string" value="hector_geotiff_plugins/TrajectoryMapWriter visual_grid_mapper/VisualCalibrationGeotiffPlugin"/>
+    <param name="hector_geotiff_plugins/TrajectoryMapWriter/service_name" type="string" value="trajectory"/>
+    <param name="hector_geotiff_plugins/TrajectoryMapWriter/path_color_r" type="int" value="120"/>
+    <param name="hector_geotiff_plugins/TrajectoryMapWriter/path_color_g" type="int" value="0"/>
+    <param name="hector_geotiff_plugins/TrajectoryMapWriter/path_color_b" type="int" value="240"/>
     <param name="visual_grid_mapper/VisualCalibrationGeotiffPlugin/marker_topic" type="string" value="/visual_calibration/grid_marks"/>
   </node>
 
