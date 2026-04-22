@@ -6,6 +6,7 @@
 #include <hector_geotiff/map_writer_interface.h>
 #include <hector_geotiff/map_writer_plugin_interface.h>
 
+#include <algorithm>
 #include <Eigen/Core>
 #include <boost/thread/lock_guard.hpp>
 #include <boost/thread/mutex.hpp>
@@ -36,6 +37,8 @@ public:
 protected:
   void pointCloudCallback(const sensor_msgs::PointCloud2ConstPtr& cloud_msg);
   std::string makeLabel(std::size_t index) const;
+  MapWriterInterface::Color makeColor(std::size_t index) const;
+  static bool comparePointOrder(const Eigen::Vector2f& lhs, const Eigen::Vector2f& rhs);
 
   ros::NodeHandle nh_;
   ros::Subscriber point_cloud_sub_;
@@ -48,6 +51,7 @@ protected:
   ros::Duration point_timeout_;
   ros::Time last_nonempty_stamp_;
   std::vector<Eigen::Vector2f> cached_points_;
+  bool use_palette_colors_;
   int point_color_r_;
   int point_color_g_;
   int point_color_b_;
@@ -57,6 +61,7 @@ protected:
 PersonMapWriter::PersonMapWriter()
   : initialized_(false)
   , point_timeout_(1.0)
+  , use_palette_colors_(true)
   , point_color_r_(255)
   , point_color_g_(70)
   , point_color_b_(70)
@@ -73,8 +78,9 @@ void PersonMapWriter::initialize(const std::string& name)
   std::string point_shape_name("circle");
 
   plugin_nh.param("topic_name", topic_name_, std::string("/person_global_localizer/person_map_cloud"));
-  plugin_nh.param("label_prefix", label_prefix_, std::string("P"));
+  plugin_nh.param("label_prefix", label_prefix_, std::string("p"));
   plugin_nh.param("point_timeout", point_timeout_seconds, 1.0);
+  plugin_nh.param("use_palette_colors", use_palette_colors_, true);
   plugin_nh.param("point_color_r", point_color_r_, 255);
   plugin_nh.param("point_color_g", point_color_g_, 70);
   plugin_nh.param("point_color_b", point_color_b_, 70);
@@ -117,9 +123,9 @@ void PersonMapWriter::draw(MapWriterInterface* interface)
     return;
   }
 
-  const MapWriterInterface::Color color(point_color_r_, point_color_g_, point_color_b_);
+  std::sort(points.begin(), points.end(), &PersonMapWriter::comparePointOrder);
   for (std::size_t i = 0; i < points.size(); ++i) {
-    interface->drawObjectOfInterest(points[i], makeLabel(i), color, point_shape_);
+    interface->drawObjectOfInterest(points[i], makeLabel(i), makeColor(i), point_shape_);
   }
 }
 
@@ -162,6 +168,39 @@ std::string PersonMapWriter::makeLabel(std::size_t index) const
   std::ostringstream stream;
   stream << label_prefix_ << (index + 1);
   return stream.str();
+}
+
+MapWriterInterface::Color PersonMapWriter::makeColor(std::size_t index) const
+{
+  if (!use_palette_colors_) {
+    return MapWriterInterface::Color(point_color_r_, point_color_g_, point_color_b_);
+  }
+
+  static const unsigned int palette[][3] = {
+    {230, 57, 70},
+    {29, 53, 87},
+    {42, 157, 143},
+    {233, 196, 106},
+    {244, 162, 97},
+    {126, 87, 194},
+    {69, 123, 157},
+    {231, 111, 81}
+  };
+
+  const std::size_t palette_size = sizeof(palette) / sizeof(palette[0]);
+  const unsigned int* rgb = palette[index % palette_size];
+  return MapWriterInterface::Color(rgb[0], rgb[1], rgb[2]);
+}
+
+bool PersonMapWriter::comparePointOrder(const Eigen::Vector2f& lhs, const Eigen::Vector2f& rhs)
+{
+  const float epsilon = 1e-3f;
+
+  if (std::fabs(lhs.x() - rhs.x()) > epsilon) {
+    return lhs.x() < rhs.x();
+  }
+
+  return lhs.y() < rhs.y();
 }
 
 } // namespace hector_geotiff_plugins

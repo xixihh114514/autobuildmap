@@ -68,8 +68,9 @@
     <param name="geotiff_save_period" value="1"/>
     <param name="plugins" value="hector_geotiff_plugins/TrajectoryMapWriter hector_geotiff_plugins/PersonMapWriter"/>
     <param name="PersonMapWriter/topic_name" value="/person_global_localizer/person_map_cloud"/>
-    <param name="PersonMapWriter/label_prefix" value="P"/>
+    <param name="PersonMapWriter/label_prefix" value="p"/>
     <param name="PersonMapWriter/point_timeout" value="1.5"/>
+    <param name="PersonMapWriter/use_palette_colors" value="true"/>
     <param name="PersonMapWriter/point_color_r" value="255"/>
     <param name="PersonMapWriter/point_color_g" value="70"/>
     <param name="PersonMapWriter/point_color_b" value="70"/>
