@@ -7,6 +7,8 @@ import message_filters
 import numpy as np
 import rospy
 import sensor_msgs.point_cloud2 as pc2
+import tf2_geometry_msgs  # noqa: F401
+import tf2_ros
 from cv_bridge import CvBridge, CvBridgeError
 from geometry_msgs.msg import PointStamped
 from sensor_msgs.msg import CameraInfo, Image, PointCloud2, PointField
@@ -40,6 +42,8 @@ class PersonGlobalLocalizer(object):
         self.depth_roi_half = rospy.get_param("~depth_roi_half", 4)
         self.marker_lifetime = rospy.get_param("~marker_lifetime", 0.3)
         self.publish_debug_image = rospy.get_param("~publish_debug_image", True)
+        self.global_frame = rospy.get_param("~global_frame", "map")
+        self.transform_timeout = rospy.get_param("~transform_timeout", 0.05)
         self.person_classes = {
             str(name).strip().lower()
             for name in rospy.get_param("~person_classes", ["victim"])
@@ -51,10 +55,16 @@ class PersonGlobalLocalizer(object):
         self.person_cloud_pub = rospy.Publisher(
             "~person_camera_cloud", PointCloud2, queue_size=1
         )
+        self.person_map_cloud_pub = rospy.Publisher(
+            "~person_map_cloud", PointCloud2, queue_size=1
+        )
         self.marker_pub = rospy.Publisher("~person_markers", MarkerArray, queue_size=1)
         self.debug_image_pub = rospy.Publisher(
             "~debug_image", Image, queue_size=1
         ) if self.publish_debug_image else None
+
+        self.tf_buffer = tf2_ros.Buffer()
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
         self.color_sub = message_filters.Subscriber(self.color_topic, Image)
         self.depth_sub = message_filters.Subscriber(self.depth_topic, Image)
@@ -66,7 +76,10 @@ class PersonGlobalLocalizer(object):
         )
         self.sync.registerCallback(self.synced_callback)
 
-        rospy.loginfo("person_global_localizer is ready")
+        rospy.loginfo(
+            "person_global_localizer is ready, publishing person centers in %s",
+            self.global_frame,
+        )
 
     def synced_callback(self, color_msg, depth_msg, camera_info_msg):
         try:
@@ -83,6 +96,7 @@ class PersonGlobalLocalizer(object):
 
         detections = self.run_yolo(color_image)
         current_camera_points = []
+        current_map_points = []
         marker_array = MarkerArray()
         debug_image = color_image.copy()
         camera_frame = depth_msg.header.frame_id
@@ -130,12 +144,28 @@ class PersonGlobalLocalizer(object):
                     camera_frame,
                 )
             )
+            map_point = self.transform_point(camera_point)
+            if map_point is not None:
+                current_map_points.append(
+                    (
+                        map_point.point.x,
+                        map_point.point.y,
+                        map_point.point.z,
+                        confidence,
+                    )
+                )
 
         self.publish_cloud(
             self.person_cloud_pub,
             color_msg.header.stamp,
             camera_frame,
             current_camera_points,
+        )
+        self.publish_cloud(
+            self.person_map_cloud_pub,
+            color_msg.header.stamp,
+            self.global_frame,
+            current_map_points,
         )
         self.publish_markers(marker_array, color_msg.header.stamp, camera_frame)
 
@@ -194,6 +224,27 @@ class PersonGlobalLocalizer(object):
         if depth_image.dtype in (np.float32, np.float64):
             return depth_image.astype(np.float32)
         return None
+
+    def transform_point(self, point_stamped):
+        try:
+            return self.tf_buffer.transform(
+                point_stamped,
+                self.global_frame,
+                rospy.Duration(self.transform_timeout),
+            )
+        except (
+            tf2_ros.LookupException,
+            tf2_ros.ConnectivityException,
+            tf2_ros.ExtrapolationException,
+        ) as exc:
+            rospy.logwarn_throttle(
+                2.0,
+                "failed to transform person center from %s to %s: %s",
+                point_stamped.header.frame_id,
+                self.global_frame,
+                exc,
+            )
+            return None
 
     def sample_depth_and_point(self, depth_m, bbox, camera_info_msg):
         x1, y1, x2, y2 = bbox

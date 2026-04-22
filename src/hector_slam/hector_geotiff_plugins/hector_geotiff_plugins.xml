@@ -4,4 +4,9 @@
       This is a MapWriter plugin that draws the robot's trajectory in the map.
     </description>
   </class>
+  <class name="hector_geotiff_plugins/PersonMapWriter" type="hector_geotiff_plugins::PersonMapWriter" base_class_type="hector_geotiff::MapWriterPluginInterface">
+    <description>
+      This MapWriter plugin draws person center points from a map-frame point cloud onto the geotiff map.
+    </description>
+  </class>
 </library>

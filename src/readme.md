@@ -675,3 +675,47 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       说明：
       - 当前 GeoTIFF 输出目录使用 `hector_geotiff` 自带 `maps` 目录，避免示例占位包名导致 launch 解析失败
       - 如需回到 Gazebo 仿真，应将 `/use_sim_time` 改回 `true`
+
+   4.22.2
+      将视觉检测得到的人物中心点接入 Hector GeoTIFF 导出链路，使人物中心点能够以 `map` 坐标系标注到导出的 2D 地图中
+
+      本次改动：
+      1) 修改 `visual_obstacle_detector/person_global_localizer.py`
+         - 保留原有“检测框中心深度”作为人物中心点定义
+         - 新增 `tf2` 变换，将人物中心点从相机坐标系变换到 `map`
+         - 在继续发布 `~person_camera_cloud` 的同时，新增发布 `~person_map_cloud`
+         - 当前 `~person_map_cloud` 默认话题解析后为：
+           `/person_global_localizer/person_map_cloud`
+
+      2) 修改 `visual_obstacle_detector/launch/person_global_localizer.launch`
+         - 新增 `global_frame` 参数，默认值为 `map`
+         - 新增 `transform_timeout` 参数，默认值为 `0.05`
+
+      3) 修改 `hector_slam/hector_geotiff_plugins`
+         - 新增 `PersonMapWriter` 插件
+         - 订阅 `map` 坐标系下的人物中心点云
+         - 在 GeoTIFF 导出时将人物中心点绘制为目标标记
+         - 当前默认标签格式为 `P1`、`P2`、`P3`
+
+      4) 修改 `hector_slam/hector_slam_launch/launch/hector.launch`
+         - 为 `hector_geotiff_node` 启用：
+           `hector_geotiff_plugins/TrajectoryMapWriter`
+           `hector_geotiff_plugins/PersonMapWriter`
+         - 默认人物点云输入话题设置为：
+           `/person_global_localizer/person_map_cloud`
+         - 默认人物标注超时时间设置为 `1.5s`
+
+      使用方式：
+      - 启动 Hector SLAM：
+        `roslaunch hector_slam_launch hector.launch`
+      - 启动视觉人物定位：
+        `roslaunch visual_obstacle_detector person_global_localizer.launch`
+      - 在人物已被检测并且 TF 链正常时，人物中心点会持续发布到：
+        `/person_global_localizer/person_map_cloud`
+      - 需要导出带人物标注的 GeoTIFF 时，发送：
+        `rostopic pub /syscommand std_msgs/String "data: 'savegeotiff'" -1`
+
+      说明：
+      - 当前标注点使用的是“人物中心点”，不是脚点或地面投影点
+      - GeoTIFF 中是否绘制人物点，取决于保存时刻之前最近一段时间内是否收到了人物中心点云
+      - 当前插件不会把视觉原始点云整片画进地图，而是仅绘制人物中心点标注，更适合 2D 地图使用

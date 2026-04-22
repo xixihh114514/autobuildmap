@@ -66,6 +66,13 @@
     <param name="map_file_path" value="$(find hector_geotiff)/maps"/>
     <param name="map_file_base_name" value="hector_map"/>
     <param name="geotiff_save_period" value="0"/>
+    <param name="plugins" value="hector_geotiff_plugins/TrajectoryMapWriter hector_geotiff_plugins/PersonMapWriter"/>
+    <param name="PersonMapWriter/topic_name" value="/person_global_localizer/person_map_cloud"/>
+    <param name="PersonMapWriter/label_prefix" value="P"/>
+    <param name="PersonMapWriter/point_timeout" value="1.5"/>
+    <param name="PersonMapWriter/point_color_r" value="255"/>
+    <param name="PersonMapWriter/point_color_g" value="70"/>
+    <param name="PersonMapWriter/point_color_b" value="70"/>
   </node>
 
   <!-- ========== 启动RViz可视化（可选，便于调试） ========== -->

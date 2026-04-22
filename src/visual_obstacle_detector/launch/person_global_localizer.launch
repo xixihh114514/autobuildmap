@@ -5,6 +5,8 @@
   <arg name="camera_info_topic" default="/camera/color/camera_info" />
   <arg name="conf_threshold" default="0.5" />
   <arg name="publish_debug_image" default="true" />
+  <arg name="global_frame" default="map" />
+  <arg name="transform_timeout" default="0.05" />
 
   <node pkg="visual_obstacle_detector"
         type="person_global_localizer.py"
@@ -16,5 +18,7 @@
     <param name="camera_info_topic" value="$(arg camera_info_topic)" />
     <param name="conf_threshold" value="$(arg conf_threshold)" />
     <param name="publish_debug_image" value="$(arg publish_debug_image)" />
+    <param name="global_frame" value="$(arg global_frame)" />
+    <param name="transform_timeout" value="$(arg transform_timeout)" />
   </node>
 </launch>
