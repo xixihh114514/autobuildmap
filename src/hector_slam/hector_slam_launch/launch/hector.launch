@@ -62,10 +62,10 @@
 
   <!-- ========== 启动hector_geotiff地图保存节点（用于保存地图为GeoTIFF格式） ========== -->
   <node pkg="hector_geotiff" type="geotiff_node" name="hector_geotiff_node" output="screen">
-    <remap from="map" to="/map"/>
+    <remap from="map" to="/dynamic_map"/>
     <param name="map_file_path" value="$(find hector_geotiff)/maps"/>
     <param name="map_file_base_name" value="hector_map"/>
-    <param name="geotiff_save_period" value="0"/>
+    <param name="geotiff_save_period" value="1"/>
     <param name="plugins" value="hector_geotiff_plugins/TrajectoryMapWriter hector_geotiff_plugins/PersonMapWriter"/>
     <param name="PersonMapWriter/topic_name" value="/person_global_localizer/person_map_cloud"/>
     <param name="PersonMapWriter/label_prefix" value="P"/>
