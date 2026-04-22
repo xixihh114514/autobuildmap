@@ -29,15 +29,15 @@
 #include "hector_geotiff/geotiff_writer.h"
 #include <ros/console.h>
 
-#include <QFile>
-#include <QImageWriter>
+#include <cstdint>
+
 #include <QPainter>
 //#include <QtCore/QDateTime>
 #include <QTime>
-#include <QTextStream>
 #include <QFontDatabase>
 
 #include <ros/package.h>
+#include <tiffio.h>
 
 #if  __cplusplus < 201703L
 	#include <experimental/filesystem>
@@ -49,6 +49,76 @@
 
 namespace hector_geotiff
 {
+
+namespace {
+constexpr ttag_t kModelPixelScaleTag = 33550;
+constexpr ttag_t kModelTiepointTag = 33922;
+constexpr ttag_t kGeoKeyDirectoryTag = 34735;
+
+bool writeTiffImageWithEmbeddedGeoTags(const std::string& tif_file_name, const QImage& image,
+                                       double resolution_geo, double top_left_center_x,
+                                       double top_left_center_y)
+{
+  const QImage rgb_image = image.convertToFormat(QImage::Format_RGB888);
+  TIFF* tif = TIFFOpen(tif_file_name.c_str(), "w");
+  if (tif == nullptr) {
+    ROS_ERROR("Failed to open %s for GeoTIFF writing", tif_file_name.c_str());
+    return false;
+  }
+
+  TIFFFieldInfo geo_fields[] = {
+      {kModelPixelScaleTag, 3, 3, TIFF_DOUBLE, FIELD_CUSTOM, 1, 0, const_cast<char*>("ModelPixelScaleTag")},
+      {kModelTiepointTag, 6, 6, TIFF_DOUBLE, FIELD_CUSTOM, 1, 0, const_cast<char*>("ModelTiepointTag")},
+      {kGeoKeyDirectoryTag, -1, -1, TIFF_SHORT, FIELD_CUSTOM, 1, 1, const_cast<char*>("GeoKeyDirectoryTag")},
+  };
+  TIFFMergeFieldInfo(tif, geo_fields, sizeof(geo_fields) / sizeof(geo_fields[0]));
+
+  TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, rgb_image.width());
+  TIFFSetField(tif, TIFFTAG_IMAGELENGTH, rgb_image.height());
+  TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 3);
+  TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, 8);
+  TIFFSetField(tif, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
+  TIFFSetField(tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
+  TIFFSetField(tif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
+  TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_LZW);
+  TIFFSetField(tif, TIFFTAG_ROWSPERSTRIP, TIFFDefaultStripSize(tif, rgb_image.bytesPerLine()));
+
+  const double model_pixel_scale[3] = {resolution_geo, resolution_geo, 0.0};
+  const double model_tiepoint[6] = {
+      0.0,
+      0.0,
+      0.0,
+      top_left_center_x - 0.5 * resolution_geo,
+      top_left_center_y + 0.5 * resolution_geo,
+      0.0,
+  };
+  // Minimal GeoTIFF key directory: local projected model, pixel-is-area raster.
+  const uint16_t geo_key_directory[] = {
+      1, 1, 0, 2,
+      1024, 0, 1, 1,
+      1025, 0, 1, 1,
+  };
+
+  bool ok =
+      TIFFSetField(tif, kModelPixelScaleTag, model_pixel_scale) &&
+      TIFFSetField(tif, kModelTiepointTag, model_tiepoint) &&
+      TIFFSetField(tif, kGeoKeyDirectoryTag,
+                   static_cast<uint16_t>(sizeof(geo_key_directory) / sizeof(geo_key_directory[0])),
+                   geo_key_directory);
+
+  for (int row = 0; ok && row < rgb_image.height(); ++row) {
+    if (TIFFWriteScanline(tif, const_cast<uchar*>(rgb_image.constScanLine(row)), row, 0) < 0) {
+      ok = false;
+    }
+  }
+  ok = ok && TIFFWriteDirectory(tif);
+  TIFFClose(tif);
+  if (!ok) {
+    ROS_ERROR("Failed to write embedded GeoTIFF image to %s", tif_file_name.c_str());
+  }
+  return ok;
+}
+}  // namespace
 
 
 GeotiffWriter::GeotiffWriter( bool useCheckerboardCacheIn )
@@ -563,57 +633,14 @@ void GeotiffWriter::writeGeotiffImage(bool completed)
     complete_file_string += "/" + map_file_name_;
   }
   
-  QImageWriter imageWriter( QString::fromStdString( complete_file_string + ".tif" ));
-  imageWriter.setCompression( 1 );
-
-  bool success = imageWriter.write( image );
-
-  std::string tfw_file_name( complete_file_string + ".tfw" );
-  QFile tfwFile( QString::fromStdString( tfw_file_name ));
-
-  tfwFile.open( QIODevice::WriteOnly );
-
-  QTextStream out( &tfwFile );
-
+  const std::string tif_file_name = complete_file_string + ".tif";
   float resolution_geo = resolution / resolutionFactorf;
-
-  QString resolution_string;
-  resolution_string.setNum( resolution_geo, 'f', 10 );
-
-  //positive x resolution
-  out << resolution_string << "\n";
-
-  QString zero_string;
-  zero_string.setNum( 0.0f, 'f', 10 );
-
-  //rotation, translation
-  out << zero_string << "\n" << zero_string << "\n";
-
-  //negative y resolution
-  out << "-" << resolution_string << "\n";
-
-  QString top_left_string_x;
-  QString top_left_string_y;
-
-  //Eigen::Vector2f zero_map_w = world_map_transformer_.getC1Coords(Eigen::Vector2f::Zero());
   Eigen::Vector2f zero_geo_w( world_geo_transformer_.getC1Coords((geoTiffSizePixels.array() + 1).cast<float>()));
 
-
-  top_left_string_x.setNum( -zero_geo_w.y(), 'f', 10 );
-  top_left_string_y.setNum( zero_geo_w.x(), 'f', 10 );
-
-  out << top_left_string_x << "\n" << top_left_string_y << "\n";
-
-  tfwFile.close();
-
-  if ( !success )
-  {
-    ROS_INFO( "Writing image with file %s failed with error %s", complete_file_string.c_str(),
-              imageWriter.errorString().toStdString().c_str());
-  }
-  else
-  {
-    ROS_INFO( "Successfully wrote geotiff to %s", complete_file_string.c_str());
+  const bool success =
+      writeTiffImageWithEmbeddedGeoTags(tif_file_name, image, resolution_geo, -zero_geo_w.y(), zero_geo_w.x());
+  if (success) {
+    ROS_INFO( "Successfully wrote embedded geotiff to %s", tif_file_name.c_str());
   }
 }
 

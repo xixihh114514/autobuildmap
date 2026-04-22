@@ -53,7 +53,7 @@
   </node>
 
   <!-- ========== 启动hector_trajectory_server（可选，用于保存轨迹） ========== -->
-  <!-- <node pkg="hector_trajectory_server" type="hector_trajectory_server" name="hector_trajectory_server" output="screen">
+  <node pkg="hector_trajectory_server" type="hector_trajectory_server" name="hector_trajectory_server" output="screen">
     <param name="target_frame_name" value="map"/>
     <param name="source_frame_name" value="base_link"/>
     <param name="trajectory_update_rate" value="4"/>
@@ -73,13 +73,16 @@
   <!-- ========== 启动hector_geotiff地图保存节点，并把视觉标定蓝点写入GeoTIFF ========== -->
   <node if="$(arg enable_geotiff_save)" pkg="hector_geotiff" type="geotiff_node" name="hector_geotiff_node" output="screen">
     <remap from="map" to="/dynamic_map"/>
-    <param name="map_file_path" value="$(arg geotiff_map_file_path)"/>
-    <param name="map_file_base_name" value="$(arg geotiff_map_file_base_name)"/>
-    <param name="geotiff_save_period" value="0"/>
-    <param name="draw_background_checkerboard" value="true"/>
-    <param name="draw_free_space_grid" value="true"/>
-    <param name="plugins" value="visual_grid_mapper/VisualCalibrationGeotiffPlugin"/>
-    <param name="visual_grid_mapper/VisualCalibrationGeotiffPlugin/marker_topic" value="/visual_calibration/grid_marks"/>
+    <param name="use_map_topic" type="bool" value="false"/>
+    <param name="map_file_path" type="string" value="$(arg geotiff_map_file_path)"/>
+    <param name="map_file_base_name" type="string" value="$(arg geotiff_map_file_base_name)"/>
+    <param name="geotiff_save_period" type="double" value="1.0"/>
+    <param name="use_utc_time_suffix" type="bool" value="false"/>
+    <param name="use_elapsed_autosave_names" type="bool" value="true"/>
+    <param name="draw_background_checkerboard" type="bool" value="true"/>
+    <param name="draw_free_space_grid" type="bool" value="true"/>
+    <param name="plugins" type="string" value="visual_grid_mapper/VisualCalibrationGeotiffPlugin"/>
+    <param name="visual_grid_mapper/VisualCalibrationGeotiffPlugin/marker_topic" type="string" value="/visual_calibration/grid_marks"/>
   </node>
 
   <!-- ========== 启动RViz可视化（可选，便于调试） ========== -->

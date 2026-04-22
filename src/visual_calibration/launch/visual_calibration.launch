@@ -1,21 +1,135 @@
 <launch>
+  <!-- =========================
+       基础输入 / 输出话题
+       ========================= -->
+  <!-- RGB 图像输入话题 -->
   <arg name="image_topic" default="/camera/color/image_raw"/>
+  <!-- 对齐后的有序点云输入话题，要求能按像素索引访问 -->
   <arg name="cloud_topic" default="/camera/depth_registered/points"/>
+  <!-- YOLO ONNX 模型路径 -->
   <arg name="model_path" default="$(find visual_calibration)/models/yolo.onnx"/>
+
+  <!-- 是否对输入图像做 180 度旋转修正 -->
   <arg name="rotate_180" default="true"/>
+
+  <!-- 可视化图像输出话题 -->
   <arg name="visualization_topic" default="/visual_calibration/visualization"/>
+  <!-- 受困者检测点云输出话题 -->
   <arg name="detection_cloud_topic" default="/visual_calibration/detection_points"/>
+  <!-- 检测结果点云与 TF 默认使用的父坐标系 -->
   <arg name="detection_cloud_frame" default="camera_depth_frame"/>
+
+  <!-- =========================
+       OpenVINO / YOLO 推理参数
+       ========================= -->
+  <!-- 推理设备，AUTO:GPU,CPU 表示优先 GPU，不行再退 CPU -->
   <arg name="inference_device" default="AUTO:GPU,CPU"/>
+  <!-- YOLO 检测置信度阈值，低于此值的框在检测阶段直接丢弃 -->
   <arg name="conf_threshold" default="0.65"/>
+  <!-- NMS 阈值，用于去掉重叠过大的重复框 -->
   <arg name="nms_threshold" default="0.45"/>
+  <!-- 网络输入尺寸，通常与训练/导出尺寸一致 -->
   <arg name="input_size" default="640"/>
+
+  <!-- 是否打印性能统计日志 -->
   <arg name="enable_profiling_log" default="true"/>
+  <!-- 每多少帧打印一次性能统计 -->
   <arg name="profiling_log_interval" default="30"/>
 
-  <node pkg="visual_calibration" type="isual_callibration" name="visual_calibration" output="screen">
+  <!-- =========================
+       受困者点云拟合优化参数
+       ========================= -->
+  <!-- 大于此面积的受困者bbox直接过滤，默认 < 0.5m距离不准 -->
+  <arg name="victim_max_bbox_area_percent" default="25.0"/>
+  <!-- 小框面积阈值，小于该面积时不做整框深度拟合，改用中心小窗口平均 -->
+  <arg name="victim_small_box_area_thresh" default="6400"/>
+  <!-- 小框中心窗口大小，必须为奇数，实际会取中心 NxN 点 -->
+  <arg name="victim_center_window_size" default="9"/>
+  <!-- 小框中心窗口最少有效点数，小于这个值则认为该框没有可靠深度 -->
+  <arg name="victim_center_min_valid_points" default="8"/>
+
+  <!-- =========================
+       YOLO 解码优化
+       ========================= -->
+  <!-- NMS 前最多保留多少个候选框，减少 CPU 压力 -->
+  <arg name="max_candidates_pre_nms" default="200"/>
+
+  <!-- =========================
+       二维码检测相关参数
+       ========================= -->
+  <!-- 二维码检测点云输出话题 -->
+  <arg name="qr_detection_cloud_topic" default="/visual_calibration/qr_detection_points"/>
+  <!-- 是否启用二维码检测 -->
+  <arg name="enable_qr_detection" default="true"/>
+  <!-- 二维码深度取中心窗口平均时的窗口大小，必须为奇数 -->
+  <arg name="qr_center_window_size" default="9"/>
+  <!-- 二维码中心窗口最少有效点数 -->
+  <arg name="qr_min_valid_points" default="8"/>
+  <!-- 二维码检测框最小尺寸，小于该尺寸的候选框会被忽略 -->
+  <arg name="qr_min_box_size" default="20"/>
+  <!-- 二维码模板归一化尺寸，模板匹配前会统一缩放到这个大小 -->
+  <arg name="qr_template_size" default="256"/>
+  <!-- 是否启用参考模板过滤；开启后只接受与模板足够相似的二维码 -->
+  <arg name="qr_enable_reference_filter" default="true"/>
+  <!-- 二维码模板匹配阈值，低于这个相似度就认为不是目标二维码 -->
+  <arg name="qr_reference_match_threshold" default="0.78"/>
+  <!-- 二维码模板图片目录 -->
+  <arg name="qr_reference_dir" default="$(find visual_calibration)/models/qr_refs"/>
+
+  <!-- =========================
+       二维码 CPU 优化参数
+       ========================= -->
+  <!-- 每隔多少帧真正执行一次二维码检测；其余帧可复用缓存结果 -->
+  <arg name="qr_detect_interval" default="1"/>
+  <!-- 二维码检测时允许的最大边长，超过则先缩图再检测，减小 CPU 压力 -->
+  <arg name="qr_detect_max_side" default="640"/>
+  <!-- 非检测帧是否复用上一次二维码检测结果 -->
+  <arg name="qr_reuse_cached_result" default="true"/>
+
+  <!-- =========================
+       TF 发布参数
+       ========================= -->
+  <!-- 是否发布 victim_x / qrcode_x 的 TF -->
+  <arg name="publish_tf" default="true"/>
+  <!-- TF 父坐标系 -->
+  <arg name="tf_parent_frame" default="camera_depth_frame"/>
+  <!-- 受困者 TF 前缀，最终会发布成 victim_0, victim_1... -->
+  <arg name="victim_tf_prefix" default="victim"/>
+  <!-- 二维码 TF 前缀，最终会发布成 qrcode_0, qrcode_1... -->
+  <arg name="qr_tf_prefix" default="qrcode"/>
+
+  <!-- =========================
+       通用点云拟合参数
+       ========================= -->
+  <!-- 大框区域点云采样步长，越大越省 CPU，但拟合更稀疏 -->
+  <arg name="point_sample_step" default="2"/>
+  <!-- 大框区域拟合时的最少有效点数 -->
+  <arg name="min_valid_points" default="12"/>
+  <!-- 大框区域深度拟合时，只保留最近的一部分点参与平均 -->
+  <arg name="depth_keep_ratio" default="0.30"/>
+
+  <!-- =========================
+       连续帧确认门控
+       ========================= -->
+  <!-- 受困者必须连续多少帧满足“可发布条件”才真正发布点云/TF -->
+  <arg name="victim_consecutive_frames_required" default="3"/>
+  <!-- 二维码必须连续多少个“真正检测帧”满足可发布条件才真正发布点云/TF -->
+  <arg name="qr_consecutive_frames_required" default="3"/>
+
+  <!-- =========================
+       发布置信度门控
+       ========================= -->
+  <!-- 受困者发布阈值：低于该 confidence 的结果即使检测到了也不发布 -->
+  <arg name="victim_publish_conf_threshold" default="0.65"/>
+  <!-- 二维码发布阈值：低于该 confidence 的结果即使检测到了也不发布 -->
+  <arg name="qr_publish_conf_threshold" default="0.78"/>
+
+  <node pkg="visual_calibration" type="visual_callibration" name="visual_calibration" output="screen">
+    <!-- OpenVINO 和 TBB 的运行时库路径 -->
     <env name="LD_LIBRARY_PATH"
          value="/home/rera/robocup_nano_visual/third_party/l_openvino_toolkit_ubuntu20_2024.6.0.17404.4c0f47d2335_x86_64/runtime/lib/intel64:/home/rera/robocup_nano_visual/third_party/l_openvino_toolkit_ubuntu20_2024.6.0.17404.4c0f47d2335_x86_64/runtime/3rdparty/tbb/lib:$(optenv LD_LIBRARY_PATH)"/>
+
+    <!-- 基础输入 / 输出 -->
     <param name="image_topic" value="$(arg image_topic)"/>
     <param name="cloud_topic" value="$(arg cloud_topic)"/>
     <param name="model_path" value="$(arg model_path)"/>
@@ -23,11 +137,57 @@
     <param name="visualization_topic" value="$(arg visualization_topic)"/>
     <param name="detection_cloud_topic" value="$(arg detection_cloud_topic)"/>
     <param name="detection_cloud_frame" value="$(arg detection_cloud_frame)"/>
+
+    <!-- 推理参数 -->
     <param name="inference_device" value="$(arg inference_device)"/>
     <param name="conf_threshold" value="$(arg conf_threshold)"/>
     <param name="nms_threshold" value="$(arg nms_threshold)"/>
     <param name="input_size" value="$(arg input_size)"/>
     <param name="enable_profiling_log" value="$(arg enable_profiling_log)"/>
     <param name="profiling_log_interval" value="$(arg profiling_log_interval)"/>
+
+    <!-- 受困者点云拟合优化 -->
+    <param name="victim_max_bbox_area_percent" value="$(arg victim_max_bbox_area_percent)"/>
+    <param name="victim_small_box_area_thresh" value="$(arg victim_small_box_area_thresh)"/>
+    <param name="victim_center_window_size" value="$(arg victim_center_window_size)"/>
+    <param name="victim_center_min_valid_points" value="$(arg victim_center_min_valid_points)"/>
+
+    <!-- YOLO 解码优化 -->
+    <param name="max_candidates_pre_nms" value="$(arg max_candidates_pre_nms)"/>
+
+    <!-- 二维码相关 -->
+    <param name="qr_detection_cloud_topic" value="$(arg qr_detection_cloud_topic)"/>
+    <param name="enable_qr_detection" value="$(arg enable_qr_detection)"/>
+    <param name="qr_center_window_size" value="$(arg qr_center_window_size)"/>
+    <param name="qr_min_valid_points" value="$(arg qr_min_valid_points)"/>
+    <param name="qr_min_box_size" value="$(arg qr_min_box_size)"/>
+    <param name="qr_template_size" value="$(arg qr_template_size)"/>
+    <param name="qr_enable_reference_filter" value="$(arg qr_enable_reference_filter)"/>
+    <param name="qr_reference_match_threshold" value="$(arg qr_reference_match_threshold)"/>
+    <param name="qr_reference_dir" value="$(arg qr_reference_dir)"/>
+
+    <!-- 二维码 CPU 优化 -->
+    <param name="qr_detect_interval" value="$(arg qr_detect_interval)"/>
+    <param name="qr_detect_max_side" value="$(arg qr_detect_max_side)"/>
+    <param name="qr_reuse_cached_result" value="$(arg qr_reuse_cached_result)"/>
+
+    <!-- TF 发布 -->
+    <param name="publish_tf" value="$(arg publish_tf)"/>
+    <param name="tf_parent_frame" value="$(arg tf_parent_frame)"/>
+    <param name="victim_tf_prefix" value="$(arg victim_tf_prefix)"/>
+    <param name="qr_tf_prefix" value="$(arg qr_tf_prefix)"/>
+
+    <!-- 通用点云拟合 -->
+    <param name="point_sample_step" value="$(arg point_sample_step)"/>
+    <param name="min_valid_points" value="$(arg min_valid_points)"/>
+    <param name="depth_keep_ratio" value="$(arg depth_keep_ratio)"/>
+
+    <!-- 连续帧确认 -->
+    <param name="victim_consecutive_frames_required" value="$(arg victim_consecutive_frames_required)"/>
+    <param name="qr_consecutive_frames_required" value="$(arg qr_consecutive_frames_required)"/>
+
+    <!-- 发布置信度门控 -->
+    <param name="victim_publish_conf_threshold" value="$(arg victim_publish_conf_threshold)"/>
+    <param name="qr_publish_conf_threshold" value="$(arg qr_publish_conf_threshold)"/>
   </node>
 </launch>

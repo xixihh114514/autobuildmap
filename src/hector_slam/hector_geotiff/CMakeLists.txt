@@ -6,6 +6,7 @@ find_package(catkin REQUIRED COMPONENTS hector_map_tools hector_nav_msgs nav_msg
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
 
 find_package(Eigen3 REQUIRED)
+find_package(TIFF REQUIRED)
 
 catkin_package(
   INCLUDE_DIRS include
@@ -23,10 +24,11 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${Qt5Widgets_INCLUDE_DIRS}
+  ${TIFF_INCLUDE_DIRS}
 )
 
 add_library(geotiff_writer src/geotiff_writer/geotiff_writer.cpp)
-target_link_libraries(geotiff_writer ${catkin_LIBRARIES} Qt5::Widgets stdc++fs)
+target_link_libraries(geotiff_writer ${catkin_LIBRARIES} Qt5::Widgets ${TIFF_LIBRARIES} stdc++fs)
 add_dependencies(geotiff_writer ${catkin_EXPORTED_TARGETS})
 
 add_executable(geotiff_saver src/geotiff_saver.cpp)
@@ -59,4 +61,3 @@ install(DIRECTORY include/${PROJECT_NAME}/
 install(DIRECTORY fonts
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
-

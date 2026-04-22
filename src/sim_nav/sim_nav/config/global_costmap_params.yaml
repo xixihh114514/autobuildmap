@@ -14,9 +14,9 @@ global_costmap:
     # 机器人底盘中心坐标系
     # 足迹、传感器、膨胀都以这个坐标系为原点
 
-  transform_tolerance: 0.5
+  transform_tolerance: 1.5
     # TF 坐标变换最大容忍时间（秒）
-    # 建议：0.3 ~ 1.0，仿真可设大一点
+    # Hector 建图时 map->base_link 的 TF 可能落后当前时间约 1s，导航侧放宽避免 timeout
 
   # ------------------- 更新与发布频率 -------------------
   update_frequency: 1.0

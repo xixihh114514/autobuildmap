@@ -6,11 +6,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(catkin REQUIRED COMPONENTS
   cv_bridge
+  geometry_msgs
   image_transport
   roscpp
   roslib
   sensor_msgs
   std_msgs
+  tf2
+  tf2_ros
 )
 
 find_package(OpenCV REQUIRED)
@@ -48,7 +51,16 @@ if(NOT OPENVINO_TBB_LIBRARY)
 endif()
 
 catkin_package(
-  CATKIN_DEPENDS cv_bridge image_transport roscpp roslib sensor_msgs std_msgs
+  CATKIN_DEPENDS
+    cv_bridge
+    geometry_msgs
+    image_transport
+    roscpp
+    roslib
+    sensor_msgs
+    std_msgs
+    tf2
+    tf2_ros
 )
 
 include_directories(
@@ -56,19 +68,21 @@ include_directories(
   ${OpenCV_INCLUDE_DIRS}
 )
 
-add_executable(isual_callibration src/visual_callibration.cpp)
-target_link_libraries(isual_callibration
+add_executable(visual_callibration src/visual_callibration.cpp)
+
+target_link_libraries(visual_callibration
   ${catkin_LIBRARIES}
-  ${OpenCV_LIBS}
+  ${OpenCV_LIBRARIES}
   openvino::runtime
   ${OPENVINO_TBB_LIBRARY}
 )
-set_target_properties(isual_callibration PROPERTIES
+
+set_target_properties(visual_callibration PROPERTIES
   BUILD_RPATH "${OPENVINO_RUNTIME_ROOT}/lib/intel64;${OPENVINO_TBB_LIB_DIR}"
   INSTALL_RPATH "${OPENVINO_RUNTIME_ROOT}/lib/intel64;${OPENVINO_TBB_LIB_DIR}"
 )
 
-install(TARGETS isual_callibration
+install(TARGETS visual_callibration
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

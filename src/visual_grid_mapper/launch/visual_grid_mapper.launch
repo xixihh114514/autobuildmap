@@ -1,4 +1,5 @@
 <launch>
+  <!-- 旧参数保留：默认作为受困者通道 -->
   <arg name="point_cloud_topic" default="/visual_calibration/detection_points"/>
   <arg name="map_topic" default="/map"/>
   <arg name="marker_topic" default="/visual_calibration/grid_marks"/>
@@ -8,7 +9,12 @@
   <arg name="marker_z_offset" default="0.03"/>
   <arg name="dedup_radius" default="1.0"/>
 
+  <!-- 新增：二维码通道 -->
+  <arg name="qr_point_cloud_topic" default="/visual_calibration/qr_detection_points"/>
+  <arg name="qr_marker_topic" default="/visual_calibration/qr_grid_marks"/>
+
   <node pkg="visual_grid_mapper" type="visual_grid_mapper_node" name="visual_grid_mapper" output="screen">
+    <!-- 旧参数：继续兼容，作为受困者 -->
     <param name="point_cloud_topic" value="$(arg point_cloud_topic)"/>
     <param name="map_topic" value="$(arg map_topic)"/>
     <param name="marker_topic" value="$(arg marker_topic)"/>
@@ -17,5 +23,9 @@
     <param name="marker_lifetime" value="$(arg marker_lifetime)"/>
     <param name="marker_z_offset" value="$(arg marker_z_offset)"/>
     <param name="dedup_radius" value="$(arg dedup_radius)"/>
+
+    <!-- 新参数：二维码 -->
+    <param name="qr_point_cloud_topic" value="$(arg qr_point_cloud_topic)"/>
+    <param name="qr_marker_topic" value="$(arg qr_marker_topic)"/>
   </node>
 </launch>

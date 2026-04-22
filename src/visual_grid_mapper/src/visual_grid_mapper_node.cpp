@@ -32,10 +32,25 @@ class VisualGridMapper {
         pnh_("~"),
         tf_buffer_(),
         tf_listener_(tf_buffer_) {
-    point_cloud_topic_ =
-        pnh_.param<std::string>("point_cloud_topic", "/visual_calibration/detection_points");
+    // 兼容旧参数：point_cloud_topic / marker_topic 继续作为受困者通道
+    std::string legacy_point_cloud_topic = "/visual_calibration/detection_points";
+    pnh_.param("point_cloud_topic", legacy_point_cloud_topic, legacy_point_cloud_topic);
+
+    std::string legacy_marker_topic = "/visual_calibration/grid_marks";
+    pnh_.param("marker_topic", legacy_marker_topic, legacy_marker_topic);
+
+    victim_point_cloud_topic_ =
+        pnh_.param<std::string>("victim_point_cloud_topic", legacy_point_cloud_topic);
+    qr_point_cloud_topic_ =
+        pnh_.param<std::string>("qr_point_cloud_topic", "/visual_calibration/qr_detection_points");
+
     map_topic_ = pnh_.param<std::string>("map_topic", "/map");
-    marker_topic_ = pnh_.param<std::string>("marker_topic", "/visual_calibration/grid_marks");
+
+    victim_marker_topic_ =
+        pnh_.param<std::string>("victim_marker_topic", legacy_marker_topic);
+    qr_marker_topic_ =
+        pnh_.param<std::string>("qr_marker_topic", "/visual_calibration/qr_grid_marks");
+
     target_frame_ = pnh_.param<std::string>("target_frame", "map");
     tf_timeout_ = ros::Duration(pnh_.param<double>("tf_timeout", 0.6));
     marker_lifetime_ = ros::Duration(pnh_.param<double>("marker_lifetime", 0.0));
@@ -44,22 +59,52 @@ class VisualGridMapper {
     dedup_radius_sq_ = dedup_radius_ * dedup_radius_;
 
     map_sub_ = nh_.subscribe(map_topic_, 1, &VisualGridMapper::mapCallback, this);
-    cloud_sub_ = nh_.subscribe(point_cloud_topic_, 10, &VisualGridMapper::cloudCallback, this);
-    marker_pub_ = nh_.advertise<visualization_msgs::Marker>(marker_topic_, 10);
+    victim_cloud_sub_ =
+        nh_.subscribe(victim_point_cloud_topic_, 10, &VisualGridMapper::victimCloudCallback, this);
+    qr_cloud_sub_ =
+        nh_.subscribe(qr_point_cloud_topic_, 10, &VisualGridMapper::qrCloudCallback, this);
 
-    ROS_INFO_STREAM("visual_grid_mapper listening to point cloud: " << point_cloud_topic_);
+    victim_marker_pub_ =
+        nh_.advertise<visualization_msgs::Marker>(victim_marker_topic_, 1, true);
+    qr_marker_pub_ =
+        nh_.advertise<visualization_msgs::Marker>(qr_marker_topic_, 1, true);
+
+    ROS_INFO_STREAM("visual_grid_mapper listening to victim point cloud: "
+                    << victim_point_cloud_topic_);
+    ROS_INFO_STREAM("visual_grid_mapper listening to QR point cloud: "
+                    << qr_point_cloud_topic_);
     ROS_INFO_STREAM("visual_grid_mapper listening to map: " << map_topic_);
-    ROS_INFO_STREAM("visual_grid_mapper publishing blue grid markers: " << marker_topic_);
+    ROS_INFO_STREAM("visual_grid_mapper publishing victim blue grid markers: "
+                    << victim_marker_topic_);
+    ROS_INFO_STREAM("visual_grid_mapper publishing QR red grid markers: "
+                    << qr_marker_topic_);
     ROS_INFO_STREAM("visual_grid_mapper dedup radius: " << dedup_radius_ << " m");
   }
 
  private:
+  enum class PointKind : uint8_t {
+    Victim = 0,
+    QRCode = 1
+  };
+
   void mapCallback(const nav_msgs::OccupancyGridConstPtr& msg) {
     std::lock_guard<std::mutex> lock(map_mutex_);
     latest_map_ = msg;
   }
 
-  void cloudCallback(const sensor_msgs::PointCloud2ConstPtr& msg) {
+  void victimCloudCallback(const sensor_msgs::PointCloud2ConstPtr& msg) {
+    processCloud(msg, PointKind::Victim);
+  }
+
+  void qrCloudCallback(const sensor_msgs::PointCloud2ConstPtr& msg) {
+    processCloud(msg, PointKind::QRCode);
+  }
+
+  void processCloud(const sensor_msgs::PointCloud2ConstPtr& msg, PointKind kind) {
+    if (!msg) {
+      return;
+    }
+
     nav_msgs::OccupancyGridConstPtr map;
     {
       std::lock_guard<std::mutex> lock(map_mutex_);
@@ -76,19 +121,25 @@ class VisualGridMapper {
       return;
     }
 
+    const std::string cloud_topic =
+        (kind == PointKind::Victim) ? victim_point_cloud_topic_ : qr_point_cloud_topic_;
+
     if (!hasField(*msg, "x") || !hasField(*msg, "y") || !hasField(*msg, "z") ||
         !hasField(*msg, "confidence")) {
       ROS_WARN_THROTTLE(2.0, "Point cloud on %s is missing x/y/z/confidence fields",
-                        point_cloud_topic_.c_str());
+                        cloud_topic.c_str());
       return;
     }
 
-    const std::string grid_frame = map->header.frame_id.empty() ? target_frame_ : map->header.frame_id;
+    const std::string grid_frame =
+        map->header.frame_id.empty() ? target_frame_ : map->header.frame_id;
+
     geometry_msgs::TransformStamped transform;
     try {
-      transform = tf_buffer_.lookupTransform(grid_frame, msg->header.frame_id, msg->header.stamp, tf_timeout_);
+      transform = tf_buffer_.lookupTransform(
+          grid_frame, msg->header.frame_id, msg->header.stamp, tf_timeout_);
     } catch (const tf2::TransformException& ex) {
-      ROS_WARN_THROTTLE(1.0, "Failed to transform visual calibration points to %s: %s",
+      ROS_WARN_THROTTLE(1.0, "Failed to transform calibration points to %s: %s",
                         grid_frame.c_str(), ex.what());
       return;
     }
@@ -99,6 +150,7 @@ class VisualGridMapper {
     sensor_msgs::PointCloud2ConstIterator<float> iter_y(*msg, "y");
     sensor_msgs::PointCloud2ConstIterator<float> iter_z(*msg, "z");
     sensor_msgs::PointCloud2ConstIterator<float> iter_confidence(*msg, "confidence");
+
     for (; iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z, ++iter_confidence) {
       if (!std::isfinite(*iter_x) || !std::isfinite(*iter_y) || !std::isfinite(*iter_z) ||
           !std::isfinite(*iter_confidence)) {
@@ -116,46 +168,70 @@ class VisualGridMapper {
 
       geometry_msgs::Point grid_center;
       if (!mapPointToGridCenter(map_point.point, *map, grid_center)) {
-        ROS_WARN_THROTTLE(2.0, "Visual calibration point is outside occupancy grid bounds");
+        ROS_WARN_THROTTLE(2.0, "Calibration point is outside occupancy grid bounds");
         continue;
       }
 
       frame_points.push_back({grid_center, *iter_confidence});
     }
 
-    for (const auto& point : frame_points) {
-      updateCalibrationPoint(point);
-    }
+    std::vector<CalibrationPoint>& accumulated =
+        (kind == PointKind::Victim) ? accumulated_victim_points_ : accumulated_qr_points_;
 
+    for (const auto& point : frame_points) {
+      updateCalibrationPoint(accumulated, point);
+    }
+    enforceGlobalDedup(accumulated);
+
+    publishMarker(kind, accumulated, *map, grid_frame, msg->header.stamp);
+  }
+
+  void publishMarker(PointKind kind,
+                     const std::vector<CalibrationPoint>& points,
+                     const nav_msgs::OccupancyGrid& map,
+                     const std::string& grid_frame,
+                     const ros::Time& stamp) {
     visualization_msgs::Marker marker;
     marker.header.frame_id = grid_frame;
-    marker.header.stamp = msg->header.stamp;
-    marker.ns = "visual_calibration_grid_marks";
+    marker.header.stamp = stamp;
+    marker.ns = (kind == PointKind::Victim)
+                    ? "visual_calibration_grid_marks"
+                    : "visual_calibration_qr_grid_marks";
     marker.id = 0;
     marker.type = visualization_msgs::Marker::CUBE_LIST;
     marker.action = visualization_msgs::Marker::ADD;
     marker.pose.orientation.w = 1.0;
-    marker.scale.x = map->info.resolution;
-    marker.scale.y = map->info.resolution;
-    marker.scale.z = std::max(0.02, static_cast<double>(map->info.resolution) * 0.2);
-    marker.color.r = 0.0f;
-    marker.color.g = 0.2f;
-    marker.color.b = 1.0f;
-    marker.color.a = 1.0f;
+    marker.scale.x = map.info.resolution;
+    marker.scale.y = map.info.resolution;
+    marker.scale.z = std::max(0.02, static_cast<double>(map.info.resolution) * 0.2);
     marker.lifetime = marker_lifetime_;
-    marker.points.reserve(accumulated_points_.size());
-    for (const auto& point : accumulated_points_) {
+    marker.points.reserve(points.size());
+
+    if (kind == PointKind::Victim) {
+      marker.color.r = 0.0f;
+      marker.color.g = 0.2f;
+      marker.color.b = 1.0f;
+      marker.color.a = 1.0f;
+    } else {
+      marker.color.r = 1.0f;
+      marker.color.g = 0.0f;
+      marker.color.b = 0.0f;
+      marker.color.a = 1.0f;
+    }
+
+    for (const auto& point : points) {
       marker.points.push_back(point.point);
     }
 
-    if (marker.points.empty()) {
-      marker.action = visualization_msgs::Marker::DELETE;
+    if (kind == PointKind::Victim) {
+      victim_marker_pub_.publish(marker);
+    } else {
+      qr_marker_pub_.publish(marker);
     }
-
-    marker_pub_.publish(marker);
   }
 
-  bool mapPointToGridCenter(const geometry_msgs::Point& point, const nav_msgs::OccupancyGrid& map,
+  bool mapPointToGridCenter(const geometry_msgs::Point& point,
+                            const nav_msgs::OccupancyGrid& map,
                             geometry_msgs::Point& grid_center) const {
     tf2::Transform map_origin;
     tf2::fromMsg(map.info.origin, map_origin);
@@ -176,6 +252,7 @@ class VisualGridMapper {
                                     (static_cast<double>(cell_y) + 0.5) * resolution,
                                     marker_z_offset_);
     const tf2::Vector3 world_center = map_origin * local_center;
+
     grid_center.x = world_center.x();
     grid_center.y = world_center.y();
     grid_center.z = world_center.z();
@@ -191,35 +268,62 @@ class VisualGridMapper {
     return false;
   }
 
-  void updateCalibrationPoint(const CalibrationPoint& candidate) {
+  void updateCalibrationPoint(std::vector<CalibrationPoint>& accumulated,
+                              const CalibrationPoint& candidate) {
     std::vector<size_t> matched_indices;
-    for (size_t i = 0; i < accumulated_points_.size(); ++i) {
-      if (distanceSquared2d(candidate.point, accumulated_points_[i].point) > dedup_radius_sq_) {
+    for (size_t i = 0; i < accumulated.size(); ++i) {
+      if (distanceSquared2d(candidate.point, accumulated[i].point) > dedup_radius_sq_) {
         continue;
       }
       matched_indices.push_back(i);
     }
 
     if (matched_indices.empty()) {
-      accumulated_points_.push_back(candidate);
+      accumulated.push_back(candidate);
       return;
     }
 
     CalibrationPoint best = candidate;
     for (const size_t index : matched_indices) {
-      if (accumulated_points_[index].confidence > best.confidence) {
-        best = accumulated_points_[index];
+      if (accumulated[index].confidence > best.confidence) {
+        best = accumulated[index];
       }
     }
 
     std::sort(matched_indices.rbegin(), matched_indices.rend());
     for (const size_t index : matched_indices) {
-      accumulated_points_.erase(accumulated_points_.begin() + static_cast<std::ptrdiff_t>(index));
+      accumulated.erase(accumulated.begin() + static_cast<std::ptrdiff_t>(index));
     }
-    accumulated_points_.push_back(best);
+    accumulated.push_back(best);
   }
 
-  double distanceSquared2d(const geometry_msgs::Point& lhs, const geometry_msgs::Point& rhs) const {
+  void enforceGlobalDedup(std::vector<CalibrationPoint>& accumulated) {
+    std::sort(accumulated.begin(), accumulated.end(),
+              [](const CalibrationPoint& lhs, const CalibrationPoint& rhs) {
+                return lhs.confidence > rhs.confidence;
+              });
+
+    std::vector<CalibrationPoint> kept_points;
+    kept_points.reserve(accumulated.size());
+
+    for (const auto& candidate : accumulated) {
+      bool overlaps = false;
+      for (const auto& kept : kept_points) {
+        if (distanceSquared2d(candidate.point, kept.point) <= dedup_radius_sq_) {
+          overlaps = true;
+          break;
+        }
+      }
+      if (!overlaps) {
+        kept_points.push_back(candidate);
+      }
+    }
+
+    accumulated = kept_points;
+  }
+
+  double distanceSquared2d(const geometry_msgs::Point& lhs,
+                           const geometry_msgs::Point& rhs) const {
     const double dx = lhs.x - rhs.x;
     const double dy = lhs.y - rhs.y;
     return dx * dx + dy * dy;
@@ -227,22 +331,35 @@ class VisualGridMapper {
 
   ros::NodeHandle nh_;
   ros::NodeHandle pnh_;
+
   ros::Subscriber map_sub_;
-  ros::Subscriber cloud_sub_;
-  ros::Publisher marker_pub_;
+  ros::Subscriber victim_cloud_sub_;
+  ros::Subscriber qr_cloud_sub_;
+
+  ros::Publisher victim_marker_pub_;
+  ros::Publisher qr_marker_pub_;
+
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
 
   std::mutex map_mutex_;
   nav_msgs::OccupancyGridConstPtr latest_map_;
-  std::vector<CalibrationPoint> accumulated_points_;
 
-  std::string point_cloud_topic_;
+  std::vector<CalibrationPoint> accumulated_victim_points_;
+  std::vector<CalibrationPoint> accumulated_qr_points_;
+
+  std::string victim_point_cloud_topic_;
+  std::string qr_point_cloud_topic_;
   std::string map_topic_;
-  std::string marker_topic_;
+
+  std::string victim_marker_topic_;
+  std::string qr_marker_topic_;
+
   std::string target_frame_;
+
   ros::Duration tf_timeout_;
   ros::Duration marker_lifetime_;
+
   double marker_z_offset_ = 0.03;
   double dedup_radius_ = 1.0;
   double dedup_radius_sq_ = 1.0;

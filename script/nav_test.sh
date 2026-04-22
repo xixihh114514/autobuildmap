@@ -1,76 +1,86 @@
 #!/bin/bash
 
 # ============================================================
-# 机器人系统分步启动脚本
-# 功能：按顺序独立启动 Gazebo, Display, Filter, Hector, Nav
+# RoboCup 一键启动脚本
+# 功能：按指定顺序启动雷达、相机、底盘显示、建图、导航、探索和目标决策
 # ============================================================
 
-# 定义颜色输出，方便查看状态
+set -u
+
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# 进入工作空间并
-cd ~/robotcup2026
+WORKSPACE="/home/rera/robocup2026"
+PIDS=()
 
-echo -e "${YELLOW}[1/5] 启动 gazebo.launch...${NC}"
-# 启动 gazebo.launch (假设在 car 包中)
-# 使用 & 放入后台，sleep 等待其初始化
-roslaunch car gazebo.launch &
-GAZEBO_PID=$!
-sleep 8  # Gazebo 加载模型需要较长时间，建议等待 8-10 秒
-echo -e "${GREEN}-> gazebo.launch (PID: $GAZEBO_PID)${NC}"
+cleanup() {
+  echo -e "\n${YELLOW}正在停止本脚本启动的 roslaunch 进程...${NC}"
+  for pid in "${PIDS[@]}"; do
+    if kill -0 "$pid" 2>/dev/null; then
+      kill "$pid" 2>/dev/null
+    fi
+  done
+  wait 2>/dev/null
+  echo -e "${GREEN}已停止。${NC}"
+}
 
-echo -e "${YELLOW}[2/5] 启动 display.launch (RViz/TF)...${NC}"
-# 启动 display.launch (假设在 car 包中)
-roslaunch car display.launch &
-DISPLAY_PID=$!
-sleep 2
-echo -e "${GREEN}-> display.launch 已启动 (PID: $DISPLAY_PID)${NC}"
+trap cleanup INT TERM EXIT
 
-echo -e "${YELLOW}[3/5] 启动 box_filter.launch...${NC}"
-# 启动 box_filter.launch (假设在 sim_hector 包中)
-roslaunch sim_hector box_filter.launch &
-FILTER_PID=$!
-sleep 1
-echo -e "${GREEN}-> box_filter.launch 已启动 (PID: $FILTER_PID)${NC}"
+launch_step() {
+  local index="$1"
+  local total="$2"
+  local wait_seconds="$3"
+  shift 3
 
-echo -e "${YELLOW}[4/5] 启动 hector.launch...${NC}"
-# 启动 hector.launch (假设在 sim_hector 包中)
-# 确保 use_sim_time 为 true
-roslaunch sim_hector hector.launch &
-HECTOR_PID=$!
-sleep 3  # 等待 Hector 初始化坐标系
-echo -e "${GREEN}-> hector.launch 已启动 (PID: $HECTOR_PID)${NC}"
+  echo -e "${YELLOW}[${index}/${total}] 启动：roslaunch $*${NC}"
+  roslaunch "$@" &
+  local pid=$!
+  PIDS+=("$pid")
+  sleep "$wait_seconds"
+  echo -e "${GREEN}-> 已启动 PID: ${pid}${NC}"
+}
 
-echo -e "${YELLOW}[5/5] 启动 nav.launch (Move_base + TEB)...${NC}"
-# 启动 nav.launch (假设在 sim_nav 包中)
-roslaunch sim_nav nav.launch &
-NAV_PID=$!
-sleep 2
-echo -e "${GREEN}-> nav.launch 已启动 (PID: $NAV_PID)${NC}"
+# setup_gimbal_can() {
+#   local index="$1"
+#   local total="$2"
 
-echo -e "${YELLOW}[6/6] 启动 rrt_goal_decision...${NC}"
-# 延迟启动 rrt_goal_decision，确保 move_base 已经发布全局代价地图
-sleep 3
-roslaunch rrt_goal_decision rrt_goal_decision.launch &
-RRT_PID=$!
-sleep 1
-echo -e "${GREEN}-> rrt_goal_decision 已启动 (PID: $RRT_PID)${NC}"
+#   echo -e "${YELLOW}[${index}/${total}] 配置：sudo ip link set gimbalcan up type can bitrate 1000000${NC}"
+#   if sudo ip link set gimbalcan up type can bitrate 1000000; then
+#     echo -e "${GREEN}-> gimbalcan 已设置为 1000000 bitrate 并启动${NC}"
+#   else
+#     echo -e "${RED}-> gimbalcan 配置失败，停止后续启动。${NC}"
+#     exit 1
+#   fi
+# }
+
+cd "$WORKSPACE" || exit 1
+
+if [ -f "$WORKSPACE/devel/setup.bash" ]; then
+  source "$WORKSPACE/devel/setup.bash"
+elif [ -f "$WORKSPACE/devel/setup.sh" ]; then
+  source "$WORKSPACE/devel/setup.sh"
+fi
+
+TOTAL_STEPS=12
+
+launch_step 1 "$TOTAL_STEPS" 3 rplidar_ros rplidar_a3.launch
+setup_gimbal_can 2 "$TOTAL_STEPS"
+launch_step 3 "$TOTAL_STEPS" 2 "$WORKSPACE/src/imu_run/launch/imu_position_speed.launch"
+launch_step 4 "$TOTAL_STEPS" 5 orbbec_camera astra_adv.launch
+launch_step 5 "$TOTAL_STEPS" 2 car display.launch
+launch_step 6 "$TOTAL_STEPS" 2 sim_hector box_filter.launch
+launch_step 7 "$TOTAL_STEPS" 5 sim_hector hector.launch
+launch_step 8 "$TOTAL_STEPS" 4 sim_nav nav.launch
+launch_step 9 "$TOTAL_STEPS" 3 rrt_exploration single.launch
+launch_step 10 "$TOTAL_STEPS" 2 rrt_goal_decision rrt_goal_decision.launch
+launch_step 11 "$TOTAL_STEPS" 2 visual_calibration visual_calibration.launch
+launch_step 12 "$TOTAL_STEPS" 1 visual_grid_mapper visual_grid_mapper.launch
 
 echo -e "${GREEN}==========================================${NC}"
-echo -e "${GREEN}   所有节点已启动！正在打开调试工具...   ${NC}"
+echo -e "${GREEN}   所有 roslaunch 已按顺序启动完成。      ${NC}"
 echo -e "${GREEN}==========================================${NC}"
+echo -e "按 ${RED}Ctrl+C${NC} 可停止本脚本启动的所有进程。"
 
-# 可选：自动打开 rqt_tf_tree 和 rqt_reconfigure (对应你截图中的需求)
-# 如果不需要，可以注释掉下面两行
-sleep 2
-rosrun rqt_tf_tree rqt_tf_tree &
-rosrun rqt_reconfigure rqt_reconfigure &
-
-echo -e "${GREEN}系统启动完成！${NC}"
-echo -e "提示：如需停止所有节点，请运行：${RED}killall -9 roslaunch${NC}"
-
-# 保持脚本运行，以便捕获 Ctrl+C 停止所有后台进程
 wait

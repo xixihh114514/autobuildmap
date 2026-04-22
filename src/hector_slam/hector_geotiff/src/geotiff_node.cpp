@@ -30,6 +30,7 @@
 #include "hector_geotiff/map_writer_plugin_interface.h"
 
 #include <cstdio>
+#include <cmath>
 #include <ros/ros.h>
 #include <ros/console.h>
 
@@ -62,9 +63,11 @@ public:
   {
     pn_.param("map_file_path", p_map_file_path_, std::string("."));
     geotiff_writer_.setMapFilePath(p_map_file_path_);
-    geotiff_writer_.setUseUtcTimeSuffix(true);
+    pn_.param("use_utc_time_suffix", p_use_utc_time_suffix_, true);
+    geotiff_writer_.setUseUtcTimeSuffix(p_use_utc_time_suffix_);
 
     pn_.param("map_file_base_name", p_map_file_base_name_, std::string());
+    pn_.param("use_elapsed_autosave_names", p_use_elapsed_autosave_names_, false);
 
     pn_.param("draw_background_checkerboard", p_draw_background_checkerboard_, true);
     pn_.param("draw_free_space_grid", p_draw_free_space_grid_, true);
@@ -77,14 +80,16 @@ public:
     path_service_client_ = n_.serviceClient<hector_nav_msgs::GetRobotTrajectory>("trajectory");
 
 
-    double p_geotiff_save_period = 0.0;
-    pn_.param("geotiff_save_period", p_geotiff_save_period, 0.0);
+    pn_.param("geotiff_save_period", p_geotiff_save_period_, 0.0);
 
-    if(p_geotiff_save_period > 0.0){
+    if(p_geotiff_save_period_ > 0.0){
       //ros::Timer timer = pn_.createTimer(ros::Duration(p_geotiff_save_period), &MapGenerator::timerSaveGeotiffCallback, false);
       //publish_trajectory_timer_ = private_nh.createTimer(ros::Duration(1.0 / p_trajectory_publish_rate_), &PathContainer::publishTrajectoryTimerCallback, this, false);
-      map_save_timer_ = pn_.createTimer(ros::Duration(p_geotiff_save_period), &MapGenerator::timerSaveGeotiffCallback, this, false );
+      map_save_timer_ = pn_.createTimer(ros::Duration(p_geotiff_save_period_), &MapGenerator::timerSaveGeotiffCallback, this, false );
     }
+    ROS_INFO_STREAM("Geotiff autosave period: " << p_geotiff_save_period_ << " seconds");
+    ROS_INFO_STREAM("Geotiff map source: " << (use_map_topic_ ? "map topic" : "dynamic_map service"));
+    ROS_INFO_STREAM("Geotiff map file path: " << p_map_file_path_);
 
 
     pn_.param("plugins", p_plugin_list_, std::string(""));
@@ -141,15 +146,17 @@ public:
     {
       ROS_INFO("GeotiffNode: Map service called successfully");
 
-      std::string map_file_name = p_map_file_base_name_;
+      std::string map_file_name = getMapFileName();
       std::string competition_name;
       std::string team_name;
       std::string mission_name;
       std::string postfix;
-      if (n_.getParamCached("/competition", competition_name) && !competition_name.empty()) map_file_name = map_file_name + "_" + competition_name;
-      if (n_.getParamCached("/team", team_name)               && !team_name.empty())        map_file_name = map_file_name + "_" + team_name;
-      if (n_.getParamCached("/mission", mission_name)         && !mission_name.empty())     map_file_name = map_file_name + "_" + mission_name;
-      if (pn_.getParamCached("map_file_postfix", postfix)     && !postfix.empty())          map_file_name = map_file_name + "_" + postfix;
+      if (!p_use_elapsed_autosave_names_) {
+        if (n_.getParamCached("/competition", competition_name) && !competition_name.empty()) map_file_name = map_file_name + "_" + competition_name;
+        if (n_.getParamCached("/team", team_name)               && !team_name.empty())        map_file_name = map_file_name + "_" + team_name;
+        if (n_.getParamCached("/mission", mission_name)         && !mission_name.empty())     map_file_name = map_file_name + "_" + mission_name;
+        if (pn_.getParamCached("map_file_postfix", postfix)     && !postfix.empty())          map_file_name = map_file_name + "_" + postfix;
+      }
       if (map_file_name.substr(0, 1) == "_") map_file_name = map_file_name.substr(1);
       if (map_file_name.empty()) map_file_name = "GeoTiffMap";
       geotiff_writer_.setMapFileName(map_file_name);
@@ -175,7 +182,11 @@ public:
     }
     else
     {
-      ROS_ERROR("Failed to call map service");
+      if (use_map_topic_) {
+        ROS_ERROR("Failed to receive map topic for GeoTIFF autosave");
+      } else {
+        ROS_ERROR("Failed to call map service");
+      }
       return;
     }
 
@@ -265,6 +276,26 @@ public:
     this->writeGeotiff(false);
   }
 
+  std::string getMapFileName() const
+  {
+    if (!p_use_elapsed_autosave_names_) {
+      return p_map_file_base_name_;
+    }
+
+    const unsigned int elapsed_seconds =
+        static_cast<unsigned int>(std::round((running_saved_map_num_ + 1) * p_geotiff_save_period_));
+    const unsigned int minutes = elapsed_seconds / 60;
+    const unsigned int seconds = elapsed_seconds % 60;
+
+    std::stringstream name;
+    name << "map_";
+    if (minutes > 0) {
+      name << minutes << "min";
+    }
+    name << seconds << "s";
+    return name.str();
+  }
+
   void sysCmdCallback(const std_msgs::String& sys_cmd)
   {
     if (sys_cmd.data != "savegeotiff"){
@@ -280,6 +311,9 @@ public:
   bool p_draw_background_checkerboard_;
   bool p_draw_free_space_grid_;
   bool use_map_topic_;
+  bool p_use_utc_time_suffix_;
+  bool p_use_elapsed_autosave_names_;
+  double p_geotiff_save_period_;
 
   //double p_geotiff_save_period_;
 
@@ -322,4 +356,3 @@ int main(int argc, char** argv)
 
   return 0;
 }
-

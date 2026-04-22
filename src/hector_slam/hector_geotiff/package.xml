@@ -28,8 +28,11 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>qtbase5-dev</build_depend>
+  <build_depend>libtiff-dev</build_depend>
   <build_export_depend>qtbase5-dev</build_export_depend>
+  <build_export_depend>libtiff-dev</build_export_depend>
   <exec_depend>qt5-image-formats-plugins</exec_depend>
+  <exec_depend>libtiff5</exec_depend>
   <depend>hector_map_tools</depend>
   <depend>hector_nav_msgs</depend>
   <depend>libqt5-widgets</depend>
