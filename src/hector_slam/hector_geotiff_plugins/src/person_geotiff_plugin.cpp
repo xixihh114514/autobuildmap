@@ -6,7 +6,6 @@
 #include <hector_geotiff/map_writer_interface.h>
 #include <hector_geotiff/map_writer_plugin_interface.h>
 
-#include <algorithm>
 #include <Eigen/Core>
 #include <boost/thread/lock_guard.hpp>
 #include <boost/thread/mutex.hpp>
@@ -38,7 +37,10 @@ protected:
   void pointCloudCallback(const sensor_msgs::PointCloud2ConstPtr& cloud_msg);
   std::string makeLabel(std::size_t index) const;
   MapWriterInterface::Color makeColor(std::size_t index) const;
-  static bool comparePointOrder(const Eigen::Vector2f& lhs, const Eigen::Vector2f& rhs);
+  bool isDuplicatePoint(
+    const Eigen::Vector2f& point,
+    const std::vector<Eigen::Vector2f>& existing_points
+  ) const;
 
   ros::NodeHandle nh_;
   ros::Subscriber point_cloud_sub_;
@@ -48,9 +50,9 @@ protected:
   std::string name_;
   std::string topic_name_;
   std::string label_prefix_;
-  ros::Duration point_timeout_;
-  ros::Time last_nonempty_stamp_;
-  std::vector<Eigen::Vector2f> cached_points_;
+  double min_separation_distance_;
+  double min_separation_distance_squared_;
+  std::vector<Eigen::Vector2f> stored_points_;
   bool use_palette_colors_;
   int point_color_r_;
   int point_color_g_;
@@ -60,7 +62,8 @@ protected:
 
 PersonMapWriter::PersonMapWriter()
   : initialized_(false)
-  , point_timeout_(1.0)
+  , min_separation_distance_(1.0)
+  , min_separation_distance_squared_(1.0)
   , use_palette_colors_(true)
   , point_color_r_(255)
   , point_color_g_(70)
@@ -74,19 +77,19 @@ PersonMapWriter::~PersonMapWriter()
 void PersonMapWriter::initialize(const std::string& name)
 {
   ros::NodeHandle plugin_nh("~/" + name);
-  double point_timeout_seconds = 1.0;
   std::string point_shape_name("circle");
 
   plugin_nh.param("topic_name", topic_name_, std::string("/person_global_localizer/person_map_cloud"));
   plugin_nh.param("label_prefix", label_prefix_, std::string("p"));
-  plugin_nh.param("point_timeout", point_timeout_seconds, 1.0);
+  plugin_nh.param("min_separation_distance", min_separation_distance_, 1.0);
   plugin_nh.param("use_palette_colors", use_palette_colors_, true);
   plugin_nh.param("point_color_r", point_color_r_, 255);
   plugin_nh.param("point_color_g", point_color_g_, 70);
   plugin_nh.param("point_color_b", point_color_b_, 70);
   plugin_nh.param("point_shape", point_shape_name, std::string("circle"));
 
-  point_timeout_ = ros::Duration(point_timeout_seconds);
+  min_separation_distance_ = std::max(0.0, min_separation_distance_);
+  min_separation_distance_squared_ = min_separation_distance_ * min_separation_distance_;
   point_shape_ = (point_shape_name == "diamond") ? SHAPE_DIAMOND : SHAPE_CIRCLE;
   point_cloud_sub_ = nh_.subscribe(topic_name_, 1, &PersonMapWriter::pointCloudCallback, this);
 
@@ -102,28 +105,15 @@ void PersonMapWriter::draw(MapWriterInterface* interface)
   }
 
   std::vector<Eigen::Vector2f> points;
-  ros::Time stamp;
   {
     boost::lock_guard<boost::mutex> lock(mutex_);
-    points = cached_points_;
-    stamp = last_nonempty_stamp_;
+    points = stored_points_;
   }
 
   if (points.empty()) {
     return;
   }
 
-  if (!stamp.isZero() && point_timeout_.toSec() > 0.0 && (ros::Time::now() - stamp) > point_timeout_) {
-    ROS_WARN_THROTTLE_NAMED(
-      2.0,
-      name_,
-      "Skipping person overlay because the latest person center cloud is older than %.2f s.",
-      point_timeout_.toSec()
-    );
-    return;
-  }
-
-  std::sort(points.begin(), points.end(), &PersonMapWriter::comparePointOrder);
   for (std::size_t i = 0; i < points.size(); ++i) {
     interface->drawObjectOfInterest(points[i], makeLabel(i), makeColor(i), point_shape_);
   }
@@ -159,8 +149,31 @@ void PersonMapWriter::pointCloudCallback(const sensor_msgs::PointCloud2ConstPtr&
   }
 
   boost::lock_guard<boost::mutex> lock(mutex_);
-  cached_points_.swap(points);
-  last_nonempty_stamp_ = cloud_msg->header.stamp.isZero() ? ros::Time::now() : cloud_msg->header.stamp;
+  std::size_t new_points = 0;
+  for (std::size_t i = 0; i < points.size(); ++i) {
+    const Eigen::Vector2f& point = points[i];
+    if (isDuplicatePoint(point, stored_points_)) {
+      continue;
+    }
+
+    stored_points_.push_back(point);
+    ++new_points;
+    ROS_INFO_NAMED(
+      name_,
+      "Registered persistent person mark %s at (%.2f, %.2f).",
+      makeLabel(stored_points_.size() - 1).c_str(),
+      point.x(),
+      point.y()
+    );
+  }
+
+  if (new_points > 0) {
+    ROS_INFO_NAMED(
+      name_,
+      "PersonMapWriter now stores %zu persistent map marks.",
+      stored_points_.size()
+    );
+  }
 }
 
 std::string PersonMapWriter::makeLabel(std::size_t index) const
@@ -192,15 +205,19 @@ MapWriterInterface::Color PersonMapWriter::makeColor(std::size_t index) const
   return MapWriterInterface::Color(rgb[0], rgb[1], rgb[2]);
 }
 
-bool PersonMapWriter::comparePointOrder(const Eigen::Vector2f& lhs, const Eigen::Vector2f& rhs)
+bool PersonMapWriter::isDuplicatePoint(
+  const Eigen::Vector2f& point,
+  const std::vector<Eigen::Vector2f>& existing_points
+) const
 {
-  const float epsilon = 1e-3f;
-
-  if (std::fabs(lhs.x() - rhs.x()) > epsilon) {
-    return lhs.x() < rhs.x();
+  for (std::size_t i = 0; i < existing_points.size(); ++i) {
+    const Eigen::Vector2f delta = existing_points[i] - point;
+    if (delta.squaredNorm() <= min_separation_distance_squared_) {
+      return true;
+    }
   }
 
-  return lhs.y() < rhs.y();
+  return false;
 }
 
 } // namespace hector_geotiff_plugins

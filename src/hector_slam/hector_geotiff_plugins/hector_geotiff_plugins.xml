@@ -9,4 +9,9 @@
       This MapWriter plugin draws person center points from a map-frame point cloud onto the geotiff map.
     </description>
   </class>
+  <class name="hector_geotiff_plugins/QRCodeMapWriter" type="hector_geotiff_plugins::QRCodeMapWriter" base_class_type="hector_geotiff::MapWriterPluginInterface">
+    <description>
+      This MapWriter plugin draws persistent QR code labels from map-frame text markers onto the geotiff map.
+    </description>
+  </class>
 </library>

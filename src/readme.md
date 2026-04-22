@@ -737,3 +737,64 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       - 当前 `p1/p2/p3` 的顺序由保存时刻的人物中心点地图坐标决定
       - 当画面中人物集合变化时，编号会根据当前所有中心点重新排序
       - 若人数超过调色板长度，颜色会循环复用
+
+   4.22.4
+      将 GeoTIFF 中的人物标注改为累计保留模式：一旦某处人物中心点被登记，后续地图持续保留该标记；新位置仅在距离已有标记超过 `1m` 时才新增新的 `pN`
+
+      本次改动：
+      1) 修改 `hector_slam/hector_geotiff_plugins/src/person_geotiff_plugin.cpp`
+         - 不再按当前帧检测结果重绘整套人物标签
+         - 改为维护插件运行期间的持久化人物标记列表
+         - 新检测到的人物中心点只有在距所有已有标记超过 `1m` 时才会登记为新标记
+         - 已登记标记保留原始位置、原始编号和原始颜色，不会因为后续检测顺序变化而消失或重排
+
+      2) 修改 `hector_slam/hector_slam_launch/launch/hector.launch`
+         - 删除 `PersonMapWriter/point_timeout`
+         - 新增 `PersonMapWriter/min_separation_distance=1.0`
+
+      当前规则：
+      - 第一次登记的位置记为 `p1`
+      - 后续若在别处第一次出现且距离所有已有标记都超过 `1m`，则依次记为 `p2`、`p3`、`p4`
+      - 若新检测点落在任一已有标记 `1m` 范围内，则认为是已有标记附近观测，不重复新增
+      - 已生成的标记会持续出现在后续 GeoTIFF 地图中，直到重启 `hector_geotiff_node`
+
+   4.22.5
+      新增二维码检测与 GeoTIFF 永久标记链路，使用 OpenCV 解码二维码内容，并将二维码以 `cn+内容` 的标签形式永久保留在地图中
+
+      本次改动：
+      1) 新增 `visual_obstacle_detector/qr_global_localizer.py`
+         - 使用 OpenCV `QRCodeDetector` 识别二维码
+         - 从二维码四角中心点取深度，恢复二维码中心在相机坐标系下的 3D 位置
+         - 将二维码中心点通过 TF 变换到 `map`
+         - 发布 `~qr_map_markers`，其中标签格式为：
+           `cn` + 扫描出的二维码内容
+         - 同时发布调试图像，便于查看二维码框、中心点和深度
+
+      2) 新增 `visual_obstacle_detector/launch/qr_global_localizer.launch`
+         - 默认输入仍为彩色图、对齐深度图和相机内参
+         - 默认全局坐标系为 `map`
+
+      3) 新增 `hector_slam/hector_geotiff_plugins/src/qrcode_geotiff_plugin.cpp`
+         - 新增 `QRCodeMapWriter`
+         - 订阅 `/qr_global_localizer/qr_map_markers`
+         - 将二维码标记以永久方式保存在插件内部
+         - 当前同样加入 `1m` 去重校验，避免已有标记附近重复登记
+
+      4) 修改 `hector_slam/hector_slam_launch/launch/hector.launch`
+         - 为 `hector_geotiff_node` 启用 `hector_geotiff_plugins/QRCodeMapWriter`
+
+      当前规则：
+      - 第一次在某处识别到二维码，会生成一个新的永久标记
+      - 标签格式为 `cn` 加二维码内容，例如二维码内容为 `A12`，则标签为 `cnA12`
+      - 若后续新二维码中心点落在任一已有二维码标记 `1m` 范围内，则不重复新增
+      - 已登记二维码会持续出现在后续 GeoTIFF 地图中，直到重启 `hector_geotiff_node`
+
+   4.22.6
+      补充记录本轮二维码地图标记方案的已知问题与边界，避免后续联调时把“当前实现限制”误判为新 bug
+
+      当前想提醒的问题：
+      - 二维码永久标记与人物永久标记目前都只保存在 `hector_geotiff_node` 插件进程内存中，重启该节点后会重新开始编号与登记，还没有做到跨重启落盘恢复
+      - `QRCodeMapWriter` 当前的 `1m` 去重规则只按地图位置判断，不区分二维码内容；如果两个不同内容的二维码放得非常近，当前实现会只保留先登记的那个
+      - 二维码标签会直接使用 `cn+二维码原文` 画到 GeoTIFF 上；如果二维码内容太长、带很多空格，或者本身是较复杂字符串，地图上文字可能会比较挤
+      - 二维码三维定位当前取的是二维码中心附近深度中值，不是专门做平面角点重建；如果中心区域深度缺失、二维码斜放过大，或者深度和彩色图对齐不稳定，会出现“能识别内容但不落点”或落点轻微偏移
+      - 当前二维码地图标记依赖彩色图、对齐深度图和相机内参同时正常输入；如果只有彩色图能看到二维码但深度不可用，当前实现不会登记该二维码

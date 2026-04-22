@@ -1,14 +1,14 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(hector_geotiff_plugins)
 
-find_package(catkin REQUIRED COMPONENTS hector_geotiff hector_nav_msgs sensor_msgs)
+find_package(catkin REQUIRED COMPONENTS hector_geotiff hector_nav_msgs sensor_msgs visualization_msgs)
 
 
 ###################################
 ## catkin specific configuration ##
 ###################################
 catkin_package(
-  CATKIN_DEPENDS hector_geotiff hector_nav_msgs sensor_msgs
+  CATKIN_DEPENDS hector_geotiff hector_nav_msgs sensor_msgs visualization_msgs
 )
 
 ###########
@@ -22,6 +22,7 @@ include_directories(
 add_library(hector_geotiff_plugins
   src/trajectory_geotiff_plugin.cpp
   src/person_geotiff_plugin.cpp
+  src/qrcode_geotiff_plugin.cpp
 )
 add_dependencies(hector_geotiff_plugins ${catkin_EXPORTED_TARGETS})
 target_link_libraries(hector_geotiff_plugins
