@@ -820,3 +820,22 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
 
       6) 对整个工作空间做一次完整检查
          - 包括 launch、TF、传感器输入、建图、标记链路和相关包之间的联调检查
+
+   4.23.2
+      修正二维码 GeoTIFF 标记中的文字截断与显示不清问题，并同步优化地图中对象标记的文字显示效果
+
+      本次改动：
+      1) 修改 `visual_obstacle_detector/scripts/qr_global_localizer.py`
+         - 为 OpenCV `QRCodeDetector` 启用 alignment markers 支持
+         - 对解码出的二维码文本增加可打印字符清洗，去掉隐藏控制字符
+         - 当二维码原始解码结果与清洗后结果不一致时，输出节流告警，便于定位 OpenCV 解码异常
+
+      2) 修改 `hector_slam/hector_geotiff/src/geotiff_writer/geotiff_writer.cpp`
+         - 将 GeoTIFF 标签字符串从 `txt.c_str()` 改为按完整 UTF-8 字节串转换，避免遇到隐藏字符时中途截断
+         - 放大对象标记文字绘制区域，避免 `cnrobocup1qr` 这一类较长标签被裁掉
+         - 将对象标记文字颜色改为深绿色，增强与黑色墙体和白色空白区域的区分度
+         - 将对象标记文字字号调大，提升导出地图中的可读性
+
+      结果：
+      - 二维码标签在 GeoTIFF 中不再容易出现只显示前半段的情况
+      - `p...` 与 `cn...` 这一类对象标记在地图中的文字更清晰、更容易识别

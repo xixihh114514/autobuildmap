@@ -18,6 +18,8 @@ class QRGlobalLocalizer(object):
     def __init__(self):
         self.bridge = CvBridge()
         self.qr_detector = cv2.QRCodeDetector()
+        if hasattr(self.qr_detector, "setUseAlignmentMarkers"):
+            self.qr_detector.setUseAlignmentMarkers(True)
 
         self.color_topic = rospy.get_param("~color_topic", "/camera/color/image_raw")
         self.depth_topic = rospy.get_param(
@@ -180,7 +182,19 @@ class QRGlobalLocalizer(object):
     def normalize_qr_text(self, text):
         if text is None:
             return ""
-        return " ".join(str(text).split())
+        raw_text = str(text)
+        printable_text = "".join(ch for ch in raw_text if ch.isprintable())
+        normalized_text = " ".join(printable_text.split())
+
+        if normalized_text != raw_text:
+            rospy.logwarn_throttle(
+                2.0,
+                "QR decoded text normalized from %s to %s",
+                repr(raw_text),
+                repr(normalized_text),
+            )
+
+        return normalized_text
 
     def make_qr_label(self, qr_text):
         return "cn{}".format(qr_text)

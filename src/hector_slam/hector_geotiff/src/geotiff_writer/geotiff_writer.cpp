@@ -30,6 +30,7 @@
 #include <ros/console.h>
 
 #include <QFile>
+#include <QFontMetricsF>
 #include <QImageWriter>
 #include <QPainter>
 //#include <QtCore/QDateTime>
@@ -457,7 +458,7 @@ void GeotiffWriter::drawObjectOfInterest( const Eigen::Vector2f &coords, const s
   qPainter.restore();
 
 
-  QString tmp( txt.c_str());
+  QString tmp( QString::fromUtf8( txt.data(), static_cast<int>( txt.size() )));
   //tmp.setNum(number);
 
   if ( tmp.length() < 2 )
@@ -467,15 +468,21 @@ void GeotiffWriter::drawObjectOfInterest( const Eigen::Vector2f &coords, const s
   else
   {
     QFont tmp_font( font_family_ );
-    tmp_font.setPixelSize( 3 * resolutionFactor );
+    tmp_font.setPixelSize( 4 * resolutionFactor );
     qPainter.setFont( tmp_font );
   }
 
 
-  qPainter.setPen( Qt::white );
+  QPen text_pen( QColor( 12, 94, 35 ));
+  qPainter.setPen( text_pen );
   qPainter.scale( -1.0, 1.0 );
 
-  qPainter.drawText( shape_rect, Qt::AlignCenter, tmp );
+  const QFontMetricsF metrics( qPainter.font());
+  const qreal half_width = std::max<qreal>( radius * 1.5f, ( metrics.horizontalAdvance( tmp ) * 0.5 ) + radius * 0.5f );
+  const qreal half_height = std::max<qreal>( radius, ( metrics.height() * 0.5 ) + radius * 0.25f );
+  const QRectF text_rect( -half_width, -half_height, half_width * 2.0, half_height * 2.0 );
+
+  qPainter.drawText( text_rect, Qt::AlignCenter | Qt::TextDontClip, tmp );
 }
 
 void GeotiffWriter::drawPath( const Eigen::Vector3f &start, const std::vector<Eigen::Vector2f> &points, int color_r,
