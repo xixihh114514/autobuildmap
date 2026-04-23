@@ -904,3 +904,33 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
 
       验证情况：
       - `catkin_make --pkg visual_obstacle_detector` 已编译通过
+
+   4.23.5
+      为人物检测节点接入 Intel 核显 OpenCL 推理路径，并将二维码节点继续保留在 CPU 路径，避免二维码与 `YOLO ONNX` 在同一块核显上争抢算力
+
+      本次改动：
+      1) 修改 `visual_obstacle_detector/src/person_global_localizer_node.cpp`
+         - 新增 `compute_target` 参数，支持 `auto / cpu / opencl / opencl_fp16`
+         - 默认 `auto`，优先尝试 `OpenCL`，失败时自动回退到 `CPU`
+         - 节点启动时会输出当前 OpenCL 设备信息，便于现场确认是否真的跑到核显
+
+      2) 修改 `visual_obstacle_detector/launch/person_global_localizer.launch`
+         - 新增本地 OpenCL 运行环境相关参数
+         - 默认向人物节点注入：
+           `OPENCL_VENDOR_PATH=$(env HOME)/.local/intel-opencl-runtime/vendors`
+         - 默认向人物节点注入本地 Intel OpenCL 运行时库路径
+
+      3) 本地运行时目录
+         - 当前核显运行时已准备在：
+           `~/.local/intel-opencl-runtime`
+         - 这套目录来自用户态解包，不依赖 `sudo apt install`
+
+      当前需要注意：
+      - 人物节点的 `YOLO ONNX` 推理链路已经明确支持 `OpenCL/OpenCL FP16`
+      - 二维码节点当前刻意不接入核显，原因是二维码这条链路没有像 DNN 那样明确的推理 target，而且收益不确定，反而可能和人物检测争抢同一块核显资源
+      - 如果后续本地 OpenCL 运行时目录被删除，人物节点会退回普通 CPU 路径；二维码节点本身就继续保持 CPU 路径
+
+      验证情况：
+      - `catkin_make --pkg visual_obstacle_detector` 已编译通过
+      - 本地 `clinfo` 已能识别 `Intel(R) OpenCL HD Graphics`
+      - 系统 C++ OpenCV 4.2 已实测可见 `OpenCL 2.1 NEO` 设备
