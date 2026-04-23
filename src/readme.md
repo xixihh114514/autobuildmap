@@ -839,3 +839,34 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       结果：
       - 二维码标签在 GeoTIFF 中不再容易出现只显示前半段的情况
       - `p...` 与 `cn...` 这一类对象标记在地图中的文字更清晰、更容易识别
+
+   4.23.3
+      为人物与二维码全局定位节点加入连续帧确认机制，并为对应 launch 补充中文注释，降低单帧误检直接进入地图标记链路的概率
+
+      本次改动：
+      1) 修改 `visual_obstacle_detector/scripts/person_global_localizer.py`
+         - 新增人物检测连续帧确认逻辑，默认同一目标需连续命中 `3` 帧后才真正发布
+         - 采用检测框中心最近邻匹配方式，在相邻帧间按像素位置连续跟踪同一人物
+         - 调试图像中增加 `wait/ok` 与确认帧数显示，便于现场观察确认状态
+
+      2) 修改 `visual_obstacle_detector/scripts/qr_global_localizer.py`
+         - 新增二维码连续帧确认逻辑，默认同一二维码需连续命中 `3` 帧后才真正发布
+         - 按二维码内容与中心像素位置持续累计确认帧数
+         - 调试图像中增加确认进度显示，便于区分“已识别但未确认”和“已确认发布”
+
+      3) 修改 `visual_obstacle_detector/launch/person_global_localizer.launch`
+         - 新增 `min_confirm_frames`
+         - 新增 `confirm_pixel_tolerance`
+         - 新增 `confirm_timeout`
+         - 为人物定位 launch 补充中文注释，说明各输入话题与确认参数含义
+
+      4) 修改 `visual_obstacle_detector/launch/qr_global_localizer.launch`
+         - 新增 `min_confirm_frames`
+         - 新增 `confirm_pixel_tolerance`
+         - 新增 `confirm_timeout`
+         - 为二维码定位 launch 补充中文注释，说明各输入话题与确认参数含义
+
+      当前默认规则：
+      - 人物与二维码都需要连续 `3` 帧命中后才会真正进入后续地图标记链路
+      - 若目标在相邻帧间跳变过大或中间丢失超过设定时间，则重新计数
+      - 以上确认参数都已提升到 launch，可根据实车画面抖动情况继续调节

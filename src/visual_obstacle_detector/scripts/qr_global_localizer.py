@@ -37,6 +37,13 @@ class QRGlobalLocalizer(object):
         self.publish_debug_image = rospy.get_param("~publish_debug_image", True)
         self.global_frame = rospy.get_param("~global_frame", "map")
         self.transform_timeout = rospy.get_param("~transform_timeout", 0.05)
+        self.min_confirm_frames = max(1, int(rospy.get_param("~min_confirm_frames", 3)))
+        self.confirm_pixel_tolerance = rospy.get_param(
+            "~confirm_pixel_tolerance", 40.0
+        )
+        self.confirm_timeout = rospy.get_param("~confirm_timeout", 0.5)
+
+        self.pending_confirmations = {}
 
         self.map_marker_pub = rospy.Publisher(
             "~qr_map_markers", MarkerArray, queue_size=1
@@ -61,8 +68,9 @@ class QRGlobalLocalizer(object):
         self.sync.registerCallback(self.synced_callback)
 
         rospy.loginfo(
-            "qr_global_localizer is ready, publishing QR map markers in %s",
+            "qr_global_localizer is ready, publishing QR map markers in %s after %d consecutive frames",
             self.global_frame,
+            self.min_confirm_frames,
         )
 
     def synced_callback(self, color_msg, depth_msg, camera_info_msg):
@@ -86,36 +94,55 @@ class QRGlobalLocalizer(object):
         marker_array = MarkerArray()
         debug_image = color_image.copy()
         camera_frame = depth_msg.header.frame_id
+        stamp_sec = color_msg.header.stamp.to_sec()
+        active_qr_texts = set()
+        confirmed_marker_id = 0
 
-        for marker_id, det in enumerate(detections):
+        for det in detections:
             qr_text = det["text"]
             corners = det["corners"]
             center = np.mean(corners, axis=0)
+            active_qr_texts.add(qr_text)
 
-            sample = self.sample_depth_and_point(depth_m, center, camera_info_msg)
-            if sample is None:
-                self.draw_detection(debug_image, corners, qr_text, None, None)
-                continue
-
-            point_xyz, pixel_xy, depth_value = sample
-            camera_point = PointStamped()
-            camera_point.header = Header(
-                stamp=depth_msg.header.stamp,
-                frame_id=camera_frame,
+            confirm_count, is_confirmed, newly_confirmed = self.update_confirmation(
+                qr_text,
+                center,
+                stamp_sec,
             )
-            camera_point.point.x = float(point_xyz[0])
-            camera_point.point.y = float(point_xyz[1])
-            camera_point.point.z = float(point_xyz[2])
 
-            map_point = self.transform_point(camera_point)
-            if map_point is not None:
-                marker_array.markers.extend(
-                    self.make_map_markers(
-                        marker_id,
-                        map_point,
-                        self.make_qr_label(qr_text),
-                    )
+            if newly_confirmed:
+                rospy.loginfo(
+                    "QR %s confirmed after %d consecutive frames",
+                    qr_text,
+                    confirm_count,
                 )
+
+            pixel_xy = None
+            depth_value = None
+
+            if is_confirmed:
+                sample = self.sample_depth_and_point(depth_m, center, camera_info_msg)
+                if sample is not None:
+                    point_xyz, pixel_xy, depth_value = sample
+                    camera_point = PointStamped()
+                    camera_point.header = Header(
+                        stamp=depth_msg.header.stamp,
+                        frame_id=camera_frame,
+                    )
+                    camera_point.point.x = float(point_xyz[0])
+                    camera_point.point.y = float(point_xyz[1])
+                    camera_point.point.z = float(point_xyz[2])
+
+                    map_point = self.transform_point(camera_point)
+                    if map_point is not None:
+                        marker_array.markers.extend(
+                            self.make_map_markers(
+                                confirmed_marker_id,
+                                map_point,
+                                self.make_qr_label(qr_text),
+                            )
+                        )
+                        confirmed_marker_id += 1
 
             self.draw_detection(
                 debug_image,
@@ -123,7 +150,11 @@ class QRGlobalLocalizer(object):
                 qr_text,
                 pixel_xy,
                 depth_value,
+                confirm_count,
+                is_confirmed,
             )
+
+        self.cleanup_confirmations(active_qr_texts, stamp_sec)
 
         self.publish_markers(marker_array, color_msg.header.stamp, self.global_frame)
 
@@ -134,6 +165,46 @@ class QRGlobalLocalizer(object):
                 self.debug_image_pub.publish(debug_msg)
             except CvBridgeError as exc:
                 rospy.logwarn_throttle(2.0, "debug image publish failed: %s", exc)
+
+    def update_confirmation(self, qr_text, center_xy, stamp_sec):
+        center_xy = np.asarray(center_xy, dtype=np.float32)
+        track = self.pending_confirmations.get(qr_text)
+
+        if track is None:
+            confirm_count = 1
+        else:
+            pixel_shift = np.linalg.norm(center_xy - track["center"])
+            time_gap = stamp_sec - track["stamp"]
+            if (
+                time_gap <= self.confirm_timeout
+                and pixel_shift <= self.confirm_pixel_tolerance
+            ):
+                confirm_count = track["count"] + 1
+            else:
+                confirm_count = 1
+
+        self.pending_confirmations[qr_text] = {
+            "count": confirm_count,
+            "center": center_xy,
+            "stamp": stamp_sec,
+        }
+
+        is_confirmed = confirm_count >= self.min_confirm_frames
+        newly_confirmed = confirm_count == self.min_confirm_frames
+        return confirm_count, is_confirmed, newly_confirmed
+
+    def cleanup_confirmations(self, active_qr_texts, stamp_sec):
+        stale_keys = []
+        for qr_text, track in self.pending_confirmations.items():
+            if qr_text not in active_qr_texts:
+                stale_keys.append(qr_text)
+                continue
+
+            if stamp_sec - track["stamp"] > self.confirm_timeout:
+                stale_keys.append(qr_text)
+
+        for qr_text in stale_keys:
+            self.pending_confirmations.pop(qr_text, None)
 
     def detect_qrs(self, color_image):
         detections = []
@@ -294,14 +365,29 @@ class QRGlobalLocalizer(object):
 
         return markers
 
-    def draw_detection(self, image, corners, qr_text, pixel_xy, depth_value):
+    def draw_detection(
+        self,
+        image,
+        corners,
+        qr_text,
+        pixel_xy,
+        depth_value,
+        confirm_count,
+        is_confirmed,
+    ):
         polygon = np.asarray(corners, dtype=np.int32).reshape(-1, 1, 2)
         cv2.polylines(image, [polygon], isClosed=True, color=(255, 180, 0), thickness=2)
 
         if pixel_xy is not None:
             cv2.circle(image, tuple(pixel_xy), 4, (0, 0, 255), -1)
 
-        label_text = self.make_qr_label(qr_text)
+        label_text = "{} {}/{}".format(
+            self.make_qr_label(qr_text),
+            min(confirm_count, self.min_confirm_frames),
+            self.min_confirm_frames,
+        )
+        if is_confirmed:
+            label_text += " ok"
         x_text = int(np.min(corners[:, 0]))
         y_text_1 = max(20, int(np.min(corners[:, 1])) - 10)
         y_text_2 = min(image.shape[0] - 10, y_text_1 + 20)
