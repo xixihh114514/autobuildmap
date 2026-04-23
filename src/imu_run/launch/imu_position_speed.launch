@@ -1,0 +1,353 @@
+<launch>
+  <!-- ================================================================== -->
+  <!-- 1) 基础设备参数                                                     -->
+  <!-- ================================================================== -->
+
+  <!-- CAN 接口名。通常是 can0 / can1。 -->
+  <arg name="can_interface" default="gimbalcan" />
+
+  <!-- IMU 串口设备名。 -->
+  <!-- 常见情况是 /dev/ttyUSB0，也可能是 /dev/ttyACM0。 -->
+  <arg name="imu_device" default="/dev/imu" />
+
+  <!-- IMU 串口波特率。必须和 IMU 实际输出波特率一致。 -->
+  <arg name="imu_baud" default="115200" />
+
+
+  <!-- ================================================================== -->
+  <!-- 2) 控制循环与日志                                                   -->
+  <!-- ================================================================== -->
+
+  <!-- 控制主循环频率，单位 Hz。 -->
+  <!-- 数值越高，控制刷新越快，但也会提高 CPU 占用和 CAN 总线发送频率。 -->
+  <!-- 建议先从 200Hz 跑起，稳定后再试 300Hz。 -->
+  <arg name="control_hz" default="300.0" />
+
+  <!-- 日志打印频率，单位 Hz。 -->
+  <!-- 太高会影响终端输出和调试体验，一般 5~10Hz 就够。 -->
+  <arg name="print_hz" default="10.0" />
+
+  <!-- IMU 数据超时判定时间，单位秒。 -->
+  <!-- 如果最新 IMU 数据超过这个时间还没更新，就认为姿态数据已经不新鲜。 -->
+  <!-- 超时后程序会进入保护逻辑，避免继续拿旧姿态控云台。 -->
+  <arg name="imu_timeout_sec" default="0.08" />
+
+
+  <!-- ================================================================== -->
+  <!-- 3) 上电初始化与回零                                                 -->
+  <!-- ================================================================== -->
+
+  <!-- 启动时是否执行回零动作。 -->
+  <!-- true：程序启动后先让电机回零 -->
+  <!-- false：直接进入控制环，不做回零 -->
+  <arg name="home_on_startup" default="true" />
+
+  <!-- 回零时的目标速度，单位 rpm。 -->
+  <arg name="home_speed_rpm" default="8.0" />
+
+  <!-- 回零时的加速度，单位 rpm/s。 -->
+  <arg name="home_accel_rpm_s" default="800.0" />
+
+  <!-- 回零时的减速度，单位 rpm/s。 -->
+  <arg name="home_decel_rpm_s" default="800.0" />
+
+  <!-- 回零完成后的等待稳定时间，单位秒。 -->
+  <!-- 给电机一点机械稳定时间，避免回零结束后立刻进入控制造成冲击。 -->
+  <arg name="home_settle_time_sec" default="0.3" />
+
+
+  <!-- ================================================================== -->
+  <!-- 4) Linux 低延迟 / 实时调度相关                                      -->
+  <!-- ================================================================== -->
+
+  <!-- 是否尝试给主线程启用实时调度（SCHED_FIFO）。 -->
+  <!-- 需要系统已给当前用户 realtime 权限，否则会打印失败日志。 -->
+  <arg name="try_realtime" default="true" />
+
+  <!-- 是否尝试锁定当前进程内存（mlockall）。 -->
+  <!-- 这样可以减少缺页、交换等带来的时延抖动。 -->
+  <arg name="try_mlockall" default="true" />
+
+  <!-- 是否尝试给串口设备开启低延迟模式。 -->
+  <!-- 是否成功取决于串口驱动和设备本身，不是所有 USB 串口都支持。 -->
+  <arg name="try_serial_low_latency" default="true" />
+
+  <!-- 主控制线程的实时优先级。 -->
+  <!-- 优先级越高，调度越优先。一般主线程要低于 IMU 线程或略低。 -->
+  <arg name="main_thread_priority" default="80" />
+
+  <!-- IMU 接收线程的实时优先级。 -->
+  <!-- 一般希望它略高于主线程，这样姿态数据更新更及时。 -->
+  <arg name="imu_thread_priority" default="85" />
+
+  <!-- 主线程绑核。 -->
+  <!-- -1 表示不绑核，让系统自由调度。 -->
+  <!-- 如果你想减少抖动，可以绑到某个空闲 CPU 核，比如 2 或 3。 -->
+  <arg name="main_thread_cpu" default="-1" />
+
+  <!-- IMU 线程绑核。 -->
+  <!-- 同样 -1 表示不绑。 -->
+  <arg name="imu_thread_cpu" default="-1" />
+
+
+  <!-- ================================================================== -->
+  <!-- 5) CAN 命令发送策略                                                 -->
+  <!-- ================================================================== -->
+
+  <!-- 是否每个控制周期都发送 CAN 命令。 -->
+  <!-- true：每周期都发，响应最快，但 CAN 总线会更忙 -->
+  <!-- false：只有命令变化超过阈值时才发，减小总线占用 -->
+  <arg name="always_send" default="false" />
+
+  <!-- 当 always_send=false 时，位置命令变化超过这个阈值才发送。 -->
+  <!-- 单位：度 -->
+  <arg name="min_send_position_delta_deg" default="0.002" />
+
+  <!-- 当 always_send=false 时，速度命令变化超过这个阈值才发送。 -->
+  <!-- 单位：rpm -->
+  <arg name="min_send_speed_delta_rpm" default="0.02" />
+
+
+  <!-- ================================================================== -->
+  <!-- 5.1) 按 IMU 变化率动态调节发送频率                                   -->
+  <!-- ================================================================== -->
+
+  <!-- 是否启用按 IMU 角速度分档的动态发送频率 -->
+  <arg name="dynamic_imu_rate_send_rate_enable" default="true" />
+
+  <!-- IMU 角速度 EMA 平滑系数 -->
+  <!-- 越大越灵敏，越小越平滑 -->
+  <arg name="dynamic_imu_rate_ema_alpha" default="0.25" />
+
+  <!-- 四档发送频率 -->
+  <!-- level_0: 最小角速度 -> 最高频 -->
+  <!-- level_3: 最大角速度 -> 最低频 -->
+  <arg name="dynamic_imu_rate_send_hz_level_0" default="300.0" />
+  <arg name="dynamic_imu_rate_send_hz_level_1" default="150.0" />
+  <arg name="dynamic_imu_rate_send_hz_level_2" default="90.0" />
+  <arg name="dynamic_imu_rate_send_hz_level_3" default="30.0" />
+
+  <!-- 三个 IMU 角速度阈值，单位 deg/s -->
+  <arg name="dynamic_imu_rate_threshold_1_deg_s" default="2.0" />
+  <arg name="dynamic_imu_rate_threshold_2_deg_s" default="8.0" />
+  <arg name="dynamic_imu_rate_threshold_3_deg_s" default="20.0" />
+
+  <!-- 最长静默重发时间 -->
+  <arg name="dynamic_imu_rate_force_resend_sec" default="0.20" />
+
+
+  <!-- ================================================================== -->
+  <!-- 6) roll 轴基础控制参数                                              -->
+  <!-- ================================================================== -->
+
+  <!-- 误差进入静止区阈值。 -->
+  <!-- 误差绝对值小于该值时，系统认为已经够接近水平，可以停止动作。 -->
+  <arg name="roll_deadband_deg" default="0.5" />
+
+  <!-- 误差退出静止区阈值。 -->
+  <!-- 这是滞回阈值，通常要比 deadband 略大，防止在边界来回抖动。 -->
+  <arg name="roll_deadband_exit_deg" default="0.50" />
+
+  <!-- IMU 一阶低通滤波系数，范围一般 0~1。 -->
+  <!-- 越大：跟随更快，噪声也更多 -->
+  <!-- 越小：更平滑，但延迟更大 -->
+  <arg name="roll_imu_lpf_alpha" default="0.60" />
+
+  <!-- “角度输出”换算成“速度命令”的比例因子。 -->
+  <!-- 单位 rpm/deg。越大表示误差同样大时，速度给得更猛。 -->
+  <arg name="roll_speed_scale_rpm_per_deg" default="12.0" />
+
+  <!-- roll 轴最小速度限制。 -->
+  <!-- 防止电机速度给得太小，静摩擦推不动。 -->
+  <arg name="roll_min_speed_rpm" default="6.0" />
+
+  <!-- roll 轴最大速度限制。 -->
+  <!-- 防止速度过高导致过冲或机械冲击。 -->
+  <arg name="roll_max_speed_rpm" default="120.0" />
+
+  <!-- 位置目标斜率限制。 -->
+  <!-- 单位 deg/s，用于限制 target_cmd_deg 的变化速度。 -->
+  <arg name="roll_target_slew_deg_per_s" default="360.0" />
+
+  <!-- 速度命令斜率限制。 -->
+  <!-- 单位 rpm/s，用于限制 speed_cmd_rpm 的变化速度。 -->
+  <arg name="roll_speed_slew_rpm_per_s" default="720.0" />
+
+  <!-- 电机方向。通常是 1 或 -1。 -->
+  <!-- 如果方向反了，优先改这个。 -->
+  <arg name="roll_motor_dir" default="1.0" />
+
+  <!-- 水平零点偏置。 -->
+  <!-- 如果 IMU 机械安装本身有一点偏，可以在这里补。 -->
+  <arg name="roll_level_offset_deg" default="0.0" />
+
+  <!-- 输出位置零点偏置。 -->
+  <!-- 如果电机零点和机械水平零点不一致，可以在这里补偿。 -->
+  <arg name="roll_position_offset_deg" default="0.0" />
+
+
+  <!-- ================================================================== -->
+  <!-- 7) pitch 轴基础控制参数                                             -->
+  <!-- ================================================================== -->
+
+  <arg name="pitch_deadband_deg" default="0.5" />
+  <arg name="pitch_deadband_exit_deg" default="0.50" />
+  <arg name="pitch_imu_lpf_alpha" default="0.60" />
+  <arg name="pitch_speed_scale_rpm_per_deg" default="12.0" />
+  <arg name="pitch_min_speed_rpm" default="6.0" />
+  <arg name="pitch_max_speed_rpm" default="110.0" />
+  <arg name="pitch_target_slew_deg_per_s" default="320.0" />
+  <arg name="pitch_speed_slew_rpm_per_s" default="660.0" />
+  <arg name="pitch_motor_dir" default="1.0" />
+  <arg name="pitch_level_offset_deg" default="0.0" />
+  <arg name="pitch_position_offset_deg" default="0.0" />
+
+
+  <!-- ================================================================== -->
+  <!-- 8) roll 轴 PID                                                      -->
+  <!-- ================================================================== -->
+
+  <!-- 比例项。误差越大，输出越大。 -->
+  <arg name="roll_pid_kp" default="0.8" />
+
+  <!-- 积分项。用于消除长期静差。 -->
+  <!-- 你现在设为 0，表示暂时不用积分。 -->
+  <arg name="roll_pid_ki" default="0.0" />
+
+  <!-- 微分项。用于抑制变化太快、减小过冲。 -->
+  <arg name="roll_pid_kd" default="0.015" />
+
+  <!-- PID 输出角度限幅，单位 deg。 -->
+  <!-- 防止 PID 直接给出过大的目标位置偏移。 -->
+  <arg name="roll_pid_output_limit_deg" default="60.0" />
+
+  <!-- 积分项限幅。 -->
+  <!-- 防止积分项累得过大。 -->
+  <arg name="roll_pid_integral_limit" default="20.0" />
+
+  <!-- 积分分离阈值。 -->
+  <!-- 当误差太大时，不进行积分，避免一开始就严重积分饱和。 -->
+  <arg name="roll_pid_integral_separation_deg" default="8.0" />
+
+  <!-- 抗积分饱和回算增益。 -->
+  <!-- 用于在输出限幅后，把多余部分“回推”到积分项，减少 windup。 -->
+  <arg name="roll_pid_anti_windup_gain" default="6.0" />
+
+  <!-- D 项低通截止频率，单位 Hz。 -->
+  <!-- 越低越稳，但 D 项更钝；越高越灵，但更容易吃噪声。 -->
+  <arg name="roll_pid_d_lpf_hz" default="6.0" />
+
+
+  <!-- ================================================================== -->
+  <!-- 9) pitch 轴 PID                                                     -->
+  <!-- ================================================================== -->
+
+  <arg name="pitch_pid_kp" default="0.8" />
+  <arg name="pitch_pid_ki" default="0.0" />
+  <arg name="pitch_pid_kd" default="0.015" />
+  <arg name="pitch_pid_output_limit_deg" default="60.0" />
+  <arg name="pitch_pid_integral_limit" default="20.0" />
+  <arg name="pitch_pid_integral_separation_deg" default="8.0" />
+  <arg name="pitch_pid_anti_windup_gain" default="6.0" />
+  <arg name="pitch_pid_d_lpf_hz" default="6.0" />
+
+
+  <!-- ================================================================== -->
+  <!-- 10) 节点启动                                                        -->
+  <!-- ================================================================== -->
+  <node pkg="imu_run"
+        type="imu_position_speed_control"
+        name="imu_position_speed_control_low_latency"
+        output="screen"
+        respawn="false">
+
+    <!-- 基础设备 -->
+    <param name="can_interface" value="$(arg can_interface)" />
+    <param name="imu_device" value="$(arg imu_device)" />
+    <param name="imu_baud" value="$(arg imu_baud)" />
+
+    <!-- 控制循环 -->
+    <param name="control_hz" value="$(arg control_hz)" />
+    <param name="print_hz" value="$(arg print_hz)" />
+    <param name="imu_timeout_sec" value="$(arg imu_timeout_sec)" />
+
+    <!-- 上电初始化 -->
+    <param name="home_on_startup" value="$(arg home_on_startup)" />
+    <param name="home_speed_rpm" value="$(arg home_speed_rpm)" />
+    <param name="home_accel_rpm_s" value="$(arg home_accel_rpm_s)" />
+    <param name="home_decel_rpm_s" value="$(arg home_decel_rpm_s)" />
+    <param name="home_settle_time_sec" value="$(arg home_settle_time_sec)" />
+
+    <!-- 低延迟 -->
+    <param name="try_realtime" value="$(arg try_realtime)" />
+    <param name="try_mlockall" value="$(arg try_mlockall)" />
+    <param name="try_serial_low_latency" value="$(arg try_serial_low_latency)" />
+    <param name="main_thread_priority" value="$(arg main_thread_priority)" />
+    <param name="imu_thread_priority" value="$(arg imu_thread_priority)" />
+    <param name="main_thread_cpu" value="$(arg main_thread_cpu)" />
+    <param name="imu_thread_cpu" value="$(arg imu_thread_cpu)" />
+
+    <!-- 发送策略 -->
+    <param name="always_send" value="$(arg always_send)" />
+    <param name="min_send_position_delta_deg" value="$(arg min_send_position_delta_deg)" />
+    <param name="min_send_speed_delta_rpm" value="$(arg min_send_speed_delta_rpm)" />
+
+    <!-- 按 IMU 变化率动态发送频率 -->
+    <param name="dynamic_imu_rate_send_rate_enable" value="$(arg dynamic_imu_rate_send_rate_enable)" />
+    <param name="dynamic_imu_rate_ema_alpha" value="$(arg dynamic_imu_rate_ema_alpha)" />
+    <param name="dynamic_imu_rate_send_hz_level_0" value="$(arg dynamic_imu_rate_send_hz_level_0)" />
+    <param name="dynamic_imu_rate_send_hz_level_1" value="$(arg dynamic_imu_rate_send_hz_level_1)" />
+    <param name="dynamic_imu_rate_send_hz_level_2" value="$(arg dynamic_imu_rate_send_hz_level_2)" />
+    <param name="dynamic_imu_rate_send_hz_level_3" value="$(arg dynamic_imu_rate_send_hz_level_3)" />
+    <param name="dynamic_imu_rate_threshold_1_deg_s" value="$(arg dynamic_imu_rate_threshold_1_deg_s)" />
+    <param name="dynamic_imu_rate_threshold_2_deg_s" value="$(arg dynamic_imu_rate_threshold_2_deg_s)" />
+    <param name="dynamic_imu_rate_threshold_3_deg_s" value="$(arg dynamic_imu_rate_threshold_3_deg_s)" />
+    <param name="dynamic_imu_rate_force_resend_sec" value="$(arg dynamic_imu_rate_force_resend_sec)" />
+
+    <!-- roll 轴 -->
+    <param name="roll_deadband_deg" value="$(arg roll_deadband_deg)" />
+    <param name="roll_deadband_exit_deg" value="$(arg roll_deadband_exit_deg)" />
+    <param name="roll_imu_lpf_alpha" value="$(arg roll_imu_lpf_alpha)" />
+    <param name="roll_speed_scale_rpm_per_deg" value="$(arg roll_speed_scale_rpm_per_deg)" />
+    <param name="roll_min_speed_rpm" value="$(arg roll_min_speed_rpm)" />
+    <param name="roll_max_speed_rpm" value="$(arg roll_max_speed_rpm)" />
+    <param name="roll_target_slew_deg_per_s" value="$(arg roll_target_slew_deg_per_s)" />
+    <param name="roll_speed_slew_rpm_per_s" value="$(arg roll_speed_slew_rpm_per_s)" />
+    <param name="roll_motor_dir" value="$(arg roll_motor_dir)" />
+    <param name="roll_level_offset_deg" value="$(arg roll_level_offset_deg)" />
+    <param name="roll_position_offset_deg" value="$(arg roll_position_offset_deg)" />
+
+    <!-- pitch 轴 -->
+    <param name="pitch_deadband_deg" value="$(arg pitch_deadband_deg)" />
+    <param name="pitch_deadband_exit_deg" value="$(arg pitch_deadband_exit_deg)" />
+    <param name="pitch_imu_lpf_alpha" value="$(arg pitch_imu_lpf_alpha)" />
+    <param name="pitch_speed_scale_rpm_per_deg" value="$(arg pitch_speed_scale_rpm_per_deg)" />
+    <param name="pitch_min_speed_rpm" value="$(arg pitch_min_speed_rpm)" />
+    <param name="pitch_max_speed_rpm" value="$(arg pitch_max_speed_rpm)" />
+    <param name="pitch_target_slew_deg_per_s" value="$(arg pitch_target_slew_deg_per_s)" />
+    <param name="pitch_speed_slew_rpm_per_s" value="$(arg pitch_speed_slew_rpm_per_s)" />
+    <param name="pitch_motor_dir" value="$(arg pitch_motor_dir)" />
+    <param name="pitch_level_offset_deg" value="$(arg pitch_level_offset_deg)" />
+    <param name="pitch_position_offset_deg" value="$(arg pitch_position_offset_deg)" />
+
+    <!-- roll PID -->
+    <param name="roll_pid_kp" value="$(arg roll_pid_kp)" />
+    <param name="roll_pid_ki" value="$(arg roll_pid_ki)" />
+    <param name="roll_pid_kd" value="$(arg roll_pid_kd)" />
+    <param name="roll_pid_output_limit_deg" value="$(arg roll_pid_output_limit_deg)" />
+    <param name="roll_pid_integral_limit" value="$(arg roll_pid_integral_limit)" />
+    <param name="roll_pid_integral_separation_deg" value="$(arg roll_pid_integral_separation_deg)" />
+    <param name="roll_pid_anti_windup_gain" value="$(arg roll_pid_anti_windup_gain)" />
+    <param name="roll_pid_d_lpf_hz" value="$(arg roll_pid_d_lpf_hz)" />
+
+    <!-- pitch PID -->
+    <param name="pitch_pid_kp" value="$(arg pitch_pid_kp)" />
+    <param name="pitch_pid_ki" value="$(arg pitch_pid_ki)" />
+    <param name="pitch_pid_kd" value="$(arg pitch_pid_kd)" />
+    <param name="pitch_pid_output_limit_deg" value="$(arg pitch_pid_output_limit_deg)" />
+    <param name="pitch_pid_integral_limit" value="$(arg pitch_pid_integral_limit)" />
+    <param name="pitch_pid_integral_separation_deg" value="$(arg pitch_pid_integral_separation_deg)" />
+    <param name="pitch_pid_anti_windup_gain" value="$(arg pitch_pid_anti_windup_gain)" />
+    <param name="pitch_pid_d_lpf_hz" value="$(arg pitch_pid_d_lpf_hz)" />
+  </node>
+</launch>

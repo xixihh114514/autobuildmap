@@ -1,4 +1,6 @@
+#include <algorithm>
 #include <mutex>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -30,10 +32,14 @@ class VisualCalibrationGeotiffPlugin : public hector_geotiff::MapWriterPluginInt
     plugin_nh.param("victim_marker_topic", victim_marker_topic_, legacy_marker_topic);
     plugin_nh.param("qr_marker_topic", qr_marker_topic_, std::string("/visual_calibration/qr_grid_marks"));
 
-    plugin_nh.param("victim_label_prefix", victim_label_prefix_, legacy_label_prefix);
-    plugin_nh.param("qr_label_prefix", qr_label_prefix_, std::string("Q"));
+    const std::string default_victim_label_prefix =
+        legacy_label_prefix.empty() ? std::string("Person") : legacy_label_prefix;
+    plugin_nh.param("victim_label_prefix", victim_label_prefix_, default_victim_label_prefix);
+    plugin_nh.param("qr_label_prefix", qr_label_prefix_, std::string("QRCode"));
 
-    plugin_nh.param("draw_labels", draw_labels_, false);
+    plugin_nh.param("draw_labels", draw_labels_, true);
+    dedup_radius_ = plugin_nh.param("dedup_radius", 1.0);
+    dedup_radius_sq_ = dedup_radius_ * dedup_radius_;
 
     victim_marker_sub_ =
         nh_.subscribe(victim_marker_topic_, 1,
@@ -58,8 +64,8 @@ class VisualCalibrationGeotiffPlugin : public hector_geotiff::MapWriterPluginInt
       return;
     }
 
-    std::vector<geometry_msgs::Point> victim_points;
-    std::vector<geometry_msgs::Point> qr_points;
+    std::vector<LabeledPoint> victim_points;
+    std::vector<LabeledPoint> qr_points;
     {
       std::lock_guard<std::mutex> lock(points_mutex_);
       victim_points = victim_points_;
@@ -69,19 +75,20 @@ class VisualCalibrationGeotiffPlugin : public hector_geotiff::MapWriterPluginInt
     const hector_geotiff::MapWriterInterface::Color blue(0, 50, 255);
     const hector_geotiff::MapWriterInterface::Color red(255, 0, 0);
 
-    for (size_t i = 0; i < victim_points.size(); ++i) {
-      const std::string label =
-          draw_labels_ ? (victim_label_prefix_ + std::to_string(i + 1)) : "";
+    for (const auto& point : victim_points) {
+      const std::string label = draw_labels_
+                                    ? (victim_label_prefix_ + std::to_string(point.label_id))
+                                    : "";
       interface->drawObjectOfInterest(
-          Eigen::Vector2f(victim_points[i].x, victim_points[i].y),
+          Eigen::Vector2f(point.point.x, point.point.y),
           label, blue, hector_geotiff::SHAPE_CIRCLE);
     }
 
-    for (size_t i = 0; i < qr_points.size(); ++i) {
+    for (const auto& point : qr_points) {
       const std::string label =
-          draw_labels_ ? (qr_label_prefix_ + std::to_string(i + 1)) : "";
+          draw_labels_ ? (qr_label_prefix_ + std::to_string(point.label_id)) : "";
       interface->drawObjectOfInterest(
-          Eigen::Vector2f(qr_points[i].x, qr_points[i].y),
+          Eigen::Vector2f(point.point.x, point.point.y),
           label, red, hector_geotiff::SHAPE_CIRCLE);
     }
 
@@ -91,16 +98,22 @@ class VisualCalibrationGeotiffPlugin : public hector_geotiff::MapWriterPluginInt
   }
 
  private:
+  struct LabeledPoint {
+    geometry_msgs::Point point;
+    size_t label_id = 0;
+  };
+
   void victimMarkerCallback(const visualization_msgs::MarkerConstPtr& msg) {
-    updatePointsFromMarker(msg, victim_points_);
+    updatePointsFromMarker(msg, victim_points_, next_victim_label_id_);
   }
 
   void qrMarkerCallback(const visualization_msgs::MarkerConstPtr& msg) {
-    updatePointsFromMarker(msg, qr_points_);
+    updatePointsFromMarker(msg, qr_points_, next_qr_label_id_);
   }
 
   void updatePointsFromMarker(const visualization_msgs::MarkerConstPtr& msg,
-                              std::vector<geometry_msgs::Point>& storage) {
+                              std::vector<LabeledPoint>& storage,
+                              size_t& next_label_id) {
     if (!msg) {
       return;
     }
@@ -119,7 +132,62 @@ class VisualCalibrationGeotiffPlugin : public hector_geotiff::MapWriterPluginInt
       return;
     }
 
-    storage = msg->points;
+    std::vector<LabeledPoint> next_points;
+    next_points.reserve(msg->points.size());
+    std::vector<bool> old_used(storage.size(), false);
+
+    for (const auto& candidate : msg->points) {
+      int best_index = -1;
+      double best_distance_sq = dedup_radius_sq_;
+
+      for (size_t i = 0; i < storage.size(); ++i) {
+        if (old_used[i]) {
+          continue;
+        }
+        const double distance_sq = distanceSquared2d(candidate, storage[i].point);
+        if (distance_sq <= best_distance_sq) {
+          best_distance_sq = distance_sq;
+          best_index = static_cast<int>(i);
+        }
+      }
+
+      if (best_index >= 0) {
+        old_used[static_cast<size_t>(best_index)] = true;
+        LabeledPoint kept = storage[static_cast<size_t>(best_index)];
+        kept.point = candidate;
+        next_points.push_back(kept);
+        continue;
+      }
+
+      next_points.push_back(LabeledPoint{candidate, next_label_id++});
+    }
+
+    normalizeLabels(next_points);
+    storage = std::move(next_points);
+  }
+
+  static double distanceSquared2d(const geometry_msgs::Point& lhs,
+                                  const geometry_msgs::Point& rhs) {
+    const double dx = lhs.x - rhs.x;
+    const double dy = lhs.y - rhs.y;
+    return dx * dx + dy * dy;
+  }
+
+  static void normalizeLabels(std::vector<LabeledPoint>& points) {
+    std::set<size_t> sorted_labels;
+    for (const auto& point : points) {
+      sorted_labels.insert(point.label_id);
+    }
+
+    std::vector<size_t> labels(sorted_labels.begin(), sorted_labels.end());
+    for (auto& point : points) {
+      const auto iter = std::lower_bound(labels.begin(), labels.end(), point.label_id);
+      if (iter == labels.end()) {
+        continue;
+      }
+      point.label_id =
+          static_cast<size_t>(std::distance(labels.begin(), iter)) + static_cast<size_t>(1);
+    }
   }
 
   ros::NodeHandle nh_;
@@ -127,11 +195,15 @@ class VisualCalibrationGeotiffPlugin : public hector_geotiff::MapWriterPluginInt
   ros::Subscriber qr_marker_sub_;
 
   std::mutex points_mutex_;
-  std::vector<geometry_msgs::Point> victim_points_;
-  std::vector<geometry_msgs::Point> qr_points_;
+  std::vector<LabeledPoint> victim_points_;
+  std::vector<LabeledPoint> qr_points_;
 
   bool initialized_ = false;
   bool draw_labels_ = false;
+  size_t next_victim_label_id_ = 1;
+  size_t next_qr_label_id_ = 1;
+  double dedup_radius_ = 1.0;
+  double dedup_radius_sq_ = 1.0;
 
   std::string name_;
   std::string victim_marker_topic_;

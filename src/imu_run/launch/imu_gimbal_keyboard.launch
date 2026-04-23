@@ -1,0 +1,13 @@
+<launch>
+  <arg name="imu_cmd_vel_topic" default="/imu_cmd_vel" />
+  <arg name="keyboard_speed_rpm" default="10.0" />
+  <arg name="keyboard_repeat_rate" default="20.0" />
+  <arg name="keyboard_backend" default="auto" />
+
+  <node pkg="imu_run" type="gimbal_keyboard_control.py" name="gimbal_keyboard_control" output="screen">
+    <param name="cmd_topic" value="$(arg imu_cmd_vel_topic)" />
+    <param name="speed_rpm" value="$(arg keyboard_speed_rpm)" />
+    <param name="repeat_rate" value="$(arg keyboard_repeat_rate)" />
+    <param name="keyboard_backend" value="$(arg keyboard_backend)" />
+  </node>
+</launch>

@@ -72,7 +72,7 @@
   <!-- 是否启用参考模板过滤；开启后只接受与模板足够相似的二维码 -->
   <arg name="qr_enable_reference_filter" default="true"/>
   <!-- 二维码模板匹配阈值，低于这个相似度就认为不是目标二维码 -->
-  <arg name="qr_reference_match_threshold" default="0.78"/>
+  <arg name="qr_reference_match_threshold" default="0.70"/>
   <!-- 二维码模板图片目录 -->
   <arg name="qr_reference_dir" default="$(find visual_calibration)/models/qr_refs"/>
 
@@ -80,7 +80,7 @@
        二维码 CPU 优化参数
        ========================= -->
   <!-- 每隔多少帧真正执行一次二维码检测；其余帧可复用缓存结果 -->
-  <arg name="qr_detect_interval" default="1"/>
+  <arg name="qr_detect_interval" default="5"/>
   <!-- 二维码检测时允许的最大边长，超过则先缩图再检测，减小 CPU 压力 -->
   <arg name="qr_detect_max_side" default="640"/>
   <!-- 非检测帧是否复用上一次二维码检测结果 -->
@@ -114,7 +114,7 @@
   <!-- 受困者必须连续多少帧满足“可发布条件”才真正发布点云/TF -->
   <arg name="victim_consecutive_frames_required" default="3"/>
   <!-- 二维码必须连续多少个“真正检测帧”满足可发布条件才真正发布点云/TF -->
-  <arg name="qr_consecutive_frames_required" default="3"/>
+  <arg name="qr_consecutive_frames_required" default="2"/>
 
   <!-- =========================
        发布置信度门控
