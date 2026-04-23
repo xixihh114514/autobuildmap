@@ -870,3 +870,37 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       - 人物与二维码都需要连续 `3` 帧命中后才会真正进入后续地图标记链路
       - 若目标在相邻帧间跳变过大或中间丢失超过设定时间，则重新计数
       - 以上确认参数都已提升到 launch，可根据实车画面抖动情况继续调节
+
+   4.23.4
+      将 `visual_obstacle_detector` 的人物与二维码识别主节点从 Python 迁移到 C++，优先解决实车运行时的推理与图像处理性能问题，同时保持原有地图标记链路基本不变
+
+      本次改动：
+      1) 新增 `visual_obstacle_detector/src/person_global_localizer_node.cpp`
+         - 使用 C++ `OpenCV DNN` 加载 `models/yolo.onnx`
+         - 保留彩色图、对齐深度图、相机内参同步输入方式
+         - 保留人物中心点深度恢复、TF 变换到 `map`、相机系与地图系点云发布
+         - 保留连续帧确认逻辑与调试图像输出
+
+      2) 新增 `visual_obstacle_detector/src/qr_global_localizer_node.cpp`
+         - 使用 C++ `cv::QRCodeDetector` 做二维码检测与解码
+         - 保留二维码中心点深度恢复、TF 变换到 `map`、地图标记发布与调试图像输出
+         - 保留连续帧确认逻辑
+
+      3) 修改 `visual_obstacle_detector/launch/person_global_localizer.launch`
+         - 默认节点切换为 `person_global_localizer_node`
+         - 默认模型路径从 `yolo.pt` 调整为 `models/yolo.onnx`
+
+      4) 修改 `visual_obstacle_detector/launch/qr_global_localizer.launch`
+         - 默认节点切换为 `qr_global_localizer_node`
+
+      5) 修改 `visual_obstacle_detector/CMakeLists.txt` 与 `package.xml`
+         - 新增 `roscpp`、`roslib`、`libopencv-dev` 等 C++ 侧构建依赖
+         - 新增两个 C++ 可执行文件的编译与安装规则
+
+      当前需要注意：
+      - 人物检测的对外话题职责和原先基本保持一致，但默认模型已切换到 `yolo.onnx`
+      - 二维码节点当前是单目标版本，一帧内只处理一个二维码
+      - 之所以暂时不能直接做多二维码，是因为当前工作空间链接的 C++ OpenCV 版本仍为 `4.2.0`，缺少新版多二维码相关接口
+
+      验证情况：
+      - `catkin_make --pkg visual_obstacle_detector` 已编译通过

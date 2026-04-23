@@ -23,7 +23,7 @@
 
   <!-- 启动二维码全局定位节点 -->
   <node pkg="visual_obstacle_detector"
-        type="qr_global_localizer.py"
+        type="qr_global_localizer_node"
         name="qr_global_localizer"
         output="screen">
     <!-- 传入输入输出相关参数 -->

@@ -3,7 +3,7 @@
        输入彩色图、对齐深度图和相机内参，输出人物中心点的相机系/地图系点云与调试标记 -->
 
   <!-- YOLO 模型路径 -->
-  <arg name="model_path" default="$(find visual_obstacle_detector)/models/yolo.pt" />
+  <arg name="model_path" default="$(find visual_obstacle_detector)/models/yolo.onnx" />
   <!-- 彩色图输入话题 -->
   <arg name="color_topic" default="/camera/color/image_raw" />
   <!-- 与彩色图对齐的深度图输入话题 -->
@@ -27,7 +27,7 @@
 
   <!-- 启动人物全局定位节点 -->
   <node pkg="visual_obstacle_detector"
-        type="person_global_localizer.py"
+        type="person_global_localizer_node"
         name="person_global_localizer"
         output="screen">
     <!-- 传入模型与输入输出相关参数 -->
