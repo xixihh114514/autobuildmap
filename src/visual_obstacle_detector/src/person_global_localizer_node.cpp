@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cctype>
 #include <cstdio>
 #include <cmath>
 #include <exception>
@@ -14,6 +15,7 @@
 #include <message_filters/sync_policies/approximate_time.h>
 #include <message_filters/synchronizer.h>
 #include <opencv2/core.hpp>
+#include <opencv2/core/ocl.hpp>
 #include <opencv2/dnn.hpp>
 #include <opencv2/imgproc.hpp>
 #include <ros/package.h>
@@ -75,6 +77,14 @@ inline float clampFloat(const float value, const float low, const float high)
   return std::max(low, std::min(high, value));
 }
 
+std::string toLowerCopy(std::string value)
+{
+  std::transform(value.begin(), value.end(), value.begin(), [](const unsigned char ch) {
+    return static_cast<char>(std::tolower(ch));
+  });
+  return value;
+}
+
 }  // namespace
 
 class PersonGlobalLocalizerNode
@@ -109,6 +119,7 @@ public:
     pnh_.param("confirm_timeout", confirm_timeout_, 0.5);
     pnh_.param("input_width", input_width_, 640);
     pnh_.param("input_height", input_height_, 640);
+    pnh_.param("compute_target", compute_target_, std::string("auto"));
 
     min_confirm_frames_ = std::max(1, min_confirm_frames_);
     depth_roi_half_ = std::max(1, depth_roi_half_);
@@ -118,7 +129,7 @@ public:
     ROS_INFO("Loading ONNX person model from %s", model_path_.c_str());
     net_ = cv::dnn::readNetFromONNX(model_path_);
     net_.setPreferableBackend(cv::dnn::DNN_BACKEND_OPENCV);
-    net_.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
+    net_.setPreferableTarget(resolveDnnTarget());
 
     person_cloud_pub_ = pnh_.advertise<sensor_msgs::PointCloud2>("person_camera_cloud", 1);
     person_map_cloud_pub_ = pnh_.advertise<sensor_msgs::PointCloud2>("person_map_cloud", 1);
@@ -152,6 +163,69 @@ private:
     sensor_msgs::Image,
     sensor_msgs::CameraInfo> SyncPolicy;
   typedef message_filters::Synchronizer<SyncPolicy> Sync;
+
+  int resolveDnnTarget()
+  {
+    const std::string normalized_target = toLowerCopy(compute_target_);
+    const bool wants_opencl =
+      normalized_target == "opencl" ||
+      normalized_target == "opencl_fp16" ||
+      normalized_target == "auto";
+
+    if (wants_opencl) {
+      cv::ocl::setUseOpenCL(true);
+    }
+
+    const bool opencl_available = cv::ocl::haveOpenCL();
+    const bool opencl_enabled = cv::ocl::useOpenCL();
+    if (opencl_available && opencl_enabled) {
+      const cv::ocl::Device device = cv::ocl::Device::getDefault();
+      if (device.available()) {
+        ROS_INFO(
+          "OpenCL device detected for person detector: %s | vendor=%s | version=%s",
+          device.name().c_str(),
+          device.vendorName().c_str(),
+          device.version().c_str());
+      }
+    }
+
+    if (normalized_target == "cpu") {
+      ROS_INFO("Person detector compute target: CPU");
+      return cv::dnn::DNN_TARGET_CPU;
+    }
+
+    if (normalized_target == "opencl_fp16") {
+      if (opencl_available && opencl_enabled) {
+        ROS_INFO("Person detector compute target: OpenCL FP16");
+        return cv::dnn::DNN_TARGET_OPENCL_FP16;
+      }
+      ROS_WARN("Requested OpenCL FP16 for person detector, but no OpenCL runtime/device is available. Falling back to CPU.");
+      return cv::dnn::DNN_TARGET_CPU;
+    }
+
+    if (normalized_target == "opencl") {
+      if (opencl_available && opencl_enabled) {
+        ROS_INFO("Person detector compute target: OpenCL");
+        return cv::dnn::DNN_TARGET_OPENCL;
+      }
+      ROS_WARN("Requested OpenCL for person detector, but no OpenCL runtime/device is available. Falling back to CPU.");
+      return cv::dnn::DNN_TARGET_CPU;
+    }
+
+    if (normalized_target == "auto") {
+      if (opencl_available && opencl_enabled) {
+        ROS_INFO("Person detector compute target: AUTO -> OpenCL");
+        return cv::dnn::DNN_TARGET_OPENCL;
+      }
+      ROS_WARN("Person detector compute target AUTO could not enable OpenCL. Falling back to CPU.");
+      return cv::dnn::DNN_TARGET_CPU;
+    }
+
+    ROS_WARN(
+      "Unknown person detector compute_target [%s]. Supported values: auto, cpu, opencl, opencl_fp16. Falling back to CPU.",
+      compute_target_.c_str());
+    return cv::dnn::DNN_TARGET_CPU;
+  }
 
   void syncedCallback(
     const sensor_msgs::ImageConstPtr& color_msg,
@@ -715,6 +789,7 @@ private:
   std::string depth_topic_;
   std::string camera_info_topic_;
   std::string global_frame_;
+  std::string compute_target_;
 
   double conf_threshold_;
   double iou_threshold_;
