@@ -1,0 +1,10 @@
+<launch>
+  <arg name="model" default="$(find rebo24)/urdf/rebo24.urdf" />
+
+  <include file="$(find rebo24)/launch/gazebo.launch" />
+
+  <include file="$(find rebo24)/launch/display.launch">
+    <arg name="model" value="$(arg model)" />
+    <arg name="delay_sec" value="10" />
+  </include>
+</launch>

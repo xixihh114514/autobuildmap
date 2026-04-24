@@ -759,3 +759,31 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       - 当前 hector 直接使用 `registered_scan_to_scan.launch` 输出的 `/scan` 做二维建图
       - 关闭 `pub_map_odom_transform` 后，hector 不再额外发布 `map -> odom`，避免和当前链路里的 TF 关系打架
       - 当前 `hector.launch` 里 `odom_frame` 仍保持 `base_link`，本轮主要是统一 scan 输入与 TF 发布行为
+26.4.24
+   4.24.0
+      版本目标：整理 `rebo24` 机器人模型包，补充当前仿真入口与使用说明，并将本轮版本推送到远端。
+
+      本次改动：
+      1) 新增 `rebo24` 机器人描述包并替换原 `car` 包
+         - 当前车模目录由 `src/car` 切换为 `src/rebo24`
+         - 保留四轮底盘基础结构，并同步导入新的 `meshes`、`urdf`、`launch` 与 `config`
+         - 新增 `imu.STL` 以及相机/IMU 相关坐标系链
+
+      2) 补齐 `rebo24/urdf/rebo24.urdf` 中的传感器与 Gazebo 配置
+         - LiDAR 通过 `libgazebo_ros_velodyne_laser.so` 发布 `/velodyne_points`
+         - 相机链包含 depth、infra1、infra2、color 与对应 optical frame
+         - IMU 传感器挂在 `camera_imu_frame`，当前更新频率配置为 `200Hz`
+
+      3) 新增 `rebo24` 的基础启动入口
+         - `gazebo.launch`：启动 Gazebo 空场景、静态 TF 并生成 `rebo24` 模型
+         - `display.launch`：发布 `robot_description`，启动 `joint_state_publisher_gui` 与 `robot_state_publisher`
+         - `simbase.launch`：统一组合 Gazebo 与显示链路
+         - `keyboard.launch`：提供 `teleop_twist_keyboard` 键盘控制入口
+
+      4) 补充仓库文档
+         - 根目录 `README.md` 新增 `rebo24` 包结构说明、依赖项与常用启动命令
+
+      当前说明：
+      - `gazebo.launch` 目前默认加载 `gazebo_ros/launch/empty_world.launch`
+      - 仓库中的 `src/rebo24/worlds/1.world` 暂未接入默认启动链
+      - `display.launch` 中的 RViz 节点当前仍保持注释状态
