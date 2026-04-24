@@ -20,11 +20,11 @@ constexpr int kLeftMotorDirection = 1;
 constexpr int kRightMotorDirection = -1;
 
 // 左右轮接地点中心之间的距离，单位米。
-constexpr double kWheelTrackMeters = 0.36;
+constexpr double kWheelTrackMeters = 0.2285;
 // 前后轴中心之间的距离，单位米。
-constexpr double kWheelbaseMeters = 0.40;
+constexpr double kWheelbaseMeters = 0.5552;
 // 车轮半径，单位米，用于把线速度换算成车轮角速度。
-constexpr double kWheelRadiusMeters = 0.075;
+constexpr double kWheelRadiusMeters = 0.0680;
 
 // 速度换算用的圆周率。
 constexpr double kPi = 3.14159265358979323846;

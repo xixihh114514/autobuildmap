@@ -787,3 +787,15 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       - `gazebo.launch` 目前默认加载 `gazebo_ros/launch/empty_world.launch`
       - 仓库中的 `src/rebo24/worlds/1.world` 暂未接入默认启动链
       - `display.launch` 中的 RViz 节点当前仍保持注释状态
+   4.24.1
+      版本目标：根据实车测量结果更新 `control` 底盘物理参数，并同步记录到版本说明。
+
+      本次改动：
+      1) 修改 `src/control/include/control/chassis_common_config.h`
+         - `kWheelTrackMeters`：`0.36 -> 0.2285`
+         - `kWheelbaseMeters`：`0.40 -> 0.5552`
+         - `kWheelRadiusMeters`：`0.075 -> 0.0680`
+
+      当前说明：
+      - 本轮参数基于实测值：左右同轴两轮距离 `228.5 mm`，前后轴间距离 `555.2 mm`，轮半径 `68.0 mm`
+      - 以上参数用于差速控制中的底盘几何配置，以及线速度到轮速的换算
