@@ -826,3 +826,40 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       - 本轮没有改动 `rebo24` 的 IMU link 关系；Gazebo IMU 插件仍挂在 `camera_imu_frame`
       - `imu_link` 当前只是 URDF 结构件，不单独发布 Gazebo IMU 数据
       - `display.launch` 当前会尝试加载 `rebo24/urdf.rviz`，若本地未提供该文件，需要后续补齐或注释 RViz 节点
+   4.25.1
+      版本目标：把 RoboCup 探索链路与 `robocup.yaml` 的使用说明补记到 `src/readme.md`，统一放在版本记录里，避免说明分散到根目录 `README.md`。
+
+      本次补充：
+      1) 记录 RoboCup 推荐启动顺序
+         - `roslaunch rebo24 simbase.launch`
+         - `roslaunch fast_lio mapping_velodyne.launch`
+         - `roslaunch loam_interface loam_interface.launch`
+         - `roslaunch sensor_scan_generation sensor_scan_generation.launch`
+         - `roslaunch terrain_analysis terrain_analysis.launch`
+         - `roslaunch terrain_analysis_ext terrain_analysis_ext.launch`
+         - `roslaunch local_planner local_planner.launch`
+         - `roslaunch tare_planner explore_robocup.launch`
+
+      2) 明确 `explore_robocup.launch` 的参数加载关系
+         - 该入口会通过 `tare_planner/launch/explore.launch` 固定传入 `scenario=robocup`
+         - 实际加载参数文件为 `tare_planner/config/robocup.yaml`
+         - 可选接口保留 `rviz`、`rosbag_record`、`bag_path`、`bag_name_prefix` 与 `use_boundary`
+
+      3) 记录当前关键话题链路
+         - `loam_interface` 输出 `/registered_scan`
+         - `sensor_scan_generation` 输出 `/state_estimation_at_scan`
+         - `terrain_analysis` 输出 `/terrain_map`
+         - `terrain_analysis_ext` 输出 `/terrain_map_ext`
+         - `tare_planner` 输出 `/way_point`
+         - `local_planner` 当前订阅 `/way_point`、`/registered_scan`、`/terrain_map` 和 `/navigation_boundary`
+
+      4) 记录 `robocup.yaml` 当前的调参方向
+         - 放宽 frontier 保留条件，避免窄入口附近的小 frontier 被过早滤掉
+         - 加密 `viewpoint_manager` 采样，并减小视点碰撞边界，尽量保留入口内外候选视点
+         - 启用 `kUseMomentum`，降低方向切换阈值，减少双入口前来回试探
+         - 上调 `kExtendWayPointDistanceBig` 与 `kLookAheadDistance`，增强已选分支后的延续性
+         - 下调 `kMinAddPointNumSmall` 与 `kMinAddPointNumBig`，避免窄口前因“新增信息不足”直接结束探索
+
+      当前说明：
+      - 当前这套参数面向“小尺度室内迷宫、窄通道、连续转角、入口较窄”的 RoboCup 地图
+      - 调参重点不是让车更激进，而是减少入口附近过早判定“探索完成”和路口左右犹豫
