@@ -55,6 +55,9 @@ roslaunch rebo24 display.launch model:=$(rospack find rebo24)/urdf/rebo24.urdf
 ## 当前仿真约定
 
 - `gazebo.launch` 当前默认包含 `gazebo_ros/launch/empty_world.launch`
+- `rebo24` 当前静态 TF 树约定为 `body -> base_footprint -> base_link`
+- `body -> base_footprint` 当前为零位姿，`base_footprint -> base_link` 当前为 `z=0.025`
+- 将 `body` 作为最上层节点，是为了避免 `base_footprint` 同时挂在多个父节点下而触发 `TF_REPEATED_DATA` 警告
 - 差速插件参数已按 `rebo24` 当前模型几何对齐：`wheelSeparation=0.466000391758278`、`wheelDiameter=0.050`
 - LiDAR 通过 `libgazebo_ros_velodyne_laser.so` 发布 `/velodyne_points`
 - 相机链包含 depth、infra1、infra2、color 与 IMU 相关坐标系
