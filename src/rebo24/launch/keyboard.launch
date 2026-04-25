@@ -2,11 +2,7 @@
   <arg name="cmd_vel_topic" default="cmd_vel" />
   <arg name="model" default="rebo24" />
 
-  <node
-    pkg="teleop_twist_keyboard"
-    type="teleop_twist_keyboard.py"
-    name="keyboard_teleop"
-    output="screen">
+  <node pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" name="keyboard_teleop" output="screen">
     <param name="cmd_vel" value="$(arg cmd_vel_topic)" />
     <param name="model" value="$(arg model)" />
   </node>

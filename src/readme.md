@@ -799,3 +799,30 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       当前说明：
       - 本轮参数基于实测值：左右同轴两轮距离 `228.5 mm`，前后轴间距离 `555.2 mm`，轮半径 `68.0 mm`
       - 以上参数用于差速控制中的底盘几何配置，以及线速度到轮速的换算
+26.4.25
+   4.25.0
+      版本目标：继续整理 `rebo24` 仿真配置，补齐说明文档，并统一当前 Gazebo 与 FAST_LIO 的几何对齐约定。
+
+      本次改动：
+      1) 修正 `rebo24/urdf/rebo24.urdf` 中差速插件参数
+         - `wheelSeparation`：`0.438 -> 0.466000391758278`
+         - `wheelDiameter`：`0.058 -> 0.050`
+         - 含义：按当前 `rebo24` 四个轮子 joint 的实际安装位置与轮子 mesh 外径重新对齐
+
+      2) 调整 `fast_lio/config/velodyne.yaml` 中 Gazebo 外参
+         - `mapping/extrinsic_T` 改为 `[-0.08376, 0.005038918391, 0.051879206396]`
+         - 当前外参定义按 Gazebo 实际发布 IMU 的挂载点 `camera_imu_frame` 计算
+         - 当前保持 `imu_topic=/camera/imu` 不变
+
+      3) 补齐 `rebo24` 启动入口并整理 launch 说明
+         - `rebo24/launch/simbase.launch` 用于统一启动 Gazebo 与显示链
+         - `rebo24/launch/keyboard.launch` 作为键盘控制入口保留
+         - `rebo24/launch/display.launch` 新增 `delay_sec` 参数，便于组合启动时延迟加载显示节点
+
+      4) 更新仓库说明文档
+         - 根目录 `README.md` 补充 `rebo24` 仿真约定、FAST_LIO 外参说明与常用启动命令
+
+      当前说明：
+      - 本轮没有改动 `rebo24` 的 IMU link 关系；Gazebo IMU 插件仍挂在 `camera_imu_frame`
+      - `imu_link` 当前只是 URDF 结构件，不单独发布 Gazebo IMU 数据
+      - `display.launch` 当前会尝试加载 `rebo24/urdf.rviz`，若本地未提供该文件，需要后续补齐或注释 RViz 节点

@@ -16,7 +16,7 @@ rera 的 RoboCup2026 自主建图赛项三维建图工作区。
 
 - `urdf/rebo24.urdf`：四轮底盘、LiDAR、相机、IMU 以及 Gazebo 传感器配置
 - `launch/gazebo.launch`：启动 Gazebo 空场景、静态 TF 并生成 `rebo24` 模型
-- `launch/display.launch`：发布 `robot_description`，启动 `joint_state_publisher_gui` 和 `robot_state_publisher`
+- `launch/display.launch`：发布 `robot_description`，启动 `joint_state_publisher_gui`、`robot_state_publisher`，并支持延时启动
 - `launch/simbase.launch`：组合 `gazebo.launch` 与 `display.launch`
 - `launch/keyboard.launch`：提供 `teleop_twist_keyboard` 键盘控制入口
 - `config/joint_names_rebo24.yaml`：关节名称配置
@@ -45,14 +45,19 @@ roslaunch rebo24 simbase.launch
 # 单独启键盘控制
 roslaunch rebo24 keyboard.launch
 
+# 启动 FAST-LIO（Velodyne 配置）
+roslaunch fast_lio mapping_velodyne.launch
+
 # 仅加载模型显示
 roslaunch rebo24 display.launch model:=$(rospack find rebo24)/urdf/rebo24.urdf
 ```
 
-## 当前默认行为
+## 当前仿真约定
 
 - `gazebo.launch` 当前默认包含 `gazebo_ros/launch/empty_world.launch`
+- 差速插件参数已按 `rebo24` 当前模型几何对齐：`wheelSeparation=0.466000391758278`、`wheelDiameter=0.050`
 - LiDAR 通过 `libgazebo_ros_velodyne_laser.so` 发布 `/velodyne_points`
 - 相机链包含 depth、infra1、infra2、color 与 IMU 相关坐标系
-- `display.launch` 中的 RViz 节点当前保持注释状态
-- 仓库中已有 `src/rebo24/worlds/1.world`，但默认启动链尚未接入该 world
+- Gazebo IMU 插件当前仍挂在 `camera_imu_frame`，发布 `/camera/imu`；`imu_link` 目前没有单独的 Gazebo IMU 插件
+- `src/fast_lio/config/velodyne.yaml` 当前按 `lidar -> camera_imu_frame` 对齐，`extrinsic_T=[-0.08376, 0.005038918391, 0.051879206396]`
+- `display.launch` 当前会尝试加载 `$(find rebo24)/urdf.rviz`；如果本地没有该文件，需要先补配置或注释 RViz 节点

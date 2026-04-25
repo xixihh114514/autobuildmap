@@ -20,7 +20,7 @@ mapping:
     fov_degree:    360           # 有效视场角（度）
     det_range:     50.0         # 有效探测距离（米）
     extrinsic_est_en:  false     # 是否在线估计 IMU-LiDAR 外参（建议已标定时关闭）
-    extrinsic_T: [ -0.087660, 0.008281, 0.066770 ]   # LiDAR 在 IMU 坐标系下的平移
+    extrinsic_T: [ -0.08376, 0.005038918391, 0.051879206396 ]              # LiDAR 在 IMU 坐标系下的平移（按 Gazebo IMU plugin 挂载点 camera_imu_frame 计算）
     extrinsic_R: [ 1, 0, 0,
                    0, 1, 0,
                    0, 0, 1]      # LiDAR 在 IMU 坐标系下的旋转（行优先 3x3）
