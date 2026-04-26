@@ -20,7 +20,41 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_ros
   visualization_msgs
 )
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
 find_package(OpenCV REQUIRED COMPONENTS core dnn imgproc objdetect)
+
+if(NOT OpenVINO_DIR)
+  execute_process(
+    COMMAND
+      ${Python3_EXECUTABLE}
+      -c
+      "import importlib.util, pathlib, sys; spec = importlib.util.find_spec('openvino'); pkg = pathlib.Path(spec.origin).resolve().parent if spec and spec.origin else None; candidates = [pkg / 'runtime' / 'cmake', pkg / 'cmake'] if pkg else []; existing = [str(path) for path in candidates if path.exists()]; print(existing[0] if existing else '')"
+    OUTPUT_VARIABLE OPENVINO_DIR_FROM_PYTHON
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+  if(OPENVINO_DIR_FROM_PYTHON)
+    set(OpenVINO_DIR "${OPENVINO_DIR_FROM_PYTHON}" CACHE PATH "OpenVINO CMake config path")
+  endif()
+endif()
+
+if(NOT OpenVINO_DIR)
+  message(FATAL_ERROR "OpenVINO C++ runtime was not found. Install openvino-dev or set OpenVINO_DIR manually.")
+endif()
+
+find_package(OpenVINO REQUIRED)
+
+if(DEFINED OpenVINO_GLIBCXX_USE_CXX11_ABI AND NOT OpenVINO_GLIBCXX_USE_CXX11_ABI STREQUAL "")
+  remove_definitions(-D_GLIBCXX_USE_CXX11_ABI=${OpenVINO_GLIBCXX_USE_CXX11_ABI})
+endif()
+
+execute_process(
+  COMMAND
+    ${Python3_EXECUTABLE}
+    -c
+    "import importlib.util, pathlib; spec = importlib.util.find_spec('openvino'); pkg = pathlib.Path(spec.origin).resolve().parent if spec and spec.origin else None; candidates = [pkg / 'libs', pkg / 'runtime' / 'lib' / 'intel64'] if pkg else []; existing = [str(path) for path in candidates if path.exists()]; print(existing[0] if existing else '')"
+  OUTPUT_VARIABLE OPENVINO_RUNTIME_LIB_DIR
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -133,7 +167,7 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+  include
   ${catkin_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
 )
@@ -151,6 +185,9 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
+add_library(person_openvino_backend SHARED
+  src/openvino_person_backend.cpp
+)
 add_executable(person_global_localizer_node
   src/person_global_localizer_node.cpp
 )
@@ -170,14 +207,30 @@ add_dependencies(person_global_localizer_node ${${PROJECT_NAME}_EXPORTED_TARGETS
 add_dependencies(qr_global_localizer_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
+target_link_libraries(person_openvino_backend
+  PRIVATE
+    openvino::runtime
+)
 target_link_libraries(person_global_localizer_node
   ${catkin_LIBRARIES}
   ${OpenCV_LIBRARIES}
+  person_openvino_backend
 )
 target_link_libraries(qr_global_localizer_node
   ${catkin_LIBRARIES}
   ${OpenCV_LIBRARIES}
 )
+
+if(OPENVINO_RUNTIME_LIB_DIR)
+  set_target_properties(person_openvino_backend PROPERTIES
+    BUILD_RPATH "${OPENVINO_RUNTIME_LIB_DIR}"
+    INSTALL_RPATH "${OPENVINO_RUNTIME_LIB_DIR}"
+  )
+  set_target_properties(person_global_localizer_node PROPERTIES
+    BUILD_RPATH "${OPENVINO_RUNTIME_LIB_DIR}"
+    INSTALL_RPATH "${OPENVINO_RUNTIME_LIB_DIR}"
+  )
+endif()
 
 #############
 ## Install ##
@@ -197,8 +250,10 @@ catkin_install_python(PROGRAMS
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
 install(TARGETS
+  person_openvino_backend
   person_global_localizer_node
   qr_global_localizer_node
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

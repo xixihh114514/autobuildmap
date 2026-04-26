@@ -10,6 +10,8 @@
   <arg name="camera_info_topic" default="/camera/color/camera_info" />
   <!-- 是否发布二维码检测调试图像 -->
   <arg name="publish_debug_image" default="true" />
+  <!-- OpenCV/OpenCL 计算设备：auto / gpu / cpu；兼容旧值 opencl / opencl_fp16 -->
+  <arg name="compute_target" default="gpu" />
   <!-- 全局输出坐标系，通常为 map -->
   <arg name="global_frame" default="map" />
   <!-- 相机系到全局系的 TF 变换等待时间 -->
@@ -31,6 +33,7 @@
     <param name="depth_topic" value="$(arg depth_topic)" />
     <param name="camera_info_topic" value="$(arg camera_info_topic)" />
     <param name="publish_debug_image" value="$(arg publish_debug_image)" />
+    <param name="compute_target" value="$(arg compute_target)" />
     <param name="global_frame" value="$(arg global_frame)" />
     <param name="transform_timeout" value="$(arg transform_timeout)" />
     <!-- 传入连续帧确认参数，用于抑制单帧误检 -->

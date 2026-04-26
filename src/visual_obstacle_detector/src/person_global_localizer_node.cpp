@@ -1,9 +1,12 @@
 #include <algorithm>
 #include <cctype>
+#include <cstring>
 #include <cstdio>
 #include <cmath>
 #include <exception>
 #include <memory>
+#include <sstream>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -15,7 +18,6 @@
 #include <message_filters/sync_policies/approximate_time.h>
 #include <message_filters/synchronizer.h>
 #include <opencv2/core.hpp>
-#include <opencv2/core/ocl.hpp>
 #include <opencv2/dnn.hpp>
 #include <opencv2/imgproc.hpp>
 #include <ros/package.h>
@@ -30,6 +32,8 @@
 #include <tf2_ros/transform_listener.h>
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
+
+#include "visual_obstacle_detector/openvino_person_backend.h"
 
 namespace
 {
@@ -93,6 +97,7 @@ public:
   PersonGlobalLocalizerNode()
     : nh_()
     , pnh_("~")
+    , backend_(nullptr)
     , tf_buffer_()
     , tf_listener_(tf_buffer_)
   {
@@ -126,10 +131,7 @@ public:
     input_width_ = std::max(32, input_width_);
     input_height_ = std::max(32, input_height_);
 
-    ROS_INFO("Loading ONNX person model from %s", model_path_.c_str());
-    net_ = cv::dnn::readNetFromONNX(model_path_);
-    net_.setPreferableBackend(cv::dnn::DNN_BACKEND_OPENCV);
-    net_.setPreferableTarget(resolveDnnTarget());
+    loadModel();
 
     person_cloud_pub_ = pnh_.advertise<sensor_msgs::PointCloud2>("person_camera_cloud", 1);
     person_map_cloud_pub_ = pnh_.advertise<sensor_msgs::PointCloud2>("person_map_cloud", 1);
@@ -157,6 +159,12 @@ public:
       min_confirm_frames_);
   }
 
+  ~PersonGlobalLocalizerNode()
+  {
+    person_openvino_backend_destroy(backend_);
+    backend_ = nullptr;
+  }
+
 private:
   typedef message_filters::sync_policies::ApproximateTime<
     sensor_msgs::Image,
@@ -164,67 +172,52 @@ private:
     sensor_msgs::CameraInfo> SyncPolicy;
   typedef message_filters::Synchronizer<SyncPolicy> Sync;
 
-  int resolveDnnTarget()
+  void loadModel()
+  {
+    requested_device_ = resolveOpenVinoDevice();
+    char error_buffer[1024] = {0};
+    backend_ = person_openvino_backend_create(
+      model_path_.c_str(),
+      input_width_,
+      input_height_,
+      requested_device_.c_str(),
+      error_buffer,
+      sizeof(error_buffer));
+    if (backend_ == nullptr) {
+      throw std::runtime_error(
+        error_buffer[0] != '\0' ? std::string(error_buffer) : std::string("Failed to create OpenVINO backend"));
+    }
+
+    std::istringstream summary_stream(person_openvino_backend_get_summary(backend_));
+    std::string line;
+    while (std::getline(summary_stream, line)) {
+      if (!line.empty()) {
+        ROS_INFO("%s", line.c_str());
+      }
+    }
+  }
+
+  std::string resolveOpenVinoDevice() const
   {
     const std::string normalized_target = toLowerCopy(compute_target_);
-    const bool wants_opencl =
-      normalized_target == "opencl" ||
-      normalized_target == "opencl_fp16" ||
-      normalized_target == "auto";
-
-    if (wants_opencl) {
-      cv::ocl::setUseOpenCL(true);
-    }
-
-    const bool opencl_available = cv::ocl::haveOpenCL();
-    const bool opencl_enabled = cv::ocl::useOpenCL();
-    if (opencl_available && opencl_enabled) {
-      const cv::ocl::Device device = cv::ocl::Device::getDefault();
-      if (device.available()) {
-        ROS_INFO(
-          "OpenCL device detected for person detector: %s | vendor=%s | version=%s",
-          device.name().c_str(),
-          device.vendorName().c_str(),
-          device.version().c_str());
-      }
-    }
-
     if (normalized_target == "cpu") {
-      ROS_INFO("Person detector compute target: CPU");
-      return cv::dnn::DNN_TARGET_CPU;
+      return "CPU";
     }
-
-    if (normalized_target == "opencl_fp16") {
-      if (opencl_available && opencl_enabled) {
-        ROS_INFO("Person detector compute target: OpenCL FP16");
-        return cv::dnn::DNN_TARGET_OPENCL_FP16;
-      }
-      ROS_WARN("Requested OpenCL FP16 for person detector, but no OpenCL runtime/device is available. Falling back to CPU.");
-      return cv::dnn::DNN_TARGET_CPU;
+    if (
+      normalized_target == "gpu" ||
+      normalized_target == "opencl" ||
+      normalized_target == "opencl_fp16")
+    {
+      return "GPU";
     }
-
-    if (normalized_target == "opencl") {
-      if (opencl_available && opencl_enabled) {
-        ROS_INFO("Person detector compute target: OpenCL");
-        return cv::dnn::DNN_TARGET_OPENCL;
-      }
-      ROS_WARN("Requested OpenCL for person detector, but no OpenCL runtime/device is available. Falling back to CPU.");
-      return cv::dnn::DNN_TARGET_CPU;
-    }
-
     if (normalized_target == "auto") {
-      if (opencl_available && opencl_enabled) {
-        ROS_INFO("Person detector compute target: AUTO -> OpenCL");
-        return cv::dnn::DNN_TARGET_OPENCL;
-      }
-      ROS_WARN("Person detector compute target AUTO could not enable OpenCL. Falling back to CPU.");
-      return cv::dnn::DNN_TARGET_CPU;
+      return "AUTO:GPU,CPU";
     }
 
     ROS_WARN(
-      "Unknown person detector compute_target [%s]. Supported values: auto, cpu, opencl, opencl_fp16. Falling back to CPU.",
+      "Unknown person detector compute_target [%s]. Supported values: auto, gpu, cpu. Legacy values opencl/opencl_fp16 map to gpu. Falling back to AUTO:GPU,CPU.",
       compute_target_.c_str());
-    return cv::dnn::DNN_TARGET_CPU;
+    return "AUTO:GPU,CPU";
   }
 
   void syncedCallback(
@@ -363,16 +356,45 @@ private:
       cv::Scalar(),
       true,
       false);
+    if (!blob.isContinuous()) {
+      blob = blob.clone();
+    }
 
-    net_.setInput(blob);
-    cv::Mat output = net_.forward();
+    PersonOpenVinoTensorView output_view{};
+    char error_buffer[1024] = {0};
+    if (!person_openvino_backend_infer(
+          backend_,
+          blob.ptr<float>(),
+          blob.total(),
+          &output_view,
+          error_buffer,
+          sizeof(error_buffer)))
+    {
+      ROS_ERROR_THROTTLE(
+        2.0,
+        "OpenVINO inference failed for person detector: %s",
+        error_buffer[0] != '\0' ? error_buffer : "unknown error");
+      return std::vector<Detection>();
+    }
+
+    if (output_view.dim0 != 1U) {
+      ROS_ERROR_THROTTLE(
+        2.0,
+        "Unexpected OpenVINO output shape for person detector: [%zu, %zu, %zu]",
+        output_view.dim0,
+        output_view.dim1,
+        output_view.dim2);
+      return std::vector<Detection>();
+    }
+
+    const float* output_data = output_view.data;
 
     std::vector<cv::Rect> boxes;
     std::vector<float> scores;
 
-    if (output.dims == 3 && output.size[1] == 5) {
-      const int count = output.size[2];
-      cv::Mat view(output.size[1], output.size[2], CV_32F, output.ptr<float>());
+    if (output_view.dim1 == 5U) {
+      const int count = static_cast<int>(output_view.dim2);
+      cv::Mat view(5, count, CV_32F, const_cast<float*>(output_data));
       for (int i = 0; i < count; ++i) {
         const float score = view.at<float>(4, i);
         if (score < static_cast<float>(conf_threshold_)) {
@@ -381,9 +403,9 @@ private:
         appendDecodedBox(view.at<float>(0, i), view.at<float>(1, i), view.at<float>(2, i), view.at<float>(3, i),
           score, letterboxed, color_image.size(), boxes, scores);
       }
-    } else if (output.dims == 3 && output.size[2] == 5) {
-      const int count = output.size[1];
-      cv::Mat view(output.size[1], output.size[2], CV_32F, output.ptr<float>());
+    } else if (output_view.dim2 == 5U) {
+      const int count = static_cast<int>(output_view.dim1);
+      cv::Mat view(count, 5, CV_32F, const_cast<float*>(output_data));
       for (int i = 0; i < count; ++i) {
         const float score = view.at<float>(i, 4);
         if (score < static_cast<float>(conf_threshold_)) {
@@ -807,7 +829,8 @@ private:
   int input_height_;
   bool publish_debug_image_;
 
-  cv::dnn::Net net_;
+  PersonOpenVinoBackend* backend_;
+  std::string requested_device_;
   std::vector<Track> pending_confirmations_;
 
   ros::Publisher person_cloud_pub_;

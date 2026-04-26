@@ -14,6 +14,7 @@
 #include <message_filters/sync_policies/approximate_time.h>
 #include <message_filters/synchronizer.h>
 #include <opencv2/core.hpp>
+#include <opencv2/core/ocl.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/objdetect.hpp>
 #include <ros/ros.h>
@@ -41,6 +42,14 @@ inline int clampInt(const int value, const int low, const int high)
   return std::max(low, std::min(high, value));
 }
 
+std::string toLowerCopy(std::string value)
+{
+  std::transform(value.begin(), value.end(), value.begin(), [](const unsigned char ch) {
+    return static_cast<char>(std::tolower(ch));
+  });
+  return value;
+}
+
 }  // namespace
 
 class QRGlobalLocalizerNode
@@ -49,6 +58,7 @@ public:
   QRGlobalLocalizerNode()
     : nh_()
     , pnh_("~")
+    , use_opencl_(false)
     , tf_buffer_()
     , tf_listener_(tf_buffer_)
   {
@@ -67,9 +77,11 @@ public:
     pnh_.param("min_confirm_frames", min_confirm_frames_, 3);
     pnh_.param("confirm_pixel_tolerance", confirm_pixel_tolerance_, 40.0);
     pnh_.param("confirm_timeout", confirm_timeout_, 0.5);
+    pnh_.param("compute_target", compute_target_, std::string("auto"));
 
     min_confirm_frames_ = std::max(1, min_confirm_frames_);
     depth_roi_half_ = std::max(1, depth_roi_half_);
+    configureComputeTarget();
 
     map_marker_pub_ = pnh_.advertise<visualization_msgs::MarkerArray>("qr_map_markers", 1);
     if (publish_debug_image_) {
@@ -102,6 +114,62 @@ private:
     sensor_msgs::CameraInfo> SyncPolicy;
   typedef message_filters::Synchronizer<SyncPolicy> Sync;
 
+  void configureComputeTarget()
+  {
+    const std::string normalized_target = toLowerCopy(compute_target_);
+
+    if (normalized_target == "cpu") {
+      cv::ocl::setUseOpenCL(false);
+      use_opencl_ = false;
+      ROS_INFO("QR detector compute target: CPU");
+      return;
+    }
+
+    if (
+      normalized_target == "gpu" ||
+      normalized_target == "opencl" ||
+      normalized_target == "opencl_fp16" ||
+      normalized_target == "auto")
+    {
+      cv::ocl::setUseOpenCL(true);
+      const bool opencl_available = cv::ocl::haveOpenCL();
+      const bool opencl_enabled = cv::ocl::useOpenCL();
+      if (opencl_available && opencl_enabled) {
+        use_opencl_ = true;
+        const cv::ocl::Device device = cv::ocl::Device::getDefault();
+        if (device.available()) {
+          ROS_INFO(
+            "QR detector compute target: %s -> OpenCL device=%s vendor=%s version=%s",
+            normalized_target == "auto" ? "AUTO" : "GPU",
+            device.name().c_str(),
+            device.vendorName().c_str(),
+            device.version().c_str());
+        } else {
+          ROS_INFO(
+            "QR detector compute target: %s -> OpenCL enabled",
+            normalized_target == "auto" ? "AUTO" : "GPU");
+        }
+        return;
+      }
+
+      use_opencl_ = false;
+      if (normalized_target == "auto") {
+        ROS_WARN("QR detector compute target AUTO could not enable OpenCL. Falling back to CPU.");
+      } else {
+        ROS_WARN(
+          "Requested QR detector GPU/OpenCL target, but no OpenCL runtime/device is available. Falling back to CPU.");
+      }
+      return;
+    }
+
+    cv::ocl::setUseOpenCL(true);
+    use_opencl_ = cv::ocl::haveOpenCL() && cv::ocl::useOpenCL();
+    ROS_WARN(
+      "Unknown QR detector compute_target [%s]. Supported values: auto, gpu, cpu. Legacy values opencl/opencl_fp16 map to gpu. Falling back to %s.",
+      compute_target_.c_str(),
+      use_opencl_ ? "OpenCL" : "CPU");
+  }
+
   void syncedCallback(
     const sensor_msgs::ImageConstPtr& color_msg,
     const sensor_msgs::ImageConstPtr& depth_msg,
@@ -129,7 +197,17 @@ private:
     const double stamp_sec = color_msg->header.stamp.toSec();
 
     cv::Mat points;
-    const std::string raw_text = qr_detector_.detectAndDecode(color_bridge->image, points);
+    std::string raw_text;
+    if (use_opencl_) {
+      cv::UMat color_input = color_bridge->image.getUMat(cv::ACCESS_READ);
+      cv::UMat gray_input;
+      cv::cvtColor(color_input, gray_input, cv::COLOR_BGR2GRAY);
+      raw_text = qr_detector_.detectAndDecode(gray_input, points);
+    } else {
+      cv::Mat gray_input;
+      cv::cvtColor(color_bridge->image, gray_input, cv::COLOR_BGR2GRAY);
+      raw_text = qr_detector_.detectAndDecode(gray_input, points);
+    }
     const std::string qr_text = normalizeQrText(raw_text);
 
     std::unordered_map<std::string, bool> active_qr_texts;
@@ -561,6 +639,7 @@ private:
   std::string depth_topic_;
   std::string camera_info_topic_;
   std::string global_frame_;
+  std::string compute_target_;
 
   double sync_slop_;
   double depth_unit_scale_;
@@ -573,6 +652,7 @@ private:
   int depth_roi_half_;
   int min_confirm_frames_;
   bool publish_debug_image_;
+  bool use_opencl_;
 
   cv::QRCodeDetector qr_detector_;
   std::unordered_map<std::string, Track> pending_confirmations_;

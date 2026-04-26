@@ -258,6 +258,7 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       yawRateGain：7.5 -> 5.0
       stopYawRateGain：7.5 -> 5.0
       switchTimeThre：1.0 -> 2.0
+
       说明：增强目标方向约束，减小转向增益，拉长前后切换时间，尽量降低窄通道内左右摆动和前后反复
    3.30.4
       振荡幅度减小但仍无法正常通过窄通道，继续做折中调参
@@ -997,3 +998,59 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       当前说明：
       - `rebo24` 目前主要是车体描述与启动入口包，后续如切主车体，仍需继续核对控制参数、TF 和实传感器话题
       - 本轮默认值整体偏向“先保证稳定可启动”，尤其是人物检测默认链路与 FAST_LIO 的 RViz 启动行为已按现场使用回调
+   4.26.2
+      版本目标：将视觉检测统一到 C++ 路线，并优先使用 Intel 核显，减少 FAST_LIO / tare / hector_slam 对 CPU 的竞争。
+
+      本次改动：
+      1) person_global_localizer 从 Python/OpenCV DNN 路线切换为 C++ 节点
+         - launch 默认节点改为 `person_global_localizer_node`
+         - 模型默认改为 `models/yolo.onnx`
+         - 推理后端改为 OpenVINO
+         - 默认 `compute_target=gpu`
+
+      2) person 检测新增 OpenVINO 独立后端库
+         - 新增 `visual_obstacle_detector/include/visual_obstacle_detector/openvino_person_backend.h`
+         - 新增 `visual_obstacle_detector/src/openvino_person_backend.cpp`
+         - 由于 pip 版 OpenVINO 使用 `_GLIBCXX_USE_CXX11_ABI=0`，不能直接把整个 ROS 包切到同一 ABI
+         - 当前做法为：ROS 节点保持原 ABI，OpenVINO 推理后端单独隔离，避免 roscpp/cv_bridge/tf2 链接冲突
+
+      3) qr_global_localizer 保持 C++ + OpenCV `QRCodeDetector`
+         - 未改成 OpenVINO
+         - 新增 `compute_target` 参数，支持 `auto / gpu / cpu`
+         - `gpu` 路线走 OpenCV OpenCL + UMat
+         - launch 默认 `compute_target=gpu`
+
+      4) launch 层统一
+         - `person_global_localizer.launch` 与 `qr_global_localizer.launch`
+         - 现在都支持：
+           `compute_target:=auto|gpu|cpu`
+         - 当前默认均为：
+           `compute_target:=gpu`
+
+      编译/启动验证结果：
+      1) `person_global_localizer_node` 编译通过
+      2) `qr_global_localizer_node` 编译通过
+      3) person 启动日志确认可识别 Intel iGPU，并正常在 GPU 上加载 OpenVINO 模型
+      4) qr 启动日志确认可识别 Intel OpenCL 设备，并正常启用 OpenCL 路线
+
+      性能记录（本机 NUC8i5BEH）：
+      1) person(OpenVINO GPU) 单次推理约 `14.8 ms`
+      2) qr(CPU) 单帧约 `20.2 ms`
+      3) qr(OpenCL GPU) 单帧约 `21.2 ms`
+      4) 并发时：
+         - person GPU + qr CPU：person 约 `14.86 ms`
+         - person GPU + qr GPU：person 约 `15.03 ms`
+
+      结论：
+      1) person 放核显有明显收益，应优先使用 GPU
+      2) qr 放核显不会更快，甚至略慢，但可以减少 CPU 占用
+      3) 如果系统同时运行 FAST_LIO、tare_planner、hector_slam，这些模块主要吃 CPU，因此当前默认策略仍建议：
+         - person：GPU
+         - qr：GPU
+         目的是优先给 FAST_LIO / tare / hector_slam 腾出 CPU
+
+      当前默认启动方式：
+      1) `roslaunch visual_obstacle_detector person_global_localizer.launch`
+      2) `roslaunch visual_obstacle_detector qr_global_localizer.launch`
+      3) 若需手动切回 CPU，可附加：
+         `compute_target:=cpu`
