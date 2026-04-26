@@ -1,0 +1,10 @@
+prefix=/usr
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib/x86_64-linux-gnu
+includedir=${prefix}/include
+
+Name: ZXing
+Description: ZXing library set
+Version: 
+Libs: -L${libdir} -lZXingCore 
+Cflags: -I${includedir} -I${includedir}/ZXing

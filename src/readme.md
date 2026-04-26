@@ -1055,3 +1055,42 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       2) `roslaunch visual_obstacle_detector qr_global_localizer.launch`
       3) 若需手动切回 CPU，可附加：
          `compute_target:=cpu`
+
+26.4.27
+   4.27.0
+      版本目标：修复 `rebo24` 传感器启动链路，并将二维码全局定位默认切换到更稳定的 `C++ + ZXing-cpp` 路线，避免系统 OpenCV `QRCodeDetector` 因缺少 QUIRC 无法正常解码。
+
+      本次改动：
+      1) 修复 `rebo24/sensor.launch`
+         - 不再依赖已删除的 `car` 包启动入口
+         - 新增 `rebo24/scripts/delayed_roslaunch.sh`，统一转发 `roslaunch`，并过滤 ROS 自动注入参数
+         - `sensor.launch` 现支持 `start_lidar`、`start_imu`、`start_camera` 三个独立开关
+         - 增加分阶段延时启动，默认先拉激光，再拉 IMU，最后拉相机，降低现场同时抢占资源的风险
+         - `rebo24/CMakeLists.txt` 已补上脚本安装规则，保证节点类型可被 ROS 正常找到
+
+      2) `qr_global_localizer` 默认切换为 `C++ + ZXing-cpp`
+         - `qr_global_localizer.launch` 默认 `backend:=cpp`
+         - C++ 主节点继续保留 OpenCV 图像预处理、深度采样、TF 变换与调试绘制
+         - 二维码解码后端改为独立 `ZXing-cpp`，本地 vendor 路径为 `vendor/zxing_cpp`
+         - Python 路线仍保留，可在需要时手动切回 `backend:=python`
+
+      3) 切换原因
+         - 当前系统 C++ 链接的是 `OpenCV 4.2.0`
+         - 实测会报错：
+           `Library QUIRC is not linked. No decoding is performed.`
+         - 因此不再继续依赖系统 `QRCodeDetector`，改为仓库内自带的稳定 C++ 解码后端
+
+      4) 其他同步调整
+         - `hector_slam_launch/launch/hector.launch` 中 `geotiff_save_period` 从 `1` 调整为 `5`
+         - 目的是减少高频地图落盘对 CPU 与磁盘的额外占用
+
+      编译与启动验证：
+      1) `catkin_make --pkg visual_obstacle_detector`
+      2) `roslaunch --nodes visual_obstacle_detector qr_global_localizer.launch`
+      3) `ldd devel/lib/visual_obstacle_detector/qr_global_localizer_node`
+         - 已确认运行时加载本地 `vendor/zxing_cpp` 下的 `libZXingCore.so`
+
+      当前建议：
+      - 人物检测继续优先走 `person_global_localizer.launch` 默认 C++ 路线
+      - 二维码检测默认走 `qr_global_localizer.launch backend:=cpp`
+      - 当系统同时运行 FAST_LIO、tare_planner、hector_slam 时，优先把视觉任务留在 GPU / OpenCL 或独立推理后端上，以尽量给建图与规划腾出 CPU

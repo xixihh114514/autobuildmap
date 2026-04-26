@@ -21,6 +21,7 @@ find_package(catkin REQUIRED COMPONENTS
   visualization_msgs
 )
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
+find_package(Threads REQUIRED)
 find_package(OpenCV REQUIRED COMPONENTS core dnn imgproc objdetect)
 
 if(NOT OpenVINO_DIR)
@@ -55,6 +56,19 @@ execute_process(
   OUTPUT_VARIABLE OPENVINO_RUNTIME_LIB_DIR
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
+
+set(ZXING_VENDOR_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/zxing_cpp/vendor/usr")
+set(ZXING_VENDOR_INCLUDE_DIR "${ZXING_VENDOR_ROOT}/include")
+set(ZXING_VENDOR_LIB_DIR "${ZXING_VENDOR_ROOT}/lib/x86_64-linux-gnu")
+set(ZXING_VENDOR_LIB "${ZXING_VENDOR_LIB_DIR}/libZXingCore.so")
+
+if(NOT EXISTS "${ZXING_VENDOR_INCLUDE_DIR}/ZXing/ReadBarcode.h")
+  message(FATAL_ERROR "ZXing-cpp vendor headers were not found under ${ZXING_VENDOR_INCLUDE_DIR}.")
+endif()
+
+if(NOT EXISTS "${ZXING_VENDOR_LIB}")
+  message(FATAL_ERROR "ZXing-cpp vendor library was not found under ${ZXING_VENDOR_LIB}.")
+endif()
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -170,6 +184,7 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
+  ${ZXING_VENDOR_INCLUDE_DIR}
 )
 
 ## Declare a C++ library
@@ -188,6 +203,7 @@ include_directories(
 add_library(person_openvino_backend SHARED
   src/openvino_person_backend.cpp
 )
+add_library(zxing_core_vendor SHARED IMPORTED GLOBAL)
 add_executable(person_global_localizer_node
   src/person_global_localizer_node.cpp
 )
@@ -207,6 +223,12 @@ add_dependencies(person_global_localizer_node ${${PROJECT_NAME}_EXPORTED_TARGETS
 add_dependencies(qr_global_localizer_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
+set_target_properties(zxing_core_vendor PROPERTIES
+  IMPORTED_LOCATION "${ZXING_VENDOR_LIB}"
+  IMPORTED_SONAME "libZXingCore.so.1"
+  INTERFACE_INCLUDE_DIRECTORIES "${ZXING_VENDOR_INCLUDE_DIR}"
+)
+
 target_link_libraries(person_openvino_backend
   PRIVATE
     openvino::runtime
@@ -219,6 +241,8 @@ target_link_libraries(person_global_localizer_node
 target_link_libraries(qr_global_localizer_node
   ${catkin_LIBRARIES}
   ${OpenCV_LIBRARIES}
+  zxing_core_vendor
+  Threads::Threads
 )
 
 if(OPENVINO_RUNTIME_LIB_DIR)
@@ -231,6 +255,11 @@ if(OPENVINO_RUNTIME_LIB_DIR)
     INSTALL_RPATH "${OPENVINO_RUNTIME_LIB_DIR}"
   )
 endif()
+
+set_target_properties(qr_global_localizer_node PROPERTIES
+  BUILD_RPATH "${ZXING_VENDOR_LIB_DIR}"
+  INSTALL_RPATH "\$ORIGIN"
+)
 
 #############
 ## Install ##
@@ -255,6 +284,13 @@ install(TARGETS
   qr_global_localizer_node
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(FILES
+  "${ZXING_VENDOR_LIB_DIR}/libZXingCore.so"
+  "${ZXING_VENDOR_LIB_DIR}/libZXingCore.so.1"
+  "${ZXING_VENDOR_LIB_DIR}/libZXingCore.so.1.0.7"
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 ## Mark libraries for installation

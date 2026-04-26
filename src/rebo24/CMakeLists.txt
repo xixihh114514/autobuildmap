@@ -12,3 +12,8 @@ foreach(dir config launch meshes urdf)
 	install(DIRECTORY ${dir}/
 		DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/${dir})
 endforeach(dir)
+
+install(PROGRAMS
+  scripts/delayed_roslaunch.sh
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)

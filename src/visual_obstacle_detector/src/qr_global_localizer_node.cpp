@@ -8,6 +8,11 @@
 #include <vector>
 
 #include <boost/bind/bind.hpp>
+#include <ZXing/BarcodeFormat.h>
+#include <ZXing/ReadBarcode.h>
+#include <ZXing/Result.h>
+#include <ZXing/ResultPoint.h>
+#include <ZXing/TextUtfEncoding.h>
 #include <cv_bridge/cv_bridge.h>
 #include <geometry_msgs/PointStamped.h>
 #include <message_filters/subscriber.h>
@@ -16,7 +21,6 @@
 #include <opencv2/core.hpp>
 #include <opencv2/core/ocl.hpp>
 #include <opencv2/imgproc.hpp>
-#include <opencv2/objdetect.hpp>
 #include <ros/ros.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/Image.h>
@@ -102,7 +106,7 @@ public:
         boost::placeholders::_3));
 
     ROS_INFO(
-      "qr_global_localizer C++ node is ready, publishing single QR map markers in %s after %d consecutive frames",
+      "qr_global_localizer C++ node is ready, publishing single QR map markers in %s after %d consecutive frames with ZXing-cpp decode backend",
       global_frame_.c_str(),
       min_confirm_frames_);
   }
@@ -121,7 +125,7 @@ private:
     if (normalized_target == "cpu") {
       cv::ocl::setUseOpenCL(false);
       use_opencl_ = false;
-      ROS_INFO("QR detector compute target: CPU");
+      ROS_INFO("QR preprocess compute target: CPU");
       return;
     }
 
@@ -139,14 +143,14 @@ private:
         const cv::ocl::Device device = cv::ocl::Device::getDefault();
         if (device.available()) {
           ROS_INFO(
-            "QR detector compute target: %s -> OpenCL device=%s vendor=%s version=%s",
+            "QR preprocess compute target: %s -> OpenCL device=%s vendor=%s version=%s",
             normalized_target == "auto" ? "AUTO" : "GPU",
             device.name().c_str(),
             device.vendorName().c_str(),
             device.version().c_str());
         } else {
           ROS_INFO(
-            "QR detector compute target: %s -> OpenCL enabled",
+            "QR preprocess compute target: %s -> OpenCL enabled",
             normalized_target == "auto" ? "AUTO" : "GPU");
         }
         return;
@@ -154,10 +158,10 @@ private:
 
       use_opencl_ = false;
       if (normalized_target == "auto") {
-        ROS_WARN("QR detector compute target AUTO could not enable OpenCL. Falling back to CPU.");
+        ROS_WARN("QR preprocess compute target AUTO could not enable OpenCL. Falling back to CPU.");
       } else {
         ROS_WARN(
-          "Requested QR detector GPU/OpenCL target, but no OpenCL runtime/device is available. Falling back to CPU.");
+          "Requested QR preprocess GPU/OpenCL target, but no OpenCL runtime/device is available. Falling back to CPU.");
       }
       return;
     }
@@ -165,7 +169,7 @@ private:
     cv::ocl::setUseOpenCL(true);
     use_opencl_ = cv::ocl::haveOpenCL() && cv::ocl::useOpenCL();
     ROS_WARN(
-      "Unknown QR detector compute_target [%s]. Supported values: auto, gpu, cpu. Legacy values opencl/opencl_fp16 map to gpu. Falling back to %s.",
+      "Unknown QR preprocess compute_target [%s]. Supported values: auto, gpu, cpu. Legacy values opencl/opencl_fp16 map to gpu. Falling back to %s.",
       compute_target_.c_str(),
       use_opencl_ ? "OpenCL" : "CPU");
   }
@@ -196,27 +200,14 @@ private:
     const std::string camera_frame = depth_msg->header.frame_id;
     const double stamp_sec = color_msg->header.stamp.toSec();
 
-    cv::Mat points;
-    std::string raw_text;
-    if (use_opencl_) {
-      cv::UMat color_input = color_bridge->image.getUMat(cv::ACCESS_READ);
-      cv::UMat gray_input;
-      cv::cvtColor(color_input, gray_input, cv::COLOR_BGR2GRAY);
-      raw_text = qr_detector_.detectAndDecode(gray_input, points);
-    } else {
-      cv::Mat gray_input;
-      cv::cvtColor(color_bridge->image, gray_input, cv::COLOR_BGR2GRAY);
-      raw_text = qr_detector_.detectAndDecode(gray_input, points);
-    }
-    const std::string qr_text = normalizeQrText(raw_text);
-
     std::unordered_map<std::string, bool> active_qr_texts;
+    std::string qr_text;
     int confirm_count = 0;
     bool is_confirmed = false;
     bool newly_confirmed = false;
     std::vector<cv::Point2f> corners;
 
-    if (!qr_text.empty() && extractCorners(points, corners)) {
+    if (decodeQr(color_bridge->image, qr_text, corners)) {
       active_qr_texts[qr_text] = true;
       const cv::Point2f center = meanPoint(corners);
       updateConfirmation(qr_text, center, stamp_sec, confirm_count, is_confirmed, newly_confirmed);
@@ -289,6 +280,48 @@ private:
     return false;
   }
 
+  bool makeGrayImage(const cv::Mat& color_image, cv::Mat& gray_image) const
+  {
+    if (use_opencl_) {
+      cv::UMat color_input = color_image.getUMat(cv::ACCESS_READ);
+      cv::UMat gray_input;
+      cv::cvtColor(color_input, gray_input, cv::COLOR_BGR2GRAY);
+      gray_image = gray_input.getMat(cv::ACCESS_READ).clone();
+    } else {
+      cv::cvtColor(color_image, gray_image, cv::COLOR_BGR2GRAY);
+    }
+
+    return !gray_image.empty();
+  }
+
+  bool decodeQr(const cv::Mat& color_image, std::string& qr_text, std::vector<cv::Point2f>& corners) const
+  {
+    cv::Mat gray_image;
+    if (!makeGrayImage(color_image, gray_image)) {
+      return false;
+    }
+
+    const ZXing::Result result = ZXing::ReadBarcode(
+      gray_image.cols,
+      gray_image.rows,
+      gray_image.data,
+      static_cast<int>(gray_image.step),
+      {ZXing::BarcodeFormat::QR_CODE},
+      true,
+      true);
+
+    if (!result.isValid()) {
+      return false;
+    }
+
+    qr_text = normalizeQrText(ZXing::TextUtfEncoding::ToUtf8(result.text()));
+    if (qr_text.empty()) {
+      return false;
+    }
+
+    return extractCorners(result.resultPoints(), corners);
+  }
+
   std::string normalizeQrText(const std::string& raw_text) const
   {
     if (raw_text.empty()) {
@@ -339,21 +372,16 @@ private:
     return cleaned;
   }
 
-  bool extractCorners(const cv::Mat& points, std::vector<cv::Point2f>& corners) const
+  bool extractCorners(const std::vector<ZXing::ResultPoint>& points, std::vector<cv::Point2f>& corners) const
   {
-    if (points.empty() || points.total() < 4) {
-      return false;
-    }
-
-    cv::Mat reshaped = points.reshape(1, 4);
-    if (reshaped.cols < 2) {
+    if (points.empty()) {
       return false;
     }
 
     corners.clear();
-    corners.reserve(4);
-    for (int i = 0; i < 4; ++i) {
-      corners.push_back(cv::Point2f(reshaped.at<float>(i, 0), reshaped.at<float>(i, 1)));
+    corners.reserve(points.size());
+    for (std::size_t i = 0; i < points.size(); ++i) {
+      corners.push_back(cv::Point2f(points[i].x(), points[i].y()));
     }
     return true;
   }
@@ -553,9 +581,11 @@ private:
         static_cast<int>(std::round(corners[i].y))));
     }
 
-    const cv::Point* polygon_ptr = polygon.data();
-    const int polygon_size = static_cast<int>(polygon.size());
-    cv::polylines(image, &polygon_ptr, &polygon_size, 1, true, cv::Scalar(255, 180, 0), 2);
+    if (polygon.size() >= 2) {
+      const cv::Point* polygon_ptr = polygon.data();
+      const int polygon_size = static_cast<int>(polygon.size());
+      cv::polylines(image, &polygon_ptr, &polygon_size, 1, true, cv::Scalar(255, 180, 0), 2);
+    }
     cv::circle(image, pixel_xy, 4, cv::Scalar(0, 0, 255), -1);
 
     std::string label_text = makeQrLabel(qr_text) + " " +
@@ -565,11 +595,15 @@ private:
       label_text += " ok";
     }
 
-    int min_x = polygon.front().x;
-    int min_y = polygon.front().y;
-    for (std::size_t i = 1; i < polygon.size(); ++i) {
-      min_x = std::min(min_x, polygon[i].x);
-      min_y = std::min(min_y, polygon[i].y);
+    int min_x = pixel_xy.x;
+    int min_y = pixel_xy.y;
+    if (!polygon.empty()) {
+      min_x = polygon.front().x;
+      min_y = polygon.front().y;
+      for (std::size_t i = 1; i < polygon.size(); ++i) {
+        min_x = std::min(min_x, polygon[i].x);
+        min_y = std::min(min_y, polygon[i].y);
+      }
     }
     const int y_text_1 = std::max(20, min_y - 10);
     const int y_text_2 = std::min(image.rows - 10, y_text_1 + 20);
@@ -654,7 +688,6 @@ private:
   bool publish_debug_image_;
   bool use_opencl_;
 
-  cv::QRCodeDetector qr_detector_;
   std::unordered_map<std::string, Track> pending_confirmations_;
 
   ros::Publisher map_marker_pub_;

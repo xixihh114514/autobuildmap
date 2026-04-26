@@ -2,6 +2,11 @@
   <!-- 二维码全局定位节点：
        输入彩色图、对齐深度图和相机内参，输出二维码中心点的地图系标记与调试图像 -->
 
+  <!-- 默认后端：
+       cpp 使用 C++ 主节点，解码由独立 ZXing-cpp 后端完成，不再依赖系统 OpenCV 的 QUIRC
+       python 作为保留兜底路线 -->
+  <arg name="backend" default="cpp" />
+
   <!-- 彩色图输入话题 -->
   <arg name="color_topic" default="/camera/color/image_raw" />
   <!-- 与彩色图对齐的深度图输入话题 -->
@@ -23,22 +28,40 @@
   <!-- 连续帧确认允许的最大时间间隔 -->
   <arg name="confirm_timeout" default="0.5" />
 
-  <!-- 启动二维码全局定位节点 -->
-  <node pkg="visual_obstacle_detector"
-        type="qr_global_localizer_node"
-        name="qr_global_localizer"
-        output="screen">
-    <!-- 传入输入输出相关参数 -->
-    <param name="color_topic" value="$(arg color_topic)" />
-    <param name="depth_topic" value="$(arg depth_topic)" />
-    <param name="camera_info_topic" value="$(arg camera_info_topic)" />
-    <param name="publish_debug_image" value="$(arg publish_debug_image)" />
-    <param name="compute_target" value="$(arg compute_target)" />
-    <param name="global_frame" value="$(arg global_frame)" />
-    <param name="transform_timeout" value="$(arg transform_timeout)" />
-    <!-- 传入连续帧确认参数，用于抑制单帧误检 -->
-    <param name="min_confirm_frames" value="$(arg min_confirm_frames)" />
-    <param name="confirm_pixel_tolerance" value="$(arg confirm_pixel_tolerance)" />
-    <param name="confirm_timeout" value="$(arg confirm_timeout)" />
-  </node>
+  <!-- Python 后端：保留作为兼容兜底路线 -->
+  <group if="$(eval arg('backend') == 'python')">
+    <node pkg="visual_obstacle_detector"
+          type="qr_global_localizer.py"
+          name="qr_global_localizer"
+          output="screen">
+      <param name="color_topic" value="$(arg color_topic)" />
+      <param name="depth_topic" value="$(arg depth_topic)" />
+      <param name="camera_info_topic" value="$(arg camera_info_topic)" />
+      <param name="publish_debug_image" value="$(arg publish_debug_image)" />
+      <param name="global_frame" value="$(arg global_frame)" />
+      <param name="transform_timeout" value="$(arg transform_timeout)" />
+      <param name="min_confirm_frames" value="$(arg min_confirm_frames)" />
+      <param name="confirm_pixel_tolerance" value="$(arg confirm_pixel_tolerance)" />
+      <param name="confirm_timeout" value="$(arg confirm_timeout)" />
+    </node>
+  </group>
+
+  <!-- C++ 后端：默认推荐路线，二维码解码走独立 ZXing-cpp -->
+  <group if="$(eval arg('backend') == 'cpp')">
+    <node pkg="visual_obstacle_detector"
+          type="qr_global_localizer_node"
+          name="qr_global_localizer"
+          output="screen">
+      <param name="color_topic" value="$(arg color_topic)" />
+      <param name="depth_topic" value="$(arg depth_topic)" />
+      <param name="camera_info_topic" value="$(arg camera_info_topic)" />
+      <param name="publish_debug_image" value="$(arg publish_debug_image)" />
+      <param name="compute_target" value="$(arg compute_target)" />
+      <param name="global_frame" value="$(arg global_frame)" />
+      <param name="transform_timeout" value="$(arg transform_timeout)" />
+      <param name="min_confirm_frames" value="$(arg min_confirm_frames)" />
+      <param name="confirm_pixel_tolerance" value="$(arg confirm_pixel_tolerance)" />
+      <param name="confirm_timeout" value="$(arg confirm_timeout)" />
+    </node>
+  </group>
 </launch>
