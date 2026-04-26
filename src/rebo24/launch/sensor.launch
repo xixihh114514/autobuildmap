@@ -1,0 +1,28 @@
+<launch>
+  <arg name="launch_gap_sec" default="5" />
+  <arg name="imu_delay_sec" default="$(arg launch_gap_sec)" />
+  <arg name="camera_delay_sec" default="$(eval int(arg('launch_gap_sec')) * 2)" />
+
+  <node
+    name="rslidar_launch"
+    pkg="car"
+    type="delayed_roslaunch.sh"
+    args="rslidar_sdk start.launch"
+    output="screen" />
+
+  <node
+    name="imu_launch"
+    pkg="car"
+    type="delayed_roslaunch.sh"
+    args="hipnuc_imu imu_msg.launch"
+    output="screen"
+    launch-prefix="bash -c 'sleep $(arg imu_delay_sec); exec &quot;$0&quot; &quot;$@&quot;'" />
+
+  <node
+    name="rs_camera_launch"
+    pkg="car"
+    type="delayed_roslaunch.sh"
+    args="realsense2_camera rs_camera.launch align_depth:=true"
+    output="screen"
+    launch-prefix="bash -c 'sleep $(arg camera_delay_sec); exec &quot;$0&quot; &quot;$@&quot;'" />
+</launch>

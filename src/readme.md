@@ -934,3 +934,66 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       - `catkin_make --pkg visual_obstacle_detector` 已编译通过
       - 本地 `clinfo` 已能识别 `Intel(R) OpenCL HD Graphics`
       - 系统 C++ OpenCV 4.2 已实测可见 `OpenCL 2.1 NEO` 设备
+
+   4.23.6
+      回滚人物默认启动链路到 Python 版本，原因是当前系统侧 C++ OpenCV `4.2.0` 仍无法稳定解析现有 `YOLOv8 ONNX` 模型，直接走 C++ 节点会在启动阶段退出
+
+      当前结论：
+      - 人物 `C++ + OpenCL` 代码仍然保留在仓库中，后续可以继续用于升级验证
+      - 但默认 `person_global_localizer.launch` 已恢复为 Python 节点，模型默认重新使用 `yolo.pt`
+      - 这样做的目的是先保证实车链路稳定可启动，再等待后续升级 C++ OpenCV 或改用其他推理后端
+
+      已定位到的实际问题：
+      - 当前 `yolo.onnx` 在系统 C++ OpenCV `4.2.0` 下会在 `readNetFromONNX()` 阶段报错
+      - 这不是 TF、launch 写法或核显配置本身的问题，而是旧版 C++ OpenCV 对当前 ONNX 导出格式支持不完整
+
+      当前默认启动方式：
+      - `roslaunch visual_obstacle_detector person_global_localizer.launch`
+      - 上述命令现在会回到和之前相同的 Python 路径
+
+26.4.26
+   4.26.0
+      当日初始版本
+   4.26.1
+      版本目标：补入 `rebo24` 车体描述包，并同步当前实车控制、感知与探索默认参数到仓库主线。
+
+      本次改动：
+      1) 新增 `rebo24` 描述包
+         - 新增 `urdf/rebo24.urdf`、`meshes/`、`config/joint_names_rebo24.yaml`
+         - 新增 `launch/display.launch`、`gazebo.launch`、`simbase.launch`、`sensor.launch`、`keyboard.launch`
+         - 当前已具备基础显示、Gazebo 拉起、键盘遥控与实车传感器启动入口
+
+      2) 修改 `control/include/control/chassis_common_config.h`
+         - `kWheelTrackMeters`：`0.36 -> 0.2285`
+         - `kWheelbaseMeters`：`0.40 -> 0.5552`
+         - `kWheelRadiusMeters`：`0.075 -> 0.0680`
+         - 目的：同步当前底盘控制侧使用的几何参数
+
+      3) 修改 `hipnuc_imu/config/hipnuc_config.yaml`
+         - `frame_id`：`base_link -> imu_link`
+         - 目的：让 IMU 消息坐标系回到独立 `imu_link`，便于和车体 TF 链对齐
+
+      4) 修改 `fast_lio/launch/mapping_velodyne.launch`
+         - `rviz`：`true -> false`
+         - 目的：默认启动建图时不再额外拉起 RViz，减轻现场启动负担
+
+      5) 修改 `tare_planner/config/robocup.yaml`
+         - 上调 `kExtendWayPointDistanceBig`、`kLookAheadDistance`
+         - 调整 `kCoverageDilationRadius`、`kCellCoveredToExploringThr`
+         - 保持 `kFrontierClusterMinSize=4`、`kMinAddFrontierPointNum=3`
+         - 目的：增强路口方向延续性，减少沿墙碎小 frontier 反复诱导贴墙补扫
+
+      6) 修改 `visual_obstacle_detector/launch/person_global_localizer.launch`
+         - 默认模型：`yolo.onnx -> yolo.pt`
+         - 默认节点：`person_global_localizer_node -> person_global_localizer.py`
+         - 移除 `compute_target` 与本地 OpenCL 环境注入参数
+         - 目的：默认链路继续回到已验证可用的 Python 人物检测路径
+
+      当前可用入口：
+      - 仿真模型：`roslaunch rebo24 simbase.launch`
+      - 实车传感器：`roslaunch rebo24 sensor.launch`
+      - 人物检测：`roslaunch visual_obstacle_detector person_global_localizer.launch`
+
+      当前说明：
+      - `rebo24` 目前主要是车体描述与启动入口包，后续如切主车体，仍需继续核对控制参数、TF 和实传感器话题
+      - 本轮默认值整体偏向“先保证稳定可启动”，尤其是人物检测默认链路与 FAST_LIO 的 RViz 启动行为已按现场使用回调

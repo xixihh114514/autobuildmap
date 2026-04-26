@@ -3,7 +3,7 @@
        输入彩色图、对齐深度图和相机内参，输出人物中心点的相机系/地图系点云与调试标记 -->
 
   <!-- YOLO 模型路径 -->
-  <arg name="model_path" default="$(find visual_obstacle_detector)/models/yolo.onnx" />
+  <arg name="model_path" default="$(find visual_obstacle_detector)/models/yolo.pt" />
   <!-- 彩色图输入话题 -->
   <arg name="color_topic" default="/camera/color/image_raw" />
   <!-- 与彩色图对齐的深度图输入话题 -->
@@ -12,12 +12,6 @@
   <arg name="camera_info_topic" default="/camera/color/camera_info" />
   <!-- YOLO 目标置信度阈值 -->
   <arg name="conf_threshold" default="0.5" />
-  <!-- 人物检测推理目标：auto/cpu/opencl/opencl_fp16 -->
-  <arg name="compute_target" default="auto" />
-  <!-- 本地 Intel OpenCL ICD 文件目录 -->
-  <arg name="opencl_vendor_path" default="$(env HOME)/.local/intel-opencl-runtime/vendors" />
-  <!-- 本地 Intel OpenCL 运行时库路径，末尾会拼接当前已有 LD_LIBRARY_PATH -->
-  <arg name="opencl_ld_library_path" default="$(env HOME)/.local/intel-opencl-runtime/usr/lib:$(env HOME)/.local/intel-opencl-runtime/usr/lib/x86_64-linux-gnu/intel-opencl:$(env HOME)/.local/intel-opencl-runtime/usr/lib/x86_64-linux-gnu:$(optenv LD_LIBRARY_PATH)" />
   <!-- 是否发布带框选结果的调试图像 -->
   <arg name="publish_debug_image" default="true" />
   <!-- 全局输出坐标系，通常为 map -->
@@ -33,19 +27,15 @@
 
   <!-- 启动人物全局定位节点 -->
   <node pkg="visual_obstacle_detector"
-        type="person_global_localizer_node"
+        type="person_global_localizer.py"
         name="person_global_localizer"
         output="screen">
-    <!-- 为人物节点注入本地 Intel OpenCL 运行时环境 -->
-    <env name="OPENCL_VENDOR_PATH" value="$(arg opencl_vendor_path)" />
-    <env name="LD_LIBRARY_PATH" value="$(arg opencl_ld_library_path)" />
     <!-- 传入模型与输入输出相关参数 -->
     <param name="model_path" value="$(arg model_path)" />
     <param name="color_topic" value="$(arg color_topic)" />
     <param name="depth_topic" value="$(arg depth_topic)" />
     <param name="camera_info_topic" value="$(arg camera_info_topic)" />
     <param name="conf_threshold" value="$(arg conf_threshold)" />
-    <param name="compute_target" value="$(arg compute_target)" />
     <param name="publish_debug_image" value="$(arg publish_debug_image)" />
     <param name="global_frame" value="$(arg global_frame)" />
     <param name="transform_timeout" value="$(arg transform_timeout)" />

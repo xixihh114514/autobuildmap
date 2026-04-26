@@ -57,8 +57,8 @@ kUseLineOfSightLookAheadPoint : false
 kNoExplorationReturnHome : true
 
 # waypoint 外延距离（较大 / 较小）
-# 当前值偏保守，避免窄口前给出过深目标导致摆头
-kExtendWayPointDistanceBig : 2.0
+# 当前值适度上调，增强丁字路口/分叉口已选方向的延续性
+kExtendWayPointDistanceBig : 2.5
 kExtendWayPointDistanceSmall : 1.0
 
 # 关键位姿点云降采样体素大小
@@ -71,7 +71,8 @@ kAtHomeDistThreshold : 0.5
 # 地形点被视作碰撞障碍的强度阈值
 kTerrainCollisionThreshold : 0.5
 # 全局/局部前瞻距离
-kLookAheadDistance : 3.0
+# 当前值适度上调，减少路口前过早重选局部分支
+kLookAheadDistance : 3.5
 
 # 是否启用动量模式（避免方向频繁切换）
 kUseMomentum : true
@@ -92,7 +93,7 @@ kUseFrontier : true
 # frontier 聚类距离阈值
 kFrontierClusterTolerance : 0.8
 # frontier 最小簇点数
-# 该值已专门下调，避免窄门口的小 frontier 被直接滤掉
+# 回到更稳的 4 点，避免沿墙碎小 frontier 被频繁当成主目标去追
 kFrontierClusterMinSize : 4
 # 是否使用 coverage 边界过滤 frontier
 kUseCoverageBoundaryOnFrontier : false
@@ -201,7 +202,8 @@ kCollisionFrameCountMax : 3
 kSensorRange : 5.5
 kNeighborRange : 2.2
 kCoverageOcclusionThr : 0.25
-kCoverageDilationRadius : 0.15
+# 略微增大已覆盖区域膨胀，减少墙边零碎残留点反复诱导贴墙补扫
+kCoverageDilationRadius : 0.18
 
 
 # ===============================
@@ -217,12 +219,14 @@ kGridWorldNearbyGridNum : 5
 # 当前值已专门降低，避免窄口前“有效信息太少”被直接判探索完成
 kMinAddPointNumSmall : 12
 kMinAddPointNumBig : 22
+# 回到更稳的门槛，避免为了极少量 frontier 点把车带到墙边
 kMinAddFrontierPointNum : 3
 
 # 子空间状态切换阈值
 # 当前值偏低，目的是让入口附近 cell 更容易重新进入 exploring
 kCellExploringToCoveredThr : 1
-kCellCoveredToExploringThr: 2
+# 从 2 略升到 3，降低已覆盖 cell 因微小 frontier 波动反复抖动重开的概率
+kCellCoveredToExploringThr: 3
 kCellExploringToAlmostCoveredThr: 3
 kCellAlmostCoveredToExploringThr: 5
 kCellUnknownToExploringThr: 1

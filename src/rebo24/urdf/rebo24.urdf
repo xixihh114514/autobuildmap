@@ -1,0 +1,785 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.6.0-4-g7f85cfe  Build Version: 1.6.7995.38578
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot
+  name="rebo24">
+  <link
+    name="base_link">
+    <inertial>
+      <origin
+        xyz="8.55232726890975E-05 -0.0100119829894778 0.128146462969362"
+        rpy="0 0 0" />
+      <mass
+        value="43.0826866003702" />
+      <inertia
+        ixx="0.0828611343550208"
+        ixy="9.78260603759178E-06"
+        ixz="-0.00639839535470336"
+        iyy="0.136405175282193"
+        iyz="-3.57369038716547E-05"
+        izz="0.138372095637554" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://rebo24/meshes/base_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.776470588235294 0.756862745098039 0.737254901960784 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://rebo24/meshes/base_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link
+    name="left_ahead_wheel">
+    <inertial>
+      <origin
+        xyz="0 0.000176470588235333 0"
+        rpy="0 0 0" />
+      <mass
+        value="0.0769061881598781" />
+      <inertia
+        ixx="2.37401286452523E-05"
+        ixy="-7.22022899679343E-21"
+        ixz="1.67288056091634E-36"
+        iyy="2.47117678131373E-05"
+        iyz="-2.15747235162655E-22"
+        izz="2.37401286452523E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://rebo24/meshes/left_ahead_wheel.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://rebo24/meshes/left_ahead_wheel.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="left_ahead_wheel_joint"
+    type="continuous">
+    <origin
+      xyz="0.141499999999909 0.233000195879141 0"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="left_ahead_wheel" />
+    <axis
+      xyz="0 1 0" />
+  </joint>
+  <link
+    name="left_back_wheel">
+    <inertial>
+      <origin
+        xyz="0 0.000176470588235333 1.73472347597681E-18"
+        rpy="0 0 0" />
+      <mass
+        value="0.0769061881598781" />
+      <inertia
+        ixx="2.37401286452523E-05"
+        ixy="-9.76621483857307E-21"
+        ixz="2.16959437076152E-36"
+        iyy="2.47117678131373E-05"
+        iyz="-2.15747235162684E-22"
+        izz="2.37401286452523E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://rebo24/meshes/left_back_wheel.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://rebo24/meshes/left_back_wheel.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="left_back_wheel_joint"
+    type="continuous">
+    <origin
+      xyz="-0.141500000000089 0.233000195879139 0"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="left_back_wheel" />
+    <axis
+      xyz="0 1 0" />
+  </joint>
+  <link
+    name="right_ahead_wheel">
+    <inertial>
+      <origin
+        xyz="-1.38777878078145E-17 -0.000176470588235278 0"
+        rpy="0 0 0" />
+      <mass
+        value="0.0769061881598782" />
+      <inertia
+        ixx="2.37401286452524E-05"
+        ixy="-6.45683877469619E-21"
+        ixz="-3.01100360415287E-22"
+        iyy="2.47117678131373E-05"
+        iyz="4.28388872839787E-24"
+        izz="2.37401286452524E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://rebo24/meshes/right_ahead_wheel.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://rebo24/meshes/right_ahead_wheel.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="right_ahead_wheel_joint"
+    type="continuous">
+    <origin
+      xyz="0.141500000000031 -0.233000195879137 0"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="right_ahead_wheel" />
+    <axis
+      xyz="0 1 0" />
+  </joint>
+  <link
+    name="right_back_wheel">
+    <inertial>
+      <origin
+        xyz="5.55111512312578E-17 -0.000176470588235278 0"
+        rpy="0 0 0" />
+      <mass
+        value="0.0769061881598782" />
+      <inertia
+        ixx="2.37401286452524E-05"
+        ixy="-9.08993169383966E-21"
+        ixz="-5.49651590874132E-22"
+        iyy="2.47117678131373E-05"
+        iyz="5.13355412781999E-23"
+        izz="2.37401286452524E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://rebo24/meshes/right_back_wheel.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://rebo24/meshes/right_back_wheel.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="right_back_wheel_joint"
+    type="continuous">
+    <origin
+      xyz="-0.14149999999997 -0.233000195879138 0"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="right_back_wheel" />
+    <axis
+      xyz="0 1 0" />
+  </joint>
+  <link
+    name="lidar">
+    <inertial>
+      <origin
+        xyz="-1.2490009027033E-16 -1.16573417585641E-15 2.22044604925031E-16"
+        rpy="0 0 0" />
+      <mass
+        value="1.96655555535767" />
+      <inertia
+        ixx="0.00248240765947242"
+        ixy="6.63226797699442E-20"
+        ixz="-3.04038442387346E-16"
+        iyy="0.00248240765947242"
+        iyz="-2.10733077855723E-19"
+        izz="0.00281438681916124" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://rebo24/meshes/lidar.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://rebo24/meshes/lidar.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="lidar_joint"
+    type="fixed">
+    <origin
+      xyz="0.169999999999687 -0.00100019587911868 0.305700000000706"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="lidar" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+
+
+
+  <link
+    name="camera_link">
+    <inertial>
+      <origin
+        xyz="-0.000329866874006227 -3.7237912406396E-07 0.000586716130506204"
+        rpy="0 0 0" />
+      <mass
+        value="0.048201398677882" />
+      <inertia
+        ixx="2.73914552602096E-05"
+        ixy="-4.25989861649038E-07"
+        ixz="7.54926375849486E-09"
+        iyy="3.35061197625381E-06"
+        iyz="2.11610730821827E-09"
+        izz="2.66521456031395E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://rebo24/meshes/camera_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.776470588235294 0.756862745098039 0.737254901960784 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://rebo24/meshes/camera_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="camera_joint"
+    type="fixed">
+    <origin
+      xyz="0.265499999999739 -0.000519114270499249 0.248720793604667"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="camera_link" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+
+  <!-- D435i官方坐标系链：depth/infra/color/imu -->
+  <link name="camera_depth_frame"/>
+  <joint name="camera_depth_joint" type="fixed">
+    <parent link="camera_link"/>
+    <child link="camera_depth_frame"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+  <link name="camera_depth_optical_frame"/>
+  <joint name="camera_depth_optical_joint" type="fixed">
+    <parent link="camera_depth_frame"/>
+    <child link="camera_depth_optical_frame"/>
+    <origin xyz="0 0 0" rpy="-1.57079632679 0 -1.57079632679"/>
+  </joint>
+
+  <link name="camera_infra1_frame"/>
+  <joint name="camera_infra1_joint" type="fixed">
+    <parent link="camera_link"/>
+    <child link="camera_infra1_frame"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+  <link name="camera_infra1_optical_frame"/>
+  <joint name="camera_infra1_optical_joint" type="fixed">
+    <parent link="camera_infra1_frame"/>
+    <child link="camera_infra1_optical_frame"/>
+    <origin xyz="0 0 0" rpy="-1.57079632679 0 -1.57079632679"/>
+  </joint>
+
+  <link name="camera_infra2_frame"/>
+  <joint name="camera_infra2_joint" type="fixed">
+    <parent link="camera_link"/>
+    <child link="camera_infra2_frame"/>
+    <origin xyz="0 -0.050 0" rpy="0 0 0"/>
+  </joint>
+  <link name="camera_infra2_optical_frame"/>
+  <joint name="camera_infra2_optical_joint" type="fixed">
+    <parent link="camera_infra2_frame"/>
+    <child link="camera_infra2_optical_frame"/>
+    <origin xyz="0 0 0" rpy="-1.57079632679 0 -1.57079632679"/>
+  </joint>
+
+  <link name="camera_color_frame"/>
+  <joint name="camera_color_joint" type="fixed">
+    <parent link="camera_link"/>
+    <child link="camera_color_frame"/>
+    <origin xyz="0 0.015 0" rpy="0 0 0"/>
+  </joint>
+  <link name="camera_color_optical_frame"/>
+  <joint name="camera_color_optical_joint" type="fixed">
+    <parent link="camera_color_frame"/>
+    <child link="camera_color_optical_frame"/>
+    <origin xyz="0 0 0" rpy="-1.57079632679 0 -1.57079632679"/>
+  </joint>
+
+  <link name="camera_imu_frame"/>
+  <joint name="camera_imu_joint" type="fixed">
+    <parent link="camera_link"/>
+    <child link="camera_imu_frame"/>
+    <origin xyz="-0.01174 -0.00552 0.0051" rpy="0 0 0"/>
+  </joint>
+  <link name="camera_imu_optical_frame"/>
+  <joint name="camera_imu_optical_joint" type="fixed">
+    <parent link="camera_imu_frame"/>
+    <child link="camera_imu_optical_frame"/>
+    <origin xyz="0 0 0" rpy="-1.57079632679 0 -1.57079632679"/>
+  </joint>
+
+  <link name="camera_accel_frame"/>
+  <joint name="camera_accel_joint" type="fixed">
+    <parent link="camera_link"/>
+    <child link="camera_accel_frame"/>
+    <origin xyz="-0.01174 -0.00552 0.0051" rpy="0 0 0"/>
+  </joint>
+  <link name="camera_accel_optical_frame"/>
+  <joint name="camera_accel_optical_joint" type="fixed">
+    <parent link="camera_accel_frame"/>
+    <child link="camera_accel_optical_frame"/>
+    <origin xyz="0 0 0" rpy="-1.57079632679 0 -1.57079632679"/>
+  </joint>
+
+  <link name="camera_gyro_frame"/>
+  <joint name="camera_gyro_joint" type="fixed">
+    <parent link="camera_link"/>
+    <child link="camera_gyro_frame"/>
+    <origin xyz="-0.01174 -0.00552 0.0051" rpy="0 0 0"/>
+  </joint>
+  <link name="camera_gyro_optical_frame"/>
+  <joint name="camera_gyro_optical_joint" type="fixed">
+    <parent link="camera_gyro_frame"/>
+    <child link="camera_gyro_optical_frame"/>
+    <origin xyz="0 0 0" rpy="-1.57079632679 0 -1.57079632679"/>
+  </joint>
+
+  <link
+    name="imu_link">
+    <inertial>
+      <origin
+        xyz="5.19522064257316E-11 -1.1731134882953E-09 -0.00246765057435855"
+        rpy="0 0 0" />
+      <mass
+        value="0.105365739619058" />
+      <inertia
+        ixx="1.92602986407333E-05"
+        ixy="-1.00153477604229E-20"
+        ixz="-7.37106893453943E-18"
+        iyy="1.92602986407333E-05"
+        iyz="2.63013342156866E-21"
+        izz="2.73103643815558E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://rebo24/meshes/imu_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://rebo24/meshes/imu_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="imu_joint"
+    type="fixed">
+    <origin
+      xyz="0.169999999947848 -0.00100019470600629 0.183950000000706"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="imu_link" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+
+<!-- ========================== 仿真内容（轮子、差速、激光雷达全部保留） ========================== -->
+  <!-- 轮子摩擦和接触参数 -->
+  <gazebo reference="left_ahead_wheel">
+    <mu1>1.0</mu1>
+    <mu2>1.0</mu2>
+    <kp>1000000.0</kp>
+    <kd>1.0</kd>
+    <minDepth>0.001</minDepth>
+    <maxVel>1.0</maxVel>
+  </gazebo>
+  <gazebo reference="left_back_wheel">
+    <mu1>1.0</mu1>
+    <mu2>1.0</mu2>
+    <kp>1000000.0</kp>
+    <kd>1.0</kd>
+    <minDepth>0.001</minDepth>
+    <maxVel>1.0</maxVel>
+  </gazebo>
+  <gazebo reference="right_ahead_wheel">
+    <mu1>1.0</mu1>
+    <mu2>1.0</mu2>
+    <kp>1000000.0</kp>
+    <kd>1.0</kd>
+    <minDepth>0.001</minDepth>
+    <maxVel>1.0</maxVel>
+  </gazebo>
+  <gazebo reference="right_back_wheel">
+    <mu1>1.0</mu1>
+    <mu2>1.0</mu2>
+    <kp>1000000.0</kp>
+    <kd>1.0</kd>
+    <minDepth>0.001</minDepth>
+    <maxVel>1.0</maxVel>
+  </gazebo>
+
+  <!-- Velodyne VLP-16（官方velodyne_description参数） -->
+  <gazebo reference="lidar">
+    <sensor type="ray" name="lidar_vlp16">
+      <pose>0 0 0 0 0 0</pose>
+      <visualize>false</visualize>
+      <update_rate>10.0</update_rate>
+      <ray>
+        <scan>
+          <horizontal>
+            <samples>1875</samples>
+            <resolution>1</resolution>
+            <min_angle>-3.1415926535897931</min_angle>
+            <max_angle>3.1415926535897931</max_angle>
+          </horizontal>
+          <vertical>
+            <samples>16</samples>
+            <resolution>1</resolution>
+            <min_angle>-0.2617993877991494</min_angle>
+            <max_angle>0.2617993877991494</max_angle>
+          </vertical>
+        </scan>
+        <range>
+          <min>0.09</min>
+          <max>131.0</max>
+          <resolution>0.001</resolution>
+        </range>
+        <noise>
+          <type>gaussian</type>
+          <mean>0.0</mean>
+          <stddev>0.0</stddev>
+        </noise>
+      </ray>
+      <plugin name="gazebo_ros_lidar_controller" filename="libgazebo_ros_velodyne_laser.so">
+        <topicName>/velodyne_points</topicName>
+        <frameName>lidar</frameName>
+        <organize_cloud>false</organize_cloud>
+        <min_range>0.09</min_range>
+        <max_range>130.0</max_range>
+        <gaussianNoise>0.008</gaussianNoise>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+  <!-- RealSense D435i（官方D435i坐标系+realsense_gazebo_plugin） -->
+  <gazebo reference="camera_link">
+    <sensor type="depth" name="camera_depth">
+      <always_on>true</always_on>
+      <visualize>false</visualize>
+      <update_rate>30.0</update_rate>
+      <camera name="depth_camera">
+        <horizontal_fov>1.5184364492350666</horizontal_fov>
+        <image>
+          <width>1280</width>
+          <height>720</height>
+          <format>RGB_INT8</format>
+        </image>
+        <clip>
+          <near>0.105</near>
+          <far>10.0</far>
+        </clip>
+      </camera>
+    </sensor>
+
+    <sensor type="camera" name="camera_ired1">
+      <always_on>true</always_on>
+      <visualize>false</visualize>
+      <update_rate>30.0</update_rate>
+      <pose>0 0 0 0 0 0</pose>
+      <camera name="infrared1_camera">
+        <horizontal_fov>1.5184364492350666</horizontal_fov>
+        <image>
+          <width>1280</width>
+          <height>720</height>
+          <format>L_INT8</format>
+        </image>
+        <clip>
+          <near>0.105</near>
+          <far>10.0</far>
+        </clip>
+      </camera>
+    </sensor>
+
+    <sensor type="camera" name="camera_ired2">
+      <always_on>true</always_on>
+      <visualize>false</visualize>
+      <update_rate>30.0</update_rate>
+      <pose>0 -0.050 0 0 0 0</pose>
+      <camera name="infrared2_camera">
+        <horizontal_fov>1.5184364492350666</horizontal_fov>
+        <image>
+          <width>1280</width>
+          <height>720</height>
+          <format>L_INT8</format>
+        </image>
+        <clip>
+          <near>0.105</near>
+          <far>10.0</far>
+        </clip>
+      </camera>
+    </sensor>
+
+    <sensor type="camera" name="camera_color">
+      <always_on>true</always_on>
+      <visualize>false</visualize>
+      <update_rate>30.0</update_rate>
+      <pose>0 0.015 0 0 0 0</pose>
+      <camera name="color_camera">
+        <horizontal_fov>1.211258531</horizontal_fov>
+        <image>
+          <width>1920</width>
+          <height>1080</height>
+          <format>RGB_INT8</format>
+        </image>
+        <clip>
+          <near>0.105</near>
+          <far>10.0</far>
+        </clip>
+      </camera>
+    </sensor>
+  </gazebo>
+
+  <gazebo reference="camera_imu_frame">
+    <sensor type="imu" name="camera_imu_sensor">
+      <always_on>true</always_on>
+      <visualize>false</visualize>
+      <update_rate>200.0</update_rate>
+      <imu>
+        <angular_velocity>
+          <x>
+            <noise type="gaussian">
+              <mean>0.0</mean>
+              <stddev>0.00244</stddev>
+            </noise>
+          </x>
+          <y>
+            <noise type="gaussian">
+              <mean>0.0</mean>
+              <stddev>0.00244</stddev>
+            </noise>
+          </y>
+          <z>
+            <noise type="gaussian">
+              <mean>0.0</mean>
+              <stddev>0.00244</stddev>
+            </noise>
+          </z>
+        </angular_velocity>
+        <linear_acceleration>
+          <x>
+            <noise type="gaussian">
+              <mean>0.0</mean>
+              <stddev>0.018</stddev>
+            </noise>
+          </x>
+          <y>
+            <noise type="gaussian">
+              <mean>0.0</mean>
+              <stddev>0.018</stddev>
+            </noise>
+          </y>
+          <z>
+            <noise type="gaussian">
+              <mean>0.0</mean>
+              <stddev>0.018</stddev>
+            </noise>
+          </z>
+        </linear_acceleration>
+      </imu>
+      <plugin name="camera_imu_plugin" filename="libgazebo_ros_imu_sensor.so">
+        <topicName>/camera/imu</topicName>
+        <frameName>camera_imu_frame</frameName>
+        <updateRateHZ>200.0</updateRateHZ>
+        <gaussianNoise>0.0</gaussianNoise>
+        <xyzOffset>0 0 0</xyzOffset>
+        <rpyOffset>0 0 0</rpyOffset>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+  <gazebo>
+    <plugin name="realsense_d435i_controller" filename="librealsense_gazebo_plugin.so">
+      <prefix>camera_</prefix>
+      <depthUpdateRate>30.0</depthUpdateRate>
+      <colorUpdateRate>30.0</colorUpdateRate>
+      <infraredUpdateRate>30.0</infraredUpdateRate>
+      <depthTopicName>/camera/depth/image_rect_raw</depthTopicName>
+      <depthCameraInfoTopicName>/camera/depth/camera_info</depthCameraInfoTopicName>
+      <colorTopicName>/camera/color/image_raw</colorTopicName>
+      <colorCameraInfoTopicName>/camera/color/camera_info</colorCameraInfoTopicName>
+      <infrared1TopicName>/camera/infra1/image_rect_raw</infrared1TopicName>
+      <infrared1CameraInfoTopicName>/camera/infra1/camera_info</infrared1CameraInfoTopicName>
+      <infrared2TopicName>/camera/infra2/image_rect_raw</infrared2TopicName>
+      <infrared2CameraInfoTopicName>/camera/infra2/camera_info</infrared2CameraInfoTopicName>
+      <colorOpticalframeName>camera_color_optical_frame</colorOpticalframeName>
+      <depthOpticalframeName>camera_depth_optical_frame</depthOpticalframeName>
+      <infrared1OpticalframeName>camera_infra1_optical_frame</infrared1OpticalframeName>
+      <infrared2OpticalframeName>camera_infra2_optical_frame</infrared2OpticalframeName>
+      <rangeMinDepth>0.105</rangeMinDepth>
+      <rangeMaxDepth>10.0</rangeMaxDepth>
+      <pointCloud>true</pointCloud>
+      <pointCloudTopicName>/camera/depth/color/points</pointCloudTopicName>
+      <pointCloudCutoff>0.105</pointCloudCutoff>
+      <pointCloudCutoffMax>10.0</pointCloudCutoffMax>
+      <robotNamespace>/</robotNamespace>
+    </plugin>
+  </gazebo>
+
+  <!-- 运动学 -->
+  <gazebo>
+    <plugin name="differential_drive_controller" filename="libgazebo_ros_diff_drive.so">
+      <ros>
+        <namespace></namespace>
+      </ros>
+      <!-- FAST-LIO作为主里程计时，关闭Gazebo轮速里程计发布，避免与FAST-LIO重复发布里程计/TF -->
+      <!-- 以前是true：用于纯Gazebo差速里程计；现在改为false：由FAST-LIO输出位姿 -->
+      <publishOdom>false</publishOdom>
+      <publishOdomTF>false</publishOdomTF>
+      <publishWheelTF>false</publishWheelTF>
+      <odometryFrame>odom</odometryFrame>
+      <robotBaseFrame>base_link</robotBaseFrame>
+      <leftJoint>left_ahead_wheel_joint</leftJoint>
+      <leftJoint>left_back_wheel_joint</leftJoint>
+      <rightJoint>right_ahead_wheel_joint</rightJoint>
+      <rightJoint>right_back_wheel_joint</rightJoint>
+      <wheelSeparation>0.466</wheelSeparation>
+      <wheelDiameter>0.050</wheelDiameter>
+      <wheelTorque>10.0</wheelTorque>
+      <wheelAcceleration>10.0</wheelAcceleration>
+      <commandTopic>cmd_vel</commandTopic>
+      <odometryTopic>odom</odometryTopic>
+      <updateRate>100</updateRate>
+    </plugin>
+  </gazebo>
+
+
+</robot>

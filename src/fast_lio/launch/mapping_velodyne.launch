@@ -1,7 +1,7 @@
 <launch>
 <!-- Velodyne 激光雷达建图启动文件 -->
 
-    <arg name="rviz" default="true" />  <!-- 是否启动 RViz -->
+    <arg name="rviz" default="false" />  <!-- 是否启动 RViz -->
 
     <rosparam command="load" file="$(find fast_lio)/config/velodyne.yaml" />  <!-- 加载 Velodyne 配置 -->
 
