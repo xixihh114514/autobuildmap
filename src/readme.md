@@ -1072,6 +1072,7 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
          - `qr_global_localizer.launch` 默认 `backend:=cpp`
          - C++ 主节点继续保留 OpenCV 图像预处理、深度采样、TF 变换与调试绘制
          - 二维码解码后端改为独立 `ZXing-cpp`，本地 vendor 路径为 `vendor/zxing_cpp`
+         - 当前二维码解码本体仍运行在 CPU；`compute_target:=gpu` 只作用于 OpenCV/OpenCL 预处理，不代表整条 QR 链路已经改成 GPU 解码
          - Python 路线仍保留，可在需要时手动切回 `backend:=python`
 
       3) 切换原因
@@ -1093,4 +1094,5 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       当前建议：
       - 人物检测继续优先走 `person_global_localizer.launch` 默认 C++ 路线
       - 二维码检测默认走 `qr_global_localizer.launch backend:=cpp`
+      - 需要特别注意：当前 QR 属于“CPU 解码 + 可选 OpenCL 预处理”路线，暂时还不是纯 GPU 解码
       - 当系统同时运行 FAST_LIO、tare_planner、hector_slam 时，优先把视觉任务留在 GPU / OpenCL 或独立推理后端上，以尽量给建图与规划腾出 CPU
