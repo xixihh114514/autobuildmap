@@ -20,7 +20,7 @@ mapping:
     fov_degree:    360           # 有效视场角（度）
     det_range:     50.0         # 有效探测距离（米）
     extrinsic_est_en:  false     # 是否在线估计 IMU-LiDAR 外参（建议已标定时关闭）
-    extrinsic_T: [ 0, 0 ,0.075 ]   # LiDAR 在 IMU 坐标系下的平移
+    extrinsic_T: [ 0.0, 0.0, 0.12175 ]   # LiDAR 在 IMU 坐标系下的平移
     extrinsic_R: [ 1, 0, 0,
                    0, 1, 0,
                    0, 0, 1]      # LiDAR 在 IMU 坐标系下的旋转（行优先 3x3）

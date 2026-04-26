@@ -202,12 +202,14 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       目前tare需要的节点有滤波、loam、local_planner、地形检测两个节点（需要关闭地形检测，但是不能完全关掉两个点）、sensor_scan、explore（参数在garage）
       新增了快速启动脚本，完整启动路径为先分别启动simbase，然后启动sim_fast_lio，然后启动loam，然后启动sim_terrain,然后启动local_planner，再然后启动sensor_scan,最后启动explore
 
-   3.32.1
+   3.23.1
       解决了嵌套git的问题
 
+26.3.25
    3.25.0
       更改了滤波方式，使用pclros的corpbox来过滤车体点云
 
+26.3.28
    3.28.0
       当日初始版本
    3.28.1
@@ -218,31 +220,6 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       当日初始版本
    3.30.1
       local_planner先做诊断性调参，验证窄通道和90度弯卡住是否主要由方向约束过强导致
-
-26.4.12
-   4.12.0
-      FAST_LIO 在使用 mapping_velodyne.launch 运行时，出现“启动正常、运行一段时间后崩溃”的问题。
-      终端典型报错为：
-      malloc(): mismatching next->prev_size (unsorted)
-      [laserMapping-1] process has died, exit code -6
-
-      当前现象记录：
-      1) 不是启动即崩，而是运行一段时间后才出现。
-      2) 崩溃前可能出现 “No point, skip this scan!”。
-      3) 当前使用 fast_lio/config/velodyne.yaml 与 fast_lio/launch/mapping_velodyne.launch。
-      4) 当前参数核对后，velodyne.yaml 中 preprocess/timestamp_unit=0 与 rs_to_velodyne 输出 time 的秒单位是匹配的，因此不能简单认为是 velodyne.yaml 写错导致。
-
-      当前判断：
-      1) 该报错更像堆内存被提前破坏后的延迟报错，不一定是 malloc 当场出错。
-      2) 更可疑位置在 FAST_LIO 的 Velodyne 特征提取路径，而不是 velodyne.yaml 单独配置错误。
-      3) src/fast_lio/src/preprocess.cpp 中 give_feature() 对异常 ring/坏帧的边界保护不足，怀疑存在越界访问风险。
-      4) 当前 launch 中 feature_extract_enable=1，属于较敏感路径，异常帧更容易在该路径触发问题。
-      5) velodyne.yaml 中 pcd_save_en=true 且 interval=-1 会造成长时间运行时内存持续累积，但更像长期内存压力问题，不像本次 unsorted 报错的直接根因。
-      修改了local_planner.launch：
-      checkRotObstacle：true -> false
-      dirWeight：0.02 -> 0.005
-      pathCropByGoal：true -> false
-      备注：dirThre原始默认值为90.0，当前180.0为手动调整，不属于本次代改内容
    3.30.2
       针对窄路丁字路口继续调local_planner
       修改了local_planner.launch：
@@ -395,7 +372,6 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       说明：
       - 本轮重点是整理和重置 TARE 上游前置节点的启动方式，不涉及 TARE 本体参数修改
 
-26.4.7
    4.7.3
       版本目标：补充当前 local_planner 版本记录，统一说明本轮已确认内容，并重点记录当前怀疑参数 `useTerrainAnalysis`。
 
@@ -446,7 +422,6 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       - 如果 `false` 模式异常，优先联查 `/registered_scan`、`minRelZ`、`maxRelZ`、`obstacleHeightThre`
       - 现阶段优先把 `useTerrainAnalysis` 当成“规划输入模式切换开关”来看，而不是普通功能开关
 
-26.4.7
    4.7.4
       版本目标：为 `robotcup_map` 新增一套独立的 TARE 探索入口，并针对“小尺度室内迷宫 + 窄通道入口容易直接判探索完成”的问题做专用调参记录。
 
@@ -585,6 +560,31 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       - 下一轮不建议继续一味收紧 frontier、viewpoint 或碰撞门槛
       - 若继续沿这个方向收紧，风险是重新退回“可以减少犹豫，但又进不去迷宫窄道”
       - 后续调参更适合沿“增强已选方向延续性、减少回头收益”的方向继续做，而不是继续压缩入口可选空间
+
+26.4.12
+   4.12.0
+      FAST_LIO 在使用 mapping_velodyne.launch 运行时，出现“启动正常、运行一段时间后崩溃”的问题。
+      终端典型报错为：
+      malloc(): mismatching next->prev_size (unsorted)
+      [laserMapping-1] process has died, exit code -6
+
+      当前现象记录：
+      1) 不是启动即崩，而是运行一段时间后才出现。
+      2) 崩溃前可能出现 “No point, skip this scan!”。
+      3) 当前使用 fast_lio/config/velodyne.yaml 与 fast_lio/launch/mapping_velodyne.launch。
+      4) 当前参数核对后，velodyne.yaml 中 preprocess/timestamp_unit=0 与 rs_to_velodyne 输出 time 的秒单位是匹配的，因此不能简单认为是 velodyne.yaml 写错导致。
+
+      当前判断：
+      1) 该报错更像堆内存被提前破坏后的延迟报错，不一定是 malloc 当场出错。
+      2) 更可疑位置在 FAST_LIO 的 Velodyne 特征提取路径，而不是 velodyne.yaml 单独配置错误。
+      3) src/fast_lio/src/preprocess.cpp 中 give_feature() 对异常 ring/坏帧的边界保护不足，怀疑存在越界访问风险。
+      4) 当前 launch 中 feature_extract_enable=1，属于较敏感路径，异常帧更容易在该路径触发问题。
+      5) velodyne.yaml 中 pcd_save_en=true 且 interval=-1 会造成长时间运行时内存持续累积，但更像长期内存压力问题，不像本次 unsorted 报错的直接根因。
+      修改了local_planner.launch：
+      checkRotObstacle：true -> false
+      dirWeight：0.02 -> 0.005
+      pathCropByGoal：true -> false
+      备注：dirThre原始默认值为90.0，当前180.0为手动调整，不属于本次代改内容
 
 26.4.14
    4.14.0
@@ -800,6 +800,7 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       - 二维码三维定位当前取的是二维码中心附近深度中值，不是专门做平面角点重建；如果中心区域深度缺失、二维码斜放过大，或者深度和彩色图对齐不稳定，会出现“能识别内容但不落点”或落点轻微偏移
       - 当前二维码地图标记依赖彩色图、对齐深度图和相机内参同时正常输入；如果只有彩色图能看到二维码但深度不可用，当前实现不会登记该二维码
 
+26.4.23
    4.23.1
       记录当前仍未完成的主线任务，作为下一阶段联调清单
 
