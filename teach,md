@@ -1,0 +1,133 @@
+# 启动教程
+
+## 使用说明
+
+默认每一步都建议新开一个终端执行，并且每个终端先进入工作空间后再执行：
+
+```bash
+cd /home/rera/robotcup2026
+source devel/setup.bash
+```
+
+如果还没有启动 `roscore`，先在一个单独终端执行：
+
+```bash
+roscore
+```
+
+## 启动顺序
+
+### 1. 启动 display
+
+`display.launch` 里 `model` 参数没有默认值，建议这样启动：
+
+```bash
+roslaunch rebo24 display.launch model:=$(rospack find rebo24)/urdf/rebo24.urdf
+```
+
+### 2. 启动 senser
+
+这里对应仓库里的 `sensor.launch`：
+
+```bash
+roslaunch rebo24 sensor.launch
+```
+
+### 3. 启动 mapping_velodyne
+
+```bash
+roslaunch fast_lio mapping_velodyne.launch
+```
+
+### 4. 启动 vehicle_cropbox_filter
+
+```bash
+roslaunch pcl_ros vehicle_cropbox_filter.launch
+```
+
+### 5. 启动 registered_scan_to_scan
+
+```bash
+roslaunch pointcloud_to_laserscan registered_scan_to_scan.launch
+```
+
+### 6. 启动 sim_terrain
+
+```bash
+roslaunch terrain_analysis_ext sim_terrain.launch
+```
+
+### 7. 启动 localplanner
+
+这里对应 `local_planner.launch`：
+
+```bash
+roslaunch local_planner local_planner.launch
+```
+
+### 8. 启动 senser_scan
+
+这里对应 `sensor_scan_generation.launch`：
+
+```bash
+roslaunch sensor_scan_generation sensor_scan_generation.launch
+```
+
+### 9. 启动 explore_robocup
+
+```bash
+roslaunch tare_planner explore_robocup.launch
+```
+
+### 10. 启动 person 识别
+
+```bash
+roslaunch visual_obstacle_detector person_global_localizer.launch
+```
+
+### 11. 启动 qr 识别
+
+```bash
+roslaunch visual_obstacle_detector qr_global_localizer.launch
+```
+
+### 12. 启动 damiao
+
+当前仓库里没有现成的 `damiao.launch`，对应的是底盘控制节点：
+
+```bash
+rosrun control damiao_diff_chassis_node
+```
+
+### 13. 启动 hector
+
+```bash
+roslaunch hector_slam_launch hector.launch
+```
+
+## 一份总表
+
+按顺序依次执行：
+
+```bash
+roslaunch rebo24 display.launch model:=$(rospack find rebo24)/urdf/rebo24.urdf
+roslaunch rebo24 sensor.launch
+roslaunch fast_lio mapping_velodyne.launch
+roslaunch pcl_ros vehicle_cropbox_filter.launch
+roslaunch pointcloud_to_laserscan registered_scan_to_scan.launch
+roslaunch terrain_analysis_ext sim_terrain.launch
+roslaunch local_planner local_planner.launch
+roslaunch sensor_scan_generation sensor_scan_generation.launch
+roslaunch tare_planner explore_robocup.launch
+roslaunch visual_obstacle_detector person_global_localizer.launch
+roslaunch visual_obstacle_detector qr_global_localizer.launch
+rosrun control damiao_diff_chassis_node
+roslaunch hector_slam_launch hector.launch
+```
+
+## 备注
+
+- `senser` 在仓库里对应的是 `sensor.launch`。
+- `senser_scan` 在仓库里对应的是 `sensor_scan_generation.launch`。
+- `damiao` 目前是节点，不是 launch 文件，所以使用 `rosrun` 启动。
+- `sim_terrain.launch` 内部已经包含 `loam_interface`、`terrain_analysis` 和 `terrain_analysis_ext`。
