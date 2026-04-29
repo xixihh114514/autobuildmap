@@ -1,5 +1,7 @@
 <launch>
 
+  <arg name="delay_sec" default="0"/> <!-- 启动前延迟秒数，便于按顺序拉起整套 TARE 流程 -->
+
   <!-- ==================== 共享参数：传感器外参与坐标系 ==================== -->
   <arg name="sensorOffsetX" default="0.1555"/> <!-- sensor 原点相对 vehicle 参考点的 X 偏移（m） -->
   <arg name="sensorOffsetY" default="-0.0010002"/> <!-- sensor 原点相对 vehicle 参考点的 Y 偏移（m） -->
@@ -19,7 +21,12 @@
   <arg name="goalY" default="0"/> <!-- 启动时初始目标点的 Y 坐标（map 系） -->
 
   <!-- ==================== 节点：localPlanner ==================== -->
-  <node pkg="local_planner" type="localPlanner" name="localPlanner" output="screen" required="true"> <!-- 根据环境与目标点生成局部路径 /path -->
+  <node pkg="local_planner"
+        type="localPlanner"
+        name="localPlanner"
+        output="screen"
+        required="true"
+        launch-prefix="bash -c 'sleep $(arg delay_sec); exec &quot;$0&quot; &quot;$@&quot;'"> <!-- 根据环境与目标点生成局部路径 /path -->
     <!-- 路径库与车体几何 -->
     <param name="pathFolder" type="string" value="$(find local_planner)/paths" /> <!-- 预生成路径库文件所在目录 -->
     <param name="vehicleLength" type="double" value="0.70" /> <!-- 车体长度（m） -->
@@ -73,7 +80,12 @@
   </node>
 
   <!-- ==================== 节点：pathFollower ==================== -->
-  <node pkg="local_planner" type="pathFollower" name="pathFollower" output="screen" required="true"> <!-- 将 /path 转换为底盘控制指令 /cmd_vel -->
+  <node pkg="local_planner"
+        type="pathFollower"
+        name="pathFollower"
+        output="screen"
+        required="true"
+        launch-prefix="bash -c 'sleep $(arg delay_sec); exec &quot;$0&quot; &quot;$@&quot;'"> <!-- 将 /path 转换为底盘控制指令 /cmd_vel -->
     <!-- 车辆参考点与运动模式 -->
     <param name="sensorOffsetX" value="$(arg sensorOffsetX)" /> <!-- 使用共享的 sensor X 偏移计算车体参考点 -->
     <param name="sensorOffsetY" value="$(arg sensorOffsetY)" /> <!-- 使用共享的 sensor Y 偏移计算车体参考点 -->
@@ -116,7 +128,15 @@
   </node>
 
   <!-- ==================== 静态 TF ==================== -->
-  <node pkg="tf" type="static_transform_publisher" name="vehicleTransPublisher" args="-$(arg sensorOffsetX) -$(arg sensorOffsetY) 0 0 0 0 /sensor /vehicle 1000"/> <!-- 发布 /sensor 到 /vehicle 的静态变换，平移取 sensorOffset 的相反数 -->
-  <node pkg="tf" type="static_transform_publisher" name="sensorTransPublisher" args="0 0 $(arg cameraOffsetZ) -1.5707963 0 -1.5707963 /sensor /camera 1000"/> <!-- 发布 /sensor 到 /camera 的静态变换，包含相机安装高度和固定旋转 -->
+  <node pkg="tf"
+        type="static_transform_publisher"
+        name="vehicleTransPublisher"
+        args="-$(arg sensorOffsetX) -$(arg sensorOffsetY) 0 0 0 0 /sensor /vehicle 1000"
+        launch-prefix="bash -c 'sleep $(arg delay_sec); exec &quot;$0&quot; &quot;$@&quot;'"/> <!-- 发布 /sensor 到 /vehicle 的静态变换，平移取 sensorOffset 的相反数 -->
+  <node pkg="tf"
+        type="static_transform_publisher"
+        name="sensorTransPublisher"
+        args="0 0 $(arg cameraOffsetZ) -1.5707963 0 -1.5707963 /sensor /camera 1000"
+        launch-prefix="bash -c 'sleep $(arg delay_sec); exec &quot;$0&quot; &quot;$@&quot;'"/> <!-- 发布 /sensor 到 /camera 的静态变换，包含相机安装高度和固定旋转 -->
 
 </launch>

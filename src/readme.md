@@ -1096,3 +1096,58 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       - 二维码检测默认走 `qr_global_localizer.launch backend:=cpp`
       - 需要特别注意：当前 QR 属于“CPU 解码 + 可选 OpenCL 预处理”路线，暂时还不是纯 GPU 解码
       - 当系统同时运行 FAST_LIO、tare_planner、hector_slam 时，优先把视觉任务留在 GPU / OpenCL 或独立推理后端上，以尽量给建图与规划腾出 CPU
+
+26.4.29
+   4.29.0
+      版本目标：把现场常用的 TARE 前置链路与视觉检测链路都整理成一键启动入口，减少手动分段拉起时漏步骤或顺序不一致的问题。
+
+      本次改动：
+      1) 新增 `autonomous_exploration_development_environment/src/sensor_scan_generation/launch/base_tare.launch`
+         - 将原先分开启动的：
+           `sim_terrain.launch -> local_planner.launch -> sensor_scan_generation.launch`
+           整理为单一入口
+         - 并将 `sim_terrain.launch` 内部原本包含的三个启动项直接展开为：
+           `loam_interface.launch -> terrain_analysis.launch -> terrain_analysis_ext.launch`
+         - 当前完整启动顺序调整为：
+           `loam_interface -> terrain_analysis -> terrain_analysis_ext -> local_planner -> sensor_scan_generation`
+         - 相邻阶段默认延迟 `5s`
+         - 即默认启动时刻分别为：
+           `0s / 5s / 10s / 15s / 20s`
+         - `terrain_analysis_ext` 继续固定使用：
+           `checkTerrainConn:=false`
+
+      2) 修改 `autonomous_exploration_development_environment/src/local_planner/launch/local_planner.launch`
+         - 新增 `delay_sec` 参数
+         - `localPlanner`、`pathFollower` 与两个静态 TF 发布节点均支持按统一延迟启动
+         - 目的是让 `base_tare.launch` 可以直接接管启动节奏，而不需要额外脚本包装
+
+      3) 修改 `autonomous_exploration_development_environment/src/sensor_scan_generation/launch/sensor_scan_generation.launch`
+         - 新增 `delay_sec` 参数
+         - 支持被 `base_tare.launch` 延迟拉起
+
+      4) 新增 `visual_obstacle_detector/launch/visual.launch`
+         - 将 `person_global_localizer.launch` 与 `qr_global_localizer.launch` 合并为统一视觉入口
+         - 共享彩色图、深度图、相机内参、`compute_target`、`global_frame` 等公共参数
+         - 同时保留人物检测与二维码检测各自独立的确认帧数、像素容差、后端等专属参数
+
+      5) 文档同步
+         - `teach,md` 已同步改为新的默认启动入口，避免现场执行时继续沿用旧命令
+
+      当前推荐启动方式：
+      1) TARE 前置链路：
+         `roslaunch sensor_scan_generation base_tare.launch`
+      2) 视觉检测链路：
+         `roslaunch visual_obstacle_detector visual.launch`
+
+      验证情况：
+      1) `xmllint --noout` 已检查：
+         - `base_tare.launch`
+         - `local_planner.launch`
+         - `sensor_scan_generation.launch`
+         - `visual.launch`
+      2) `source devel/setup.bash && roslaunch --nodes sensor_scan_generation base_tare.launch`
+         - 已成功展开：
+           `/loamInterface /tf_map_to_camera_init_bridge /terrainAnalysis /terrainAnalysisExt /localPlanner /pathFollower /vehicleTransPublisher /sensorTransPublisher /sensorScanGeneration`
+      3) `source devel/setup.bash && roslaunch --nodes visual_obstacle_detector visual.launch`
+         - 已成功展开：
+           `/person_global_localizer /qr_global_localizer`
