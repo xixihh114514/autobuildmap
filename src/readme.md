@@ -942,3 +942,35 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
         1) 窄通道内侧墙贴靠是否减轻
         2) 直角弯入口是否仍然出现明显内切
         3) 是否出现转向响应过慢、拐不过去的新问题
+26.5.1
+   5.1.0
+      版本目标：补记当前 `0.2m/s` 的 `local_planner` 低速参数组，并在保持低速上限不变的前提下，小幅回调上一轮过度保守的局部搜索和转向阈值，减少丁字路口前“挪过去”和犹豫。
+
+      本次改动：
+      1) 补记当前 `0.2m/s` 低速组基线
+         - `maxSpeed`：`0.5 -> 0.2`
+         - `autonomySpeed`：`0.5 -> 0.2`
+         - `maxAccel`：`1.25 -> 0.5`
+         - `stopDisThre`：`0.15 -> 0.06`
+         - `slowDwnDisThre`：`0.425 -> 0.17`
+         - `goalClearRange`：`0.25 -> 0.1`
+
+      2) 继续修改 `autonomous_exploration_development_environment/src/local_planner/launch/local_planner.launch`
+         - `adjacentRange`：`0.7 -> 1.2`
+         - `minPathRange`：`0.06 -> 0.25`
+         - `pathRangeStep`：`0.02 -> 0.05`
+         - `lookAheadDis`：`0.06 -> 0.15`
+         - `yawRateGain`：`1.7 -> 2.0`
+         - `stopYawRateGain`：`1.7 -> 2.0`
+         - `dirDiffThre`：`0.1 -> 0.15`
+
+      说明：
+      - `pathFollower` 里的“低速”不是 `0.2m/s`，而是代码按 `|vehicleSpeed| < 2 * maxAccel / 100` 动态判断。
+      - 以当前 `maxAccel=0.5` 计算，低速判定阈值是 `0.01m/s`，只有落到这个量级时才会切到 `stopYawRateGain` 分支。
+      - 当前巡航目标仍是 `0.2m/s`，所以 `stopYawRateGain` 主要影响临近停车、极慢速起步和路口反复收油时的转向响应。
+
+      当前建议：
+      - 下一轮优先观察：
+        1) 丁字路口入口是否比前一轮更果断
+        2) 窄通道中是否重新出现贴墙或左右摆头
+        3) 若仍有明显犹豫，优先继续小幅调 `stopYawRateGain` 或 `dirDiffThre`，不建议先继续缩短前视距离
