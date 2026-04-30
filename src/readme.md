@@ -892,3 +892,53 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       当前说明：
       - 现阶段还不能确定零漂根因，以上两条为当前主要怀疑方向
       - 后续建议优先结合撞墙时刻、点云有效率、`/registered_scan` 质量和状态估计输出一起对照排查
+
+26.4.30
+   4.30.0
+      版本目标：在 `local_planner` 中把共享线速度上限统一降到 `0.5m/s`，并把与线速度直接耦合的固定距离/加速度阈值按比例同步收缩，避免只降速度不改局部规划尺度，导致控制与搜索范围不匹配。
+
+      本次改动：
+      1) 修改 `autonomous_exploration_development_environment/src/local_planner/launch/local_planner.launch`
+         - `maxSpeed`：`1.0 -> 0.5`
+         - `autonomySpeed`：`1.0 -> 0.5`
+
+      2) 按 `0.5` 比例同步调整 `localPlanner` 侧固定范围参数
+         - `adjacentRange`：`3.5 -> 1.75`
+         - `minPathRange`：`0.3 -> 0.15`
+         - `pathRangeStep`：`0.1 -> 0.05`
+         - `goalClearRange`：`0.5 -> 0.25`
+
+      3) 按 `0.5` 比例同步调整 `pathFollower` 侧固定跟踪参数
+         - `lookAheadDis`：`0.3 -> 0.15`
+         - `maxAccel`：`2.5 -> 1.25`
+         - `stopDisThre`：`0.3 -> 0.15`
+         - `slowDwnDisThre`：`0.85 -> 0.425`
+
+      说明：
+      - 本轮只缩放了和线速度直接耦合的“固定距离/加速度阈值”。
+      - `pathScaleBySpeed` 与 `pathRangeBySpeed` 在代码里本来就会根据 `joySpeed = autonomySpeed / maxSpeed` 自动缩放，因此本轮不再重复改动，避免双重缩放。
+      - `yawRateGain`、`stopYawRateGain`、`maxYawRate`、`dirDiffThre` 这类角度/转向增益参数本轮保持不变，原因是它们不适合简单按线速度做线性减半。
+
+      当前建议：
+      - 后续实车或仿真观察重点放在：
+        1) 窄通道入口是否比之前更稳
+        2) 直角弯处是否因前视距离过短出现频繁抖动
+        3) `maxAccel=1.25` 是否仍偏激进
+      - 如果后续发现减速和停车仍偏猛，优先再单独下调 `maxAccel`，不建议先去动角速度增益。
+   4.30.1
+      版本目标：针对 `4.30.0` 半速参数组下“更容易贴墙”的现象，先同步下调路径跟踪侧的转向增益，避免线速度已经减半但角速度响应仍保持原强度。
+
+      本次改动：
+      1) 修改 `autonomous_exploration_development_environment/src/local_planner/launch/local_planner.launch`
+         - `yawRateGain`：`8.5 -> 4.25`
+         - `stopYawRateGain`：`8.5 -> 4.25`
+
+      说明：
+      - 本轮只同步调整转向增益，不改 `maxYawRate`、速度比例逻辑和局部规划搜索范围参数。
+      - 当前处理思路是先削弱“半速下仍然过强的转向响应”，优先观察贴墙和内切是否收敛。
+
+      当前建议：
+      - 下一轮观察重点是：
+        1) 窄通道内侧墙贴靠是否减轻
+        2) 直角弯入口是否仍然出现明显内切
+        3) 是否出现转向响应过慢、拐不过去的新问题
