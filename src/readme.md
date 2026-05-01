@@ -974,3 +974,59 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
         1) 丁字路口入口是否比前一轮更果断
         2) 窄通道中是否重新出现贴墙或左右摆头
         3) 若仍有明显犹豫，优先继续小幅调 `stopYawRateGain` 或 `dirDiffThre`，不建议先继续缩短前视距离
+   5.1.1
+      版本目标：针对当前地图里 3 个典型卡顿点继续修正局部规划与探索策略，重点解决丁字路口/宽阔地进入窄道时的犹豫原地转、中央直道卡住、进入丁字路口后卡住，并顺带补强一部分探索不完全的问题。
+
+      本次改动：
+      1) 修改 `autonomous_exploration_development_environment/src/local_planner/launch/local_planner.launch`
+         - `adjacentRange`：`1.2 -> 1.4`
+         - 新增 `pathSwitchScoreRatio=1.08`
+         - 新增 `pathCrossBranchSwitchScoreRatio=1.15`
+         - 含义：
+           提前看见路口和窄道出口，并给局部规划加上“路径切换滞回”，减少在两个都能走的分支之间来回改主意。
+
+      2) 修改 `autonomous_exploration_development_environment/src/local_planner/src/localPlanner.cpp`
+         - `searchRadius`：`0.45 -> 0.36`
+         - 新增逐条候选路径执行缓存 `execPaths`
+         - 新增 `clearPathScore`，不再只按 group 选路，而是先稳住候选方向，再在该方向内挑实际更顺的单条路径
+         - 新增 `lastSelectedCandidateID` 和记忆保持逻辑
+         - 左右跨分支切换时使用更高的切换门槛
+         - 含义：
+           重点抑制丁字路口和宽转窄入口处“朝两条可通路中间原地转”的现象，同时减少在中央直道和进入丁字路口后的局部路径抖动与卡死。
+
+      3) 修改 `autonomous_exploration_development_environment/src/local_planner/paths/path_generator.m`
+         - `searchRadius`：`0.45 -> 0.36`
+
+      4) 重生成 `autonomous_exploration_development_environment/src/local_planner/paths/correspondences.txt`
+         - 使离线路径对应关系与新的 `searchRadius=0.36` 保持一致，避免运行时仍按旧邻域关系评分。
+
+      5) 修改 `tare_planner/config/robocup.yaml`
+         - 新增：
+           `kLookAheadKeepMinDistance=0.8`
+           `kLookAheadSwitchScoreMargin=0.12`
+           `kReturnHomeCandidateCountThreshold=8`
+         - 调整：
+           `kFrontierClusterMinSize`：`4 -> 3`
+           `kMinAddPointNumSmall`：`12 -> 10`
+           `kMinAddPointNumBig`：`22 -> 18`
+           `kMinAddFrontierPointNum`：`3 -> 2`
+         - 含义：
+           在旧 lookahead 仍然合理时优先延续当前分支，降低路口附近反复重选；同时保留更小的 frontier 和更弱的新信息区域，缓解探索后期“还有地方但被过早当作探索完成”的情况。
+
+      6) 修改 `tare_planner/include/sensor_coverage_planner/sensor_coverage_planner_ground.h/.cpp`
+         - 接入上述新参数
+         - 新增 lookahead 保持逻辑与切换 margin
+         - 新增 `return_home_candidate_count_`，只有连续多轮都满足条件才正式进入回家状态
+         - 在“疑似完成但尚未确认”阶段，先不覆盖当前探索路径
+         - 含义：
+           避免车辆刚到路口或弱 frontier 区域就被过早打断当前探索，减少进入丁字路口后突然停住或转入回家流程的误判。
+
+      解决问题总结：
+      1) 修正车辆在丁字路口、以及宽阔地进入窄道时容易犹豫并朝两个可通行路口中间原地旋转的问题。
+      2) 修正车辆在中间直道区域容易卡住的问题。
+      3) 修正车辆进入丁字路口后容易卡住的问题。
+      4) 额外完善了一部分探索不完全的问题，减少小 frontier 和弱新增信息区域被过早忽略。
+
+      说明：
+      - 本轮不是单纯继续放宽某一个阈值，而是同时从“局部路径切换稳定性”和“全局探索完成判定”两侧一起收敛问题。
+      - `correspondences.txt` 为按新 `searchRadius` 重生成后的结果，因此 diff 很大，属于预期变化。

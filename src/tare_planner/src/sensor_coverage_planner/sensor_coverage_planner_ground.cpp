@@ -57,10 +57,14 @@ bool PlannerParameters::ReadParameters(ros::NodeHandle& nh)
   kAtHomeDistThreshold = misc_utils_ns::getParam<double>(nh, "kAtHomeDistThreshold", 0.5);
   kTerrainCollisionThreshold = misc_utils_ns::getParam<double>(nh, "kTerrainCollisionThreshold", 0.5);
   kLookAheadDistance = misc_utils_ns::getParam<double>(nh, "kLookAheadDistance", 5.0);
+  kLookAheadKeepMinDistance = misc_utils_ns::getParam<double>(nh, "kLookAheadKeepMinDistance", 0.8);
+  kLookAheadSwitchScoreMargin = misc_utils_ns::getParam<double>(nh, "kLookAheadSwitchScoreMargin", 0.12);
   kExtendWayPointDistanceBig = misc_utils_ns::getParam<double>(nh, "kExtendWayPointDistanceBig", 8.0);
   kExtendWayPointDistanceSmall = misc_utils_ns::getParam<double>(nh, "kExtendWayPointDistanceSmall", 3.0);
 
   // Int
+  kReturnHomeCandidateCountThreshold =
+      misc_utils_ns::getParam<int>(nh, "kReturnHomeCandidateCountThreshold", 8);
   kDirectionChangeCounterThr = misc_utils_ns::getParam<int>(nh, "kDirectionChangeCounterThr", 4);
   kDirectionNoChangeCounterThr = misc_utils_ns::getParam<int>(nh, "kDirectionNoChangeCounterThr", 5);
   kResetWaypointJoystickAxesID = misc_utils_ns::getParam<int>(nh, "kResetWaypointJoystickAxesID", 0);
@@ -177,6 +181,7 @@ SensorCoveragePlanner3D::SensorCoveragePlanner3D(ros::NodeHandle& nh, ros::NodeH
   , direction_change_count_(0)
   , direction_no_change_count_(0)
   , momentum_activation_count_(0)
+  , return_home_candidate_count_(0)
   , reset_waypoint_joystick_axis_value_(-1.0)
 {
   initialize(nh, nh_p);
@@ -1019,6 +1024,7 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
   double lookahead_angle_score = -2;
 
   double dist_robot_to_lookahead = 0.0;
+  bool prev_lookahead_point_in_los = true;
   if (has_forward)
   {
     Eigen::Vector3d forward_diff = forward_lookahead_point - robot_position;
@@ -1041,6 +1047,7 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
     diff.z() = 0.0;
     diff = diff.normalized();
     lookahead_angle_score = dx * diff.x() + dy * diff.y();
+    prev_lookahead_point_in_los = pd_.viewpoint_manager_->InCurrentFrameLineOfSight(prev_lookahead_point);
   }
 
   pd_.lookahead_point_cloud_->cloud_->clear();
@@ -1053,6 +1060,17 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
   {
     relocation_ = false;
   }
+
+  bool keep_previous_lookahead = false;
+  if (!relocation_ && has_lookahead)
+  {
+    double best_candidate_score = forward_angle_score > backward_angle_score ? forward_angle_score : backward_angle_score;
+    keep_previous_lookahead =
+        dist_robot_to_lookahead > pp_.kLookAheadKeepMinDistance &&
+        pd_.viewpoint_manager_->InLocalPlanningHorizon(local_path.nodes_[lookahead_i].position_) &&
+        lookahead_angle_score + pp_.kLookAheadSwitchScoreMargin >= best_candidate_score;
+  }
+
   if (relocation_)
   {
     if (use_momentum_ && pp_.kUseMomentum)
@@ -1085,9 +1103,7 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
       }
     }
   }
-  else if (has_lookahead && lookahead_angle_score > 0 && dist_robot_to_lookahead > pp_.kLookAheadDistance / 2 &&
-           pd_.viewpoint_manager_->InLocalPlanningHorizon(local_path.nodes_[lookahead_i].position_))
-
+  else if (keep_previous_lookahead)
   {
     lookahead_point = local_path.nodes_[lookahead_i].position_;
   }
@@ -1121,6 +1137,10 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
       (lookahead_point == backward_lookahead_point && !backward_lookahead_point_in_los))
   {
     lookahead_point_in_line_of_sight_ = false;
+  }
+  else if (has_lookahead && lookahead_point == local_path.nodes_[lookahead_i].position_)
+  {
+    lookahead_point_in_line_of_sight_ = prev_lookahead_point_in_los;
   }
   else
   {
@@ -1343,8 +1363,28 @@ void SensorCoveragePlanner3D::execute(const ros::TimerEvent&)
     near_home_ = GetRobotToHomeDistance() < pp_.kRushHomeDist;
     at_home_ = GetRobotToHomeDistance() < pp_.kAtHomeDistThreshold;
 
-    if (pd_.grid_world_->IsReturningHome() && pd_.local_coverage_planner_->IsLocalCoverageComplete() &&
-        (ros::Time::now() - start_time_).toSec() > 5)
+    bool return_home_candidate =
+        pd_.grid_world_->IsReturningHome() && pd_.local_coverage_planner_->IsLocalCoverageComplete() &&
+        (ros::Time::now() - start_time_).toSec() > 5;
+    if (return_home_candidate)
+    {
+      return_home_candidate_count_++;
+    }
+    else
+    {
+      return_home_candidate_count_ = 0;
+    }
+
+    bool return_home_confirmed =
+        return_home_candidate && return_home_candidate_count_ >= pp_.kReturnHomeCandidateCountThreshold;
+
+    if (return_home_candidate && !return_home_confirmed)
+    {
+      global_path = exploration_path_ns::ExplorationPath();
+      local_path = exploration_path_ns::ExplorationPath();
+    }
+
+    if (return_home_confirmed)
     {
       if (!exploration_finished_)
       {
@@ -1359,11 +1399,13 @@ void SensorCoveragePlanner3D::execute(const ros::TimerEvent&)
       stopped_ = true;
     }
 
-    pd_.exploration_path_ = ConcatenateGlobalLocalPath(global_path, local_path);
+    if (!return_home_candidate || return_home_confirmed || pd_.exploration_path_.GetNodeNum() == 0)
+    {
+      pd_.exploration_path_ = ConcatenateGlobalLocalPath(global_path, local_path);
+      lookahead_point_update_ = GetLookAheadPoint(pd_.exploration_path_, global_path, pd_.lookahead_point_);
+    }
 
     PublishExplorationState();
-
-    lookahead_point_update_ = GetLookAheadPoint(pd_.exploration_path_, global_path, pd_.lookahead_point_);
     PublishWaypoint();
 
     overall_processing_timer.Stop(false);

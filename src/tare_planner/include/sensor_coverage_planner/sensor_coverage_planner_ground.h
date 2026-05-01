@@ -100,10 +100,13 @@ struct PlannerParameters
   double kAtHomeDistThreshold;
   double kTerrainCollisionThreshold;
   double kLookAheadDistance;
+  double kLookAheadKeepMinDistance;
+  double kLookAheadSwitchScoreMargin;
   double kExtendWayPointDistanceBig;
   double kExtendWayPointDistanceSmall;
 
   // Int
+  int kReturnHomeCandidateCountThreshold;
   int kDirectionChangeCounterThr;
   int kDirectionNoChangeCounterThr;
   int kResetWaypointJoystickAxesID;
@@ -200,6 +203,7 @@ private:
   int direction_change_count_;
   int direction_no_change_count_;
   int momentum_activation_count_;
+  int return_home_candidate_count_;
 
   double reset_waypoint_joystick_axis_value_;
 

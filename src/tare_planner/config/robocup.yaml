@@ -73,6 +73,12 @@ kTerrainCollisionThreshold : 0.5
 # 全局/局部前瞻距离
 # 当前值适度上调，减少路口前过早重选局部分支
 kLookAheadDistance : 3.5
+# 只要旧 lookahead 仍在规划域内且距离还够，就优先沿当前已选分支继续推进
+kLookAheadKeepMinDistance : 0.8
+# 候选新分支必须比当前分支明显更优，才允许在路口重新切边
+kLookAheadSwitchScoreMargin : 0.12
+# 检测到“似乎该回家了”后，至少连续这么多轮都为空，才正式进入回家状态
+kReturnHomeCandidateCountThreshold : 8
 
 # 是否启用动量模式（避免方向频繁切换）
 kUseMomentum : true
@@ -93,8 +99,8 @@ kUseFrontier : true
 # frontier 聚类距离阈值
 kFrontierClusterTolerance : 0.8
 # frontier 最小簇点数
-# 回到更稳的 4 点，避免沿墙碎小 frontier 被频繁当成主目标去追
-kFrontierClusterMinSize : 4
+# 对同类小尺度多回环地图保留更小的 frontier，避免窄口后方区域过早被当作完成
+kFrontierClusterMinSize : 3
 # 是否使用 coverage 边界过滤 frontier
 kUseCoverageBoundaryOnFrontier : false
 # 是否使用 coverage 边界过滤物体表面
@@ -216,11 +222,11 @@ kGridWorldCellHeight : 3.0
 kGridWorldNearbyGridNum : 5
 
 # 单个视点至少需要新增多少覆盖点才算有价值
-# 当前值已专门降低，避免窄口前“有效信息太少”被直接判探索完成
-kMinAddPointNumSmall : 12
-kMinAddPointNumBig : 22
-# 回到更稳的门槛，避免为了极少量 frontier 点把车带到墙边
-kMinAddFrontierPointNum : 3
+# 当前值进一步下调，避免弱新增信息区域在第二个回环前被过早判成无价值
+kMinAddPointNumSmall : 10
+kMinAddPointNumBig : 18
+# 保留更小 frontier，提升跨回环切换能力
+kMinAddFrontierPointNum : 2
 
 # 子空间状态切换阈值
 # 当前值偏低，目的是让入口附近 cell 更容易重新进入 exploring

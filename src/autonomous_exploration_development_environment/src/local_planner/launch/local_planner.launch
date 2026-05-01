@@ -34,7 +34,7 @@
     <param name="laserVoxelSize" type="double" value="0.05" /> <!-- 激光点云降采样体素尺寸（m） -->
     <param name="terrainVoxelSize" type="double" value="0.2" /> <!-- 地形点云降采样体素尺寸（m） -->
     <param name="useTerrainAnalysis" type="bool" value="true" /> <!-- 是否使用 /terrain_map 参与可通行性分析 -->
-    <param name="adjacentRange" type="double" value="1.2" /> <!-- 局部规划与障碍检查的搜索半径（m），适度回调以减少路口短视与试探 -->
+    <param name="adjacentRange" type="double" value="1.4" /> <!-- 局部规划与障碍检查的搜索半径（m），略增大以提前看见路口和窄道出口 -->
     <param name="minRelZ" type="double" value="-0.2" /> <!-- 仅依赖激光点时允许的最低相对高度（m） -->
     <param name="maxRelZ" type="double" value="0.3" /> <!-- 仅依赖激光点时允许的最高相对高度（m） -->
 
@@ -61,6 +61,8 @@
     <param name="pathRangeStep" type="double" value="0.05" /> <!-- 路径长度逐步减小的步长（m） -->
     <param name="pathRangeBySpeed" type="bool" value="true" /> <!-- 是否根据当前速度调整路径长度 -->
     <param name="pathCropByGoal" type="bool" value="true" /> <!-- 是否按目标距离裁剪局部路径 -->
+    <param name="pathSwitchScoreRatio" type="double" value="1.08" /> <!-- 上一帧候选仍可走时，至少被新候选超出多少倍才切换 -->
+    <param name="pathCrossBranchSwitchScoreRatio" type="double" value="1.15" /> <!-- 左右分支互切时需要更明显的优势才允许换边 -->
 
     <!-- 自主控制与目标配置 -->
     <param name="autonomyMode" value="$(arg autonomyMode)" /> <!-- 使用共享的默认自主模式开关 -->
