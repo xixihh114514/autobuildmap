@@ -1,3 +1,102 @@
+# src 工作区说明
+
+这个 `src` 目录是 RoboCup2026 自主探索 / 建图工作区的 ROS 1 `catkin` 源码区，当前已经同时放入了机器人模型、仿真、FAST_LIO、TARE、本地点云处理和若干导航相关依赖包。
+
+## 当前主链路
+
+- `rebo24`：当前默认机器人模型与 Gazebo 启动入口。
+- `fast_lio`：当前主定位 / 点云里程计链路。
+- `loam_interface`：把 FAST_LIO 的里程计与点云桥接到后续探索链路。
+- `terrain_analysis` 与 `terrain_analysis_ext`：地形分析与扩展地形图。
+- `local_planner`：局部路径搜索与底盘跟踪控制。
+- `sensor_scan_generation`：为 TARE 补充传感器扫描输入。
+- `tare_planner`：探索规划主包。
+- `hector_slam`：二维地图绘制与导出。
+- `image_map_gazebo`：根据图片网格快速生成 Gazebo 地图场景的新包。
+
+## 推荐启动顺序
+
+当前仓库里已经验证过的一套主流程如下，基本沿用 2026-03-23 的记录：
+
+1. 启动仿真底盘
+   `roslaunch rebo24 simbase.launch`
+2. 启动 FAST_LIO
+   `roslaunch fast_lio mapping_velodyne.launch`
+3. 启动里程计桥接
+   `roslaunch loam_interface loam_interface.launch`
+4. 启动地形链路
+   `roslaunch terrain_analysis_ext sim_terrain.launch`
+5. 启动局部规划
+   `roslaunch local_planner local_planner.launch`
+6. 启动扫描生成
+   `roslaunch sensor_scan_generation sensor_scan_generation.launch`
+7. 启动 TARE 探索
+   `roslaunch tare_planner explore_robocup.launch`
+
+如果要跑车库参数，可把最后一步替换为：
+
+```bash
+roslaunch tare_planner explore_garage.launch
+```
+
+## 编译建议
+
+当前工作区包很多，历史上已经多次出现编译慢、依赖多、整体构建容易失败的问题。日常建议优先按包编译：
+
+```bash
+cd /home/lzk/robotcup2026
+catkin build rebo24 fast_lio loam_interface terrain_analysis terrain_analysis_ext local_planner sensor_scan_generation tare_planner image_map_gazebo
+source devel/setup.bash
+```
+
+如果 `fast_lio` 缺依赖，不要只依赖一键安装脚本，通常还是要结合官方文档和本地报错逐项补齐。
+
+## image_map_gazebo 包
+
+`image_map_gazebo` 用于把图片网格地图快速转成 Gazebo world，适合先做场景验证再接入自主探索链路。
+
+地图约定：
+
+- 1 个图片方格 = 1.0 m
+- 图片上方 = Gazebo +Y
+- 图片右方 = Gazebo +X
+- 黑色线段 = 墙体
+- “箱子” = 木箱障碍物
+- “斜坡 / 楼梯 / 操作台” = 对应实体模型
+- “-” 和 `|` = 低矮路障
+- “门口” = 绿色入口标记，无碰撞
+
+启动方式：
+
+```bash
+roslaunch image_map_gazebo image_map.launch
+```
+
+重新生成 world：
+
+```bash
+cd /home/lzk/robotcup2026/src/image_map_gazebo
+/usr/bin/python3 scripts/generate_image_map_world.py
+```
+
+如需改比例，修改 `scripts/generate_image_map_world.py` 里的 `CELL`。
+
+## 当前已知问题
+
+- 视觉避障链路已做过一轮接入，但历史上存在障碍点云消失慢的问题。
+- FAST_LIO 在仿真里曾多次出现崩溃、无效点云、零飘和无法稳定建图的问题，是否彻底解决仍需要继续验证。
+- 当前 TARE 依赖滤波、LOAM 接口、本地规划、地形分析、扫描生成和探索节点一起配合，地形节点不能简单全关。
+- `local_planner` 最近一次记录仍在做诊断性调参，重点是窄通道和 90 度转弯卡住问题。
+
+## 版本记录
+
+### 26.5.2
+
+- 新增 `image_map_gazebo` 包，用于图片地图转 Gazebo world。
+- 重写 `src/readme.md`，补充工作区说明、推荐启动顺序和当前链路说明。
+
+### 历史原始记录
+
 25.11.20
 目前已经完成视觉避障内容，但是目前存在问题点云消失太慢了
 后续对move_base进行修改即可

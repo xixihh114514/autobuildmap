@@ -1,0 +1,4929 @@
+<sdf version='1.7'>
+  <world name='image_map_world'>
+    <gravity>0 0 -9.8</gravity>
+    <physics name='default_physics' default='0' type='ode'>
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1</real_time_factor>
+      <real_time_update_rate>1000</real_time_update_rate>
+    </physics>
+    <light name='sun' type='directional'>
+      <cast_shadows>1</cast_shadows>
+      <pose>0 0 10 0 -0 0</pose>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <attenuation>
+        <range>1000</range>
+        <constant>0.9</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <direction>-0.5 0.1 -0.9</direction>
+      <spot>
+        <inner_angle>0</inner_angle>
+        <outer_angle>0</outer_angle>
+        <falloff>0</falloff>
+      </spot>
+    </light>
+    <gui fullscreen='0'>
+      <camera name='user_camera'>
+        <pose>3.67211 -4.1596 14.8113 0 1.19379 2.14606</pose>
+        <view_controller>orbit</view_controller>
+        <projection_type>perspective</projection_type>
+      </camera>
+    </gui>
+    <model name='floor'>
+      <static>1</static>
+      <pose>0 0 -0.03125 0 -0 0</pose>
+      <link name='link'>
+        <collision name='floor_collision'>
+          <geometry>
+            <box>
+              <size>10.5 10.5 0.0625</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='floor_visual'>
+          <geometry>
+            <box>
+              <size>10.5 10.5 0.0625</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.95 0.95 0.95 1</ambient>
+            <diffuse>0.95 0.95 0.95 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='grid_v_0'>
+      <static>1</static>
+      <pose>-5 0 0.0075 0 -0 0</pose>
+      <link name='link'>
+        <visual name='grid_v_0_visual'>
+          <geometry>
+            <box>
+              <size>0.0125 10 0.0125</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.82 0.82 0.82 1</ambient>
+            <diffuse>0.82 0.82 0.82 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='grid_v_1'>
+      <static>1</static>
+      <pose>-3.75 0 0.0075 0 -0 0</pose>
+      <link name='link'>
+        <visual name='grid_v_1_visual'>
+          <geometry>
+            <box>
+              <size>0.0125 10 0.0125</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.82 0.82 0.82 1</ambient>
+            <diffuse>0.82 0.82 0.82 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='grid_v_2'>
+      <static>1</static>
+      <pose>-2.5 0 0.0075 0 -0 0</pose>
+      <link name='link'>
+        <visual name='grid_v_2_visual'>
+          <geometry>
+            <box>
+              <size>0.0125 10 0.0125</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.82 0.82 0.82 1</ambient>
+            <diffuse>0.82 0.82 0.82 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='grid_v_3'>
+      <static>1</static>
+      <pose>-1.25 0 0.0075 0 -0 0</pose>
+      <link name='link'>
+        <visual name='grid_v_3_visual'>
+          <geometry>
+            <box>
+              <size>0.0125 10 0.0125</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.82 0.82 0.82 1</ambient>
+            <diffuse>0.82 0.82 0.82 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='grid_v_4'>
+      <static>1</static>
+      <pose>0 0 0.0075 0 -0 0</pose>
+      <link name='link'>
+        <visual name='grid_v_4_visual'>
+          <geometry>
+            <box>
+              <size>0.0125 10 0.0125</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.82 0.82 0.82 1</ambient>
+            <diffuse>0.82 0.82 0.82 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='grid_v_5'>
+      <static>1</static>
+      <pose>1.25 0 0.0075 0 -0 0</pose>
+      <link name='link'>
+        <visual name='grid_v_5_visual'>
+          <geometry>
+            <box>
+              <size>0.0125 10 0.0125</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.82 0.82 0.82 1</ambient>
+            <diffuse>0.82 0.82 0.82 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='grid_v_6'>
+      <static>1</static>
+      <pose>2.5 0 0.0075 0 -0 0</pose>
+      <link name='link'>
+        <visual name='grid_v_6_visual'>
+          <geometry>
+            <box>
+              <size>0.0125 10 0.0125</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.82 0.82 0.82 1</ambient>
+            <diffuse>0.82 0.82 0.82 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='grid_v_7'>
+      <static>1</static>
+      <pose>3.75 0 0.0075 0 -0 0</pose>
+      <link name='link'>
+        <visual name='grid_v_7_visual'>
+          <geometry>
+            <box>
+              <size>0.0125 10 0.0125</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.82 0.82 0.82 1</ambient>
+            <diffuse>0.82 0.82 0.82 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='grid_v_8'>
+      <static>1</static>
+      <pose>5 0 0.0075 0 -0 0</pose>
+      <link name='link'>
+        <visual name='grid_v_8_visual'>
+          <geometry>
+            <box>
+              <size>0.0125 10 0.0125</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.82 0.82 0.82 1</ambient>
+            <diffuse>0.82 0.82 0.82 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='grid_h_0'>
+      <static>1</static>
+      <pose>0 5 0.0075 0 -0 0</pose>
+      <link name='link'>
+        <visual name='grid_h_0_visual'>
+          <geometry>
+            <box>
+              <size>10 0.0125 0.0125</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.82 0.82 0.82 1</ambient>
+            <diffuse>0.82 0.82 0.82 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='grid_h_1'>
+      <static>1</static>
+      <pose>0 3.75 0.0075 0 -0 0</pose>
+      <link name='link'>
+        <visual name='grid_h_1_visual'>
+          <geometry>
+            <box>
+              <size>10 0.0125 0.0125</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.82 0.82 0.82 1</ambient>
+            <diffuse>0.82 0.82 0.82 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='grid_h_2'>
+      <static>1</static>
+      <pose>0 2.5 0.0075 0 -0 0</pose>
+      <link name='link'>
+        <visual name='grid_h_2_visual'>
+          <geometry>
+            <box>
+              <size>10 0.0125 0.0125</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.82 0.82 0.82 1</ambient>
+            <diffuse>0.82 0.82 0.82 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='grid_h_3'>
+      <static>1</static>
+      <pose>0 1.25 0.0075 0 -0 0</pose>
+      <link name='link'>
+        <visual name='grid_h_3_visual'>
+          <geometry>
+            <box>
+              <size>10 0.0125 0.0125</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.82 0.82 0.82 1</ambient>
+            <diffuse>0.82 0.82 0.82 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='grid_h_4'>
+      <static>1</static>
+      <pose>0 0 0.0075 0 -0 0</pose>
+      <link name='link'>
+        <visual name='grid_h_4_visual'>
+          <geometry>
+            <box>
+              <size>10 0.0125 0.0125</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.82 0.82 0.82 1</ambient>
+            <diffuse>0.82 0.82 0.82 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='grid_h_5'>
+      <static>1</static>
+      <pose>0 -1.25 0.0075 0 -0 0</pose>
+      <link name='link'>
+        <visual name='grid_h_5_visual'>
+          <geometry>
+            <box>
+              <size>10 0.0125 0.0125</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.82 0.82 0.82 1</ambient>
+            <diffuse>0.82 0.82 0.82 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='grid_h_6'>
+      <static>1</static>
+      <pose>0 -2.5 0.0075 0 -0 0</pose>
+      <link name='link'>
+        <visual name='grid_h_6_visual'>
+          <geometry>
+            <box>
+              <size>10 0.0125 0.0125</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.82 0.82 0.82 1</ambient>
+            <diffuse>0.82 0.82 0.82 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='grid_h_7'>
+      <static>1</static>
+      <pose>0 -3.75 0.0075 0 -0 0</pose>
+      <link name='link'>
+        <visual name='grid_h_7_visual'>
+          <geometry>
+            <box>
+              <size>10 0.0125 0.0125</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.82 0.82 0.82 1</ambient>
+            <diffuse>0.82 0.82 0.82 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='grid_h_8'>
+      <static>1</static>
+      <pose>0 -5 0.0075 0 -0 0</pose>
+      <link name='link'>
+        <visual name='grid_h_8_visual'>
+          <geometry>
+            <box>
+              <size>10 0.0125 0.0125</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.82 0.82 0.82 1</ambient>
+            <diffuse>0.82 0.82 0.82 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='wall_h_01'>
+      <static>1</static>
+      <pose>1.25 5 0.75 0 -0 0</pose>
+      <link name='link'>
+        <collision name='wall_h_01_collision'>
+          <geometry>
+            <box>
+              <size>2.5 0.1 1.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='wall_h_01_visual'>
+          <geometry>
+            <box>
+              <size>2.5 0.1 1.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='wall_h_02'>
+      <static>1</static>
+      <pose>-0.625 3.75 0.75 0 -0 0</pose>
+      <link name='link'>
+        <collision name='wall_h_02_collision'>
+          <geometry>
+            <box>
+              <size>1.25 0.1 1.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='wall_h_02_visual'>
+          <geometry>
+            <box>
+              <size>1.25 0.1 1.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='wall_h_03'>
+      <static>1</static>
+      <pose>3.125 3.75 0.75 0 -0 0</pose>
+      <link name='link'>
+        <collision name='wall_h_03_collision'>
+          <geometry>
+            <box>
+              <size>1.25 0.1 1.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='wall_h_03_visual'>
+          <geometry>
+            <box>
+              <size>1.25 0.1 1.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='wall_h_04'>
+      <static>1</static>
+      <pose>-1.875 2.5 0.75 0 -0 0</pose>
+      <link name='link'>
+        <collision name='wall_h_04_collision'>
+          <geometry>
+            <box>
+              <size>1.25 0.1 1.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='wall_h_04_visual'>
+          <geometry>
+            <box>
+              <size>1.25 0.1 1.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='wall_h_05'>
+      <static>1</static>
+      <pose>1.875 2.5 0.75 0 -0 0</pose>
+      <link name='link'>
+        <collision name='wall_h_05_collision'>
+          <geometry>
+            <box>
+              <size>1.25 0.1 1.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='wall_h_05_visual'>
+          <geometry>
+            <box>
+              <size>1.25 0.1 1.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='wall_h_06'>
+      <static>1</static>
+      <pose>4.375 2.5 0.75 0 -0 0</pose>
+      <link name='link'>
+        <collision name='wall_h_06_collision'>
+          <geometry>
+            <box>
+              <size>1.25 0.1 1.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='wall_h_06_visual'>
+          <geometry>
+            <box>
+              <size>1.25 0.1 1.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='wall_h_07'>
+      <static>1</static>
+      <pose>-2.5 1.25 0.75 0 -0 0</pose>
+      <link name='link'>
+        <collision name='wall_h_07_collision'>
+          <geometry>
+            <box>
+              <size>2.5 0.1 1.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='wall_h_07_visual'>
+          <geometry>
+            <box>
+              <size>2.5 0.1 1.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='wall_h_08'>
+      <static>1</static>
+      <pose>1.875 1.25 0.75 0 -0 0</pose>
+      <link name='link'>
+        <collision name='wall_h_08_collision'>
+          <geometry>
+            <box>
+              <size>1.25 0.1 1.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='wall_h_08_visual'>
+          <geometry>
+            <box>
+              <size>1.25 0.1 1.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='wall_h_09'>
+      <static>1</static>
+      <pose>4.375 1.25 0.75 0 -0 0</pose>
+      <link name='link'>
+        <collision name='wall_h_09_collision'>
+          <geometry>
+            <box>
+              <size>1.25 0.1 1.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='wall_h_09_visual'>
+          <geometry>
+            <box>
+              <size>1.25 0.1 1.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='wall_h_10'>
+      <static>1</static>
+      <pose>-4.375 0 0.75 0 -0 0</pose>
+      <link name='link'>
+        <collision name='wall_h_10_collision'>
+          <geometry>
+            <box>
+              <size>1.25 0.1 1.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='wall_h_10_visual'>
+          <geometry>
+            <box>
+              <size>1.25 0.1 1.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='wall_h_11'>
+      <static>1</static>
+      <pose>3.125 0 0.75 0 -0 0</pose>
+      <link name='link'>
+        <collision name='wall_h_11_collision'>
+          <geometry>
+            <box>
+              <size>1.25 0.1 1.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='wall_h_11_visual'>
+          <geometry>
+            <box>
+              <size>1.25 0.1 1.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='wall_h_12'>
+      <static>1</static>
+      <pose>1.875 -1.25 0.75 0 -0 0</pose>
+      <link name='link'>
+        <collision name='wall_h_12_collision'>
+          <geometry>
+            <box>
+              <size>1.25 0.1 1.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='wall_h_12_visual'>
+          <geometry>
+            <box>
+              <size>1.25 0.1 1.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='wall_h_13'>
+      <static>1</static>
+      <pose>-4.375 -2.5 0.75 0 -0 0</pose>
+      <link name='link'>
+        <collision name='wall_h_13_collision'>
+          <geometry>
+            <box>
+              <size>1.25 0.1 1.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='wall_h_13_visual'>
+          <geometry>
+            <box>
+              <size>1.25 0.1 1.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='wall_h_14'>
+      <static>1</static>
+      <pose>0.625 -2.5 0.75 0 -0 0</pose>
+      <link name='link'>
+        <collision name='wall_h_14_collision'>
+          <geometry>
+            <box>
+              <size>1.25 0.1 1.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='wall_h_14_visual'>
+          <geometry>
+            <box>
+              <size>1.25 0.1 1.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='wall_h_15'>
+      <static>1</static>
+      <pose>-2.5 -3.75 0.75 0 -0 0</pose>
+      <link name='link'>
+        <collision name='wall_h_15_collision'>
+          <geometry>
+            <box>
+              <size>2.5 0.1 1.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='wall_h_15_visual'>
+          <geometry>
+            <box>
+              <size>2.5 0.1 1.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='wall_v_01'>
+      <static>1</static>
+      <pose>0 4.375 0.75 0 -0 0</pose>
+      <link name='link'>
+        <collision name='wall_v_01_collision'>
+          <geometry>
+            <box>
+              <size>0.1 1.25 1.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='wall_v_01_visual'>
+          <geometry>
+            <box>
+              <size>0.1 1.25 1.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='wall_v_02'>
+      <static>1</static>
+      <pose>1.25 3.75 0.75 0 -0 0</pose>
+      <link name='link'>
+        <collision name='wall_v_02_collision'>
+          <geometry>
+            <box>
+              <size>0.1 2.5 1.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='wall_v_02_visual'>
+          <geometry>
+            <box>
+              <size>0.1 2.5 1.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='wall_v_03'>
+      <static>1</static>
+      <pose>2.5 4.375 0.75 0 -0 0</pose>
+      <link name='link'>
+        <collision name='wall_v_03_collision'>
+          <geometry>
+            <box>
+              <size>0.1 1.25 1.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='wall_v_03_visual'>
+          <geometry>
+            <box>
+              <size>0.1 1.25 1.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='wall_v_04'>
+      <static>1</static>
+      <pose>-1.25 3.125 0.75 0 -0 0</pose>
+      <link name='link'>
+        <collision name='wall_v_04_collision'>
+          <geometry>
+            <box>
+              <size>0.1 1.25 1.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='wall_v_04_visual'>
+          <geometry>
+            <box>
+              <size>0.1 1.25 1.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='wall_v_05'>
+      <static>1</static>
+      <pose>3.75 3.125 0.75 0 -0 0</pose>
+      <link name='link'>
+        <collision name='wall_v_05_collision'>
+          <geometry>
+            <box>
+              <size>0.1 1.25 1.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='wall_v_05_visual'>
+          <geometry>
+            <box>
+              <size>0.1 1.25 1.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='wall_v_06'>
+      <static>1</static>
+      <pose>3.75 0.625 0.75 0 -0 0</pose>
+      <link name='link'>
+        <collision name='wall_v_06_collision'>
+          <geometry>
+            <box>
+              <size>0.1 1.25 1.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='wall_v_06_visual'>
+          <geometry>
+            <box>
+              <size>0.1 1.25 1.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='wall_v_07'>
+      <static>1</static>
+      <pose>5 1.875 0.75 0 -0 0</pose>
+      <link name='link'>
+        <collision name='wall_v_07_collision'>
+          <geometry>
+            <box>
+              <size>0.1 1.25 1.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='wall_v_07_visual'>
+          <geometry>
+            <box>
+              <size>0.1 1.25 1.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='wall_v_08'>
+      <static>1</static>
+      <pose>-2.5 1.875 0.75 0 -0 0</pose>
+      <link name='link'>
+        <collision name='wall_v_08_collision'>
+          <geometry>
+            <box>
+              <size>0.1 1.25 1.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='wall_v_08_visual'>
+          <geometry>
+            <box>
+              <size>0.1 1.25 1.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='wall_v_09'>
+      <static>1</static>
+      <pose>-5 -1.25 0.75 0 -0 0</pose>
+      <link name='link'>
+        <collision name='wall_v_09_collision'>
+          <geometry>
+            <box>
+              <size>0.1 2.5 1.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='wall_v_09_visual'>
+          <geometry>
+            <box>
+              <size>0.1 2.5 1.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='wall_v_10'>
+      <static>1</static>
+      <pose>-3.75 0.625 0.75 0 -0 0</pose>
+      <link name='link'>
+        <collision name='wall_v_10_collision'>
+          <geometry>
+            <box>
+              <size>0.1 1.25 1.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='wall_v_10_visual'>
+          <geometry>
+            <box>
+              <size>0.1 1.25 1.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='wall_v_11'>
+      <static>1</static>
+      <pose>2.5 1.875 0.75 0 -0 0</pose>
+      <link name='link'>
+        <collision name='wall_v_11_collision'>
+          <geometry>
+            <box>
+              <size>0.1 1.25 1.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='wall_v_11_visual'>
+          <geometry>
+            <box>
+              <size>0.1 1.25 1.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='wall_v_12'>
+      <static>1</static>
+      <pose>2.5 -0.625 0.75 0 -0 0</pose>
+      <link name='link'>
+        <collision name='wall_v_12_collision'>
+          <geometry>
+            <box>
+              <size>0.1 1.25 1.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='wall_v_12_visual'>
+          <geometry>
+            <box>
+              <size>0.1 1.25 1.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='wall_v_13'>
+      <static>1</static>
+      <pose>-3.75 -3.125 0.75 0 -0 0</pose>
+      <link name='link'>
+        <collision name='wall_v_13_collision'>
+          <geometry>
+            <box>
+              <size>0.1 1.25 1.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='wall_v_13_visual'>
+          <geometry>
+            <box>
+              <size>0.1 1.25 1.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='wall_v_14'>
+      <static>1</static>
+      <pose>0 -3.125 0.75 0 -0 0</pose>
+      <link name='link'>
+        <collision name='wall_v_14_collision'>
+          <geometry>
+            <box>
+              <size>0.1 1.25 1.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='wall_v_14_visual'>
+          <geometry>
+            <box>
+              <size>0.1 1.25 1.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='wall_v_15'>
+      <static>1</static>
+      <pose>1.25 -1.875 0.75 0 -0 0</pose>
+      <link name='link'>
+        <collision name='wall_v_15_collision'>
+          <geometry>
+            <box>
+              <size>0.1 1.25 1.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='wall_v_15_visual'>
+          <geometry>
+            <box>
+              <size>0.1 1.25 1.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='box_1'>
+      <static>1</static>
+      <pose>0.625 4.375 0.5625 0 -0 0</pose>
+      <link name='link'>
+        <collision name='box_1_collision'>
+          <geometry>
+            <box>
+              <size>1.125 1.125 1.125</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='box_1_visual'>
+          <geometry>
+            <box>
+              <size>1.125 1.125 1.125</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.55 0.32 0.12 1</ambient>
+            <diffuse>0.55 0.32 0.12 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='box_2'>
+      <static>1</static>
+      <pose>-0.625 3.125 0.5625 0 -0 0</pose>
+      <link name='link'>
+        <collision name='box_2_collision'>
+          <geometry>
+            <box>
+              <size>1.125 1.125 1.125</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='box_2_visual'>
+          <geometry>
+            <box>
+              <size>1.125 1.125 1.125</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.55 0.32 0.12 1</ambient>
+            <diffuse>0.55 0.32 0.12 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='box_3'>
+      <static>1</static>
+      <pose>4.375 1.875 0.5625 0 -0 0</pose>
+      <link name='link'>
+        <collision name='box_3_collision'>
+          <geometry>
+            <box>
+              <size>1.125 1.125 1.125</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='box_3_visual'>
+          <geometry>
+            <box>
+              <size>1.125 1.125 1.125</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.55 0.32 0.12 1</ambient>
+            <diffuse>0.55 0.32 0.12 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='box_4'>
+      <static>1</static>
+      <pose>-4.375 -0.625 0.5625 0 -0 0</pose>
+      <link name='link'>
+        <collision name='box_4_collision'>
+          <geometry>
+            <box>
+              <size>1.125 1.125 1.125</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='box_4_visual'>
+          <geometry>
+            <box>
+              <size>1.125 1.125 1.125</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.55 0.32 0.12 1</ambient>
+            <diffuse>0.55 0.32 0.12 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='box_5'>
+      <static>1</static>
+      <pose>0.625 -1.875 0.5625 0 -0 0</pose>
+      <link name='link'>
+        <collision name='box_5_collision'>
+          <geometry>
+            <box>
+              <size>1.125 1.125 1.125</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='box_5_visual'>
+          <geometry>
+            <box>
+              <size>1.125 1.125 1.125</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.55 0.32 0.12 1</ambient>
+            <diffuse>0.55 0.32 0.12 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='box_6'>
+      <static>1</static>
+      <pose>-3.125 -3.125 0.5625 0 -0 0</pose>
+      <link name='link'>
+        <collision name='box_6_collision'>
+          <geometry>
+            <box>
+              <size>1.125 1.125 1.125</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='box_6_visual'>
+          <geometry>
+            <box>
+              <size>1.125 1.125 1.125</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.55 0.32 0.12 1</ambient>
+            <diffuse>0.55 0.32 0.12 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='operation_table'>
+      <static>1</static>
+      <pose>1.875 -1.875 0.4375 0 -0 0</pose>
+      <link name='link'>
+        <collision name='operation_table_collision'>
+          <geometry>
+            <box>
+              <size>0.975 0.8125 0.875</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='operation_table_visual'>
+          <geometry>
+            <box>
+              <size>0.975 0.8125 0.875</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.25 0.35 0.55 1</ambient>
+            <diffuse>0.25 0.35 0.55 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='ramp_up_left'>
+      <static>1</static>
+      <pose>-4.375 -1.875 0.118 0 -0.117109 1.5708</pose>
+      <link name='link'>
+        <collision name='ramp_up_left_collision'>
+          <geometry>
+            <box>
+              <size>1.0625 0.899999 0.1</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='ramp_up_left_visual'>
+          <geometry>
+            <box>
+              <size>1.0625 0.899999 0.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.45 0.45 0.45 1</ambient>
+            <diffuse>0.45 0.45 0.45 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='ramp_down_left'>
+      <static>1</static>
+      <pose>-3.125 -1.875 0.118 0 -0.117109 -1.5708</pose>
+      <link name='link'>
+        <collision name='ramp_down_left_collision'>
+          <geometry>
+            <box>
+              <size>1.0625 0.899996 0.1</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='ramp_down_left_visual'>
+          <geometry>
+            <box>
+              <size>1.0625 0.899996 0.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.45 0.45 0.45 1</ambient>
+            <diffuse>0.45 0.45 0.45 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='ramp_left_mid'>
+      <static>1</static>
+      <pose>-0.625 0.625 0.604125 0 -0.726642 -3.14159</pose>
+      <link name='link'>
+        <collision name='ramp_left_mid_collision'>
+          <geometry>
+            <box>
+              <size>1.6875 0.900002 0.1</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='ramp_left_mid_visual'>
+          <geometry>
+            <box>
+              <size>1.6875 0.900002 0.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.45 0.45 0.45 1</ambient>
+            <diffuse>0.45 0.45 0.45 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='stairs_up_step_1'>
+      <static>1</static>
+      <pose>-3.125 -1.075 0.15 0 -0 1.5708</pose>
+      <link name='link'>
+        <collision name='stairs_up_step_1_collision'>
+          <geometry>
+            <box>
+              <size>0.2 0.900001 0.3</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='stairs_up_step_1_visual'>
+          <geometry>
+            <box>
+              <size>0.2 0.899994 0.3</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.55 0.55 0.55 1</ambient>
+            <diffuse>0.55 0.55 0.55 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='stairs_up_step_2'>
+      <static>1</static>
+      <pose>-3.125 -0.85 0.3 0 -0 1.5708</pose>
+      <link name='link'>
+        <collision name='stairs_up_step_2_collision'>
+          <geometry>
+            <box>
+              <size>0.2 0.900001 0.6</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='stairs_up_step_2_visual'>
+          <geometry>
+            <box>
+              <size>0.2 0.900001 0.6</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.55 0.55 0.55 1</ambient>
+            <diffuse>0.55 0.55 0.55 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='stairs_up_step_3'>
+      <static>1</static>
+      <pose>-3.125 -0.625 0.45 0 -0 1.5708</pose>
+      <link name='link'>
+        <collision name='stairs_up_step_3_collision'>
+          <geometry>
+            <box>
+              <size>0.2 0.900002 0.9</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='stairs_up_step_3_visual'>
+          <geometry>
+            <box>
+              <size>0.2 0.900002 0.9</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.55 0.55 0.55 1</ambient>
+            <diffuse>0.55 0.55 0.55 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='stairs_up_step_4'>
+      <static>1</static>
+      <pose>-3.125 -0.4 0.6 0 -0 1.5708</pose>
+      <link name='link'>
+        <collision name='stairs_up_step_4_collision'>
+          <geometry>
+            <box>
+              <size>0.2 0.899998 1.2</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='stairs_up_step_4_visual'>
+          <geometry>
+            <box>
+              <size>0.2 0.899998 1.2</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.55 0.55 0.55 1</ambient>
+            <diffuse>0.55 0.55 0.55 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='stairs_up_step_5'>
+      <static>1</static>
+      <pose>-3.125 -0.175 0.75 0 -0 1.5708</pose>
+      <link name='link'>
+        <collision name='stairs_up_step_5_collision'>
+          <geometry>
+            <box>
+              <size>0.2 0.899998 1.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='stairs_up_step_5_visual'>
+          <geometry>
+            <box>
+              <size>0.2 0.899998 1.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.55 0.55 0.55 1</ambient>
+            <diffuse>0.55 0.55 0.55 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='second_floor_2'>
+      <static>1</static>
+      <pose>-1.875 0.625 0.75 0 -0 0</pose>
+      <link name='link'>
+        <collision name='second_floor_2_collision'>
+          <geometry>
+            <box>
+              <size>1.2 1.2 1.49999</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='second_floor_2_visual'>
+          <geometry>
+            <box>
+              <size>1.2 1.2 1.49999</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.62 0.62 0.62 1</ambient>
+            <diffuse>0.62 0.62 0.62 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='ridge_h_01_a'>
+      <static>1</static>
+      <pose>1.875 4.66875 0.091875 -0.205395 0 0</pose>
+      <link name='link'>
+        <collision name='ridge_h_01_a_collision'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='ridge_h_01_a_visual'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.38 0.38 0.38 1</ambient>
+            <diffuse>0.38 0.38 0.38 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='ridge_h_01_b'>
+      <static>1</static>
+      <pose>1.875 4.08125 0.091875 0.205395 -0 0</pose>
+      <link name='link'>
+        <collision name='ridge_h_01_b_collision'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='ridge_h_01_b_visual'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.38 0.38 0.38 1</ambient>
+            <diffuse>0.38 0.38 0.38 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='ridge_h_02_a'>
+      <static>1</static>
+      <pose>1.875 3.41875 0.091875 -0.205395 0 0</pose>
+      <link name='link'>
+        <collision name='ridge_h_02_a_collision'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='ridge_h_02_a_visual'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.38 0.38 0.38 1</ambient>
+            <diffuse>0.38 0.38 0.38 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='ridge_h_02_b'>
+      <static>1</static>
+      <pose>1.875 2.83125 0.091875 0.205395 -0 0</pose>
+      <link name='link'>
+        <collision name='ridge_h_02_b_collision'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='ridge_h_02_b_visual'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.38 0.38 0.38 1</ambient>
+            <diffuse>0.38 0.38 0.38 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='ridge_h_03_a'>
+      <static>1</static>
+      <pose>3.125 2.16875 0.091875 -0.205395 0 0</pose>
+      <link name='link'>
+        <collision name='ridge_h_03_a_collision'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='ridge_h_03_a_visual'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.38 0.38 0.38 1</ambient>
+            <diffuse>0.38 0.38 0.38 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='ridge_h_03_b'>
+      <static>1</static>
+      <pose>3.125 1.58125 0.091875 0.205395 -0 0</pose>
+      <link name='link'>
+        <collision name='ridge_h_03_b_collision'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='ridge_h_03_b_visual'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.38 0.38 0.38 1</ambient>
+            <diffuse>0.38 0.38 0.38 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='ridge_h_04_a'>
+      <static>1</static>
+      <pose>1.875 0.91875 0.091875 -0.205395 0 0</pose>
+      <link name='link'>
+        <collision name='ridge_h_04_a_collision'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='ridge_h_04_a_visual'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.38 0.38 0.38 1</ambient>
+            <diffuse>0.38 0.38 0.38 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='ridge_h_04_b'>
+      <static>1</static>
+      <pose>1.875 0.33125 0.091875 0.205395 -0 0</pose>
+      <link name='link'>
+        <collision name='ridge_h_04_b_collision'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='ridge_h_04_b_visual'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.38 0.38 0.38 1</ambient>
+            <diffuse>0.38 0.38 0.38 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='ridge_h_05_a'>
+      <static>1</static>
+      <pose>-0.625 -0.33125 0.091875 -0.205395 0 0</pose>
+      <link name='link'>
+        <collision name='ridge_h_05_a_collision'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='ridge_h_05_a_visual'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.38 0.38 0.38 1</ambient>
+            <diffuse>0.38 0.38 0.38 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='ridge_h_05_b'>
+      <static>1</static>
+      <pose>-0.625 -0.91875 0.091875 0.205395 -0 0</pose>
+      <link name='link'>
+        <collision name='ridge_h_05_b_collision'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='ridge_h_05_b_visual'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.38 0.38 0.38 1</ambient>
+            <diffuse>0.38 0.38 0.38 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='ridge_h_06_a'>
+      <static>1</static>
+      <pose>0.625 -0.33125 0.091875 -0.205395 0 0</pose>
+      <link name='link'>
+        <collision name='ridge_h_06_a_collision'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='ridge_h_06_a_visual'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.38 0.38 0.38 1</ambient>
+            <diffuse>0.38 0.38 0.38 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='ridge_h_06_b'>
+      <static>1</static>
+      <pose>0.625 -0.91875 0.091875 0.205395 -0 0</pose>
+      <link name='link'>
+        <collision name='ridge_h_06_b_collision'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='ridge_h_06_b_visual'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.38 0.38 0.38 1</ambient>
+            <diffuse>0.38 0.38 0.38 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='ridge_h_07_a'>
+      <static>1</static>
+      <pose>1.875 -0.33125 0.091875 -0.205395 0 0</pose>
+      <link name='link'>
+        <collision name='ridge_h_07_a_collision'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='ridge_h_07_a_visual'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.38 0.38 0.38 1</ambient>
+            <diffuse>0.38 0.38 0.38 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='ridge_h_07_b'>
+      <static>1</static>
+      <pose>1.875 -0.91875 0.091875 0.205395 -0 0</pose>
+      <link name='link'>
+        <collision name='ridge_h_07_b_collision'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='ridge_h_07_b_visual'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.38 0.38 0.38 1</ambient>
+            <diffuse>0.38 0.38 0.38 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='ridge_h_08_a'>
+      <static>1</static>
+      <pose>-1.875 -1.58125 0.091875 -0.205395 0 0</pose>
+      <link name='link'>
+        <collision name='ridge_h_08_a_collision'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='ridge_h_08_a_visual'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.38 0.38 0.38 1</ambient>
+            <diffuse>0.38 0.38 0.38 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='ridge_h_08_b'>
+      <static>1</static>
+      <pose>-1.875 -2.16875 0.091875 0.205395 -0 0</pose>
+      <link name='link'>
+        <collision name='ridge_h_08_b_collision'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='ridge_h_08_b_visual'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.38 0.38 0.38 1</ambient>
+            <diffuse>0.38 0.38 0.38 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='ridge_h_09_a'>
+      <static>1</static>
+      <pose>-0.625 -1.58125 0.091875 -0.205395 0 0</pose>
+      <link name='link'>
+        <collision name='ridge_h_09_a_collision'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='ridge_h_09_a_visual'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.38 0.38 0.38 1</ambient>
+            <diffuse>0.38 0.38 0.38 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='ridge_h_09_b'>
+      <static>1</static>
+      <pose>-0.625 -2.16875 0.091875 0.205395 -0 0</pose>
+      <link name='link'>
+        <collision name='ridge_h_09_b_collision'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='ridge_h_09_b_visual'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.38 0.38 0.38 1</ambient>
+            <diffuse>0.38 0.38 0.38 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='ridge_h_10_a'>
+      <static>1</static>
+      <pose>-1.875 -2.83125 0.091875 -0.205395 0 0</pose>
+      <link name='link'>
+        <collision name='ridge_h_10_a_collision'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='ridge_h_10_a_visual'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.38 0.38 0.38 1</ambient>
+            <diffuse>0.38 0.38 0.38 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='ridge_h_10_b'>
+      <static>1</static>
+      <pose>-1.875 -3.41875 0.091875 0.205395 -0 0</pose>
+      <link name='link'>
+        <collision name='ridge_h_10_b_collision'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='ridge_h_10_b_visual'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.38 0.38 0.38 1</ambient>
+            <diffuse>0.38 0.38 0.38 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='ridge_h_11_a'>
+      <static>1</static>
+      <pose>-0.625 -2.83125 0.091875 -0.205395 0 0</pose>
+      <link name='link'>
+        <collision name='ridge_h_11_a_collision'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='ridge_h_11_a_visual'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.38 0.38 0.38 1</ambient>
+            <diffuse>0.38 0.38 0.38 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='ridge_h_11_b'>
+      <static>1</static>
+      <pose>-0.625 -3.41875 0.091875 0.205395 -0 0</pose>
+      <link name='link'>
+        <collision name='ridge_h_11_b_collision'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='ridge_h_11_b_visual'>
+          <geometry>
+            <box>
+              <size>1.2 0.6 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.38 0.38 0.38 1</ambient>
+            <diffuse>0.38 0.38 0.38 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='ridge_v_01_a'>
+      <static>1</static>
+      <pose>3.41875 3.125 0.091875 0 0.205395 0</pose>
+      <link name='link'>
+        <collision name='ridge_v_01_a_collision'>
+          <geometry>
+            <box>
+              <size>0.6 1.2 0.05</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='ridge_v_01_a_visual'>
+          <geometry>
+            <box>
+              <size>0.6 1.2 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.38 0.38 0.38 1</ambient>
+            <diffuse>0.38 0.38 0.38 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='ridge_v_01_b'>
+      <static>1</static>
+      <pose>2.83125 3.125 0.091875 0 -0.205395 0</pose>
+      <link name='link'>
+        <collision name='ridge_v_01_b_collision'>
+          <geometry>
+            <box>
+              <size>0.6 1.2 0.05</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='ridge_v_01_b_visual'>
+          <geometry>
+            <box>
+              <size>0.6 1.2 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.38 0.38 0.38 1</ambient>
+            <diffuse>0.38 0.38 0.38 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='ridge_v_02_a'>
+      <static>1</static>
+      <pose>0.91875 0.625 0.091875 0 0.205395 0</pose>
+      <link name='link'>
+        <collision name='ridge_v_02_a_collision'>
+          <geometry>
+            <box>
+              <size>0.6 1.2 0.05</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='ridge_v_02_a_visual'>
+          <geometry>
+            <box>
+              <size>0.6 1.2 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.38 0.38 0.38 1</ambient>
+            <diffuse>0.38 0.38 0.38 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='ridge_v_02_b'>
+      <static>1</static>
+      <pose>0.33125 0.625 0.091875 0 -0.205395 0</pose>
+      <link name='link'>
+        <collision name='ridge_v_02_b_collision'>
+          <geometry>
+            <box>
+              <size>0.6 1.2 0.05</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='ridge_v_02_b_visual'>
+          <geometry>
+            <box>
+              <size>0.6 1.2 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.38 0.38 0.38 1</ambient>
+            <diffuse>0.38 0.38 0.38 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='ridge_v_03_a'>
+      <static>1</static>
+      <pose>3.41875 0.625 0.091875 0 0.205395 0</pose>
+      <link name='link'>
+        <collision name='ridge_v_03_a_collision'>
+          <geometry>
+            <box>
+              <size>0.6 1.2 0.05</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='ridge_v_03_a_visual'>
+          <geometry>
+            <box>
+              <size>0.6 1.2 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.38 0.38 0.38 1</ambient>
+            <diffuse>0.38 0.38 0.38 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='ridge_v_03_b'>
+      <static>1</static>
+      <pose>2.83125 0.625 0.091875 0 -0.205395 0</pose>
+      <link name='link'>
+        <collision name='ridge_v_03_b_collision'>
+          <geometry>
+            <box>
+              <size>0.6 1.2 0.05</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='ridge_v_03_b_visual'>
+          <geometry>
+            <box>
+              <size>0.6 1.2 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.38 0.38 0.38 1</ambient>
+            <diffuse>0.38 0.38 0.38 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='door_marker'>
+      <static>1</static>
+      <pose>-0.625 -4.9375 0.01375 0 -0 0</pose>
+      <link name='link'>
+        <visual name='door_marker_visual'>
+          <geometry>
+            <box>
+              <size>0.9375 0.125 0.025</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.8 0.2 1</ambient>
+            <diffuse>0 0.8 0.2 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <magnetic_field>6e-06 2.3e-05 -4.2e-05</magnetic_field>
+    <atmosphere type='adiabatic'/>
+    <scene>
+      <ambient>0.4 0.4 0.4 1</ambient>
+      <background>0.7 0.7 0.7 1</background>
+      <shadows>1</shadows>
+    </scene>
+    <wind/>
+    <spherical_coordinates>
+      <surface_model>EARTH_WGS84</surface_model>
+      <latitude_deg>0</latitude_deg>
+      <longitude_deg>0</longitude_deg>
+      <elevation>0</elevation>
+      <heading_deg>0</heading_deg>
+    </spherical_coordinates>
+    <model name='wall_h_14_clone'>
+      <static>1</static>
+      <pose>-0.690771 -3.75834 0.75 0 -0 0</pose>
+      <link name='link'>
+        <collision name='wall_h_14_collision'>
+          <geometry>
+            <box>
+              <size>1.25 0.1 1.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='wall_h_14_visual'>
+          <geometry>
+            <box>
+              <size>1.25 0.1 1.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <state world_name='image_map_world'>
+      <sim_time>611 790000000</sim_time>
+      <real_time>43 148594030</real_time>
+      <wall_time>1777645724 331668481</wall_time>
+      <iterations>42595</iterations>
+      <model name='box_1'>
+        <pose>0.625 4.375 0.5625 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>0.625 4.375 0.5625 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='box_2'>
+        <pose>-0.625 3.125 0.5625 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-0.625 3.125 0.5625 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='box_3'>
+        <pose>4.375 1.875 0.5625 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>4.375 1.875 0.5625 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='box_4'>
+        <pose>-4.375 -0.625 0.5625 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-4.375 -0.625 0.5625 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='box_5'>
+        <pose>0.625 -1.875 0.5625 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>0.625 -1.875 0.5625 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='box_6'>
+        <pose>-3.125 -3.125 0.5625 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-3.125 -3.125 0.5625 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='door_marker'>
+        <pose>-0.625 -4.9375 0.01375 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-0.625 -4.9375 0.01375 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='floor'>
+        <pose>0 0 -0.03125 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>0 0 -0.03125 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='grid_h_0'>
+        <pose>0 5 0.0075 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>0 5 0.0075 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='grid_h_1'>
+        <pose>0 3.75 0.0075 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>0 3.75 0.0075 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='grid_h_2'>
+        <pose>0 2.5 0.0075 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>0 2.5 0.0075 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='grid_h_3'>
+        <pose>0 1.25 0.0075 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>0 1.25 0.0075 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='grid_h_4'>
+        <pose>0 0 0.0075 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>0 0 0.0075 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='grid_h_5'>
+        <pose>0 -1.25 0.0075 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>0 -1.25 0.0075 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='grid_h_6'>
+        <pose>0 -2.5 0.0075 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>0 -2.5 0.0075 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='grid_h_7'>
+        <pose>0 -3.75 0.0075 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>0 -3.75 0.0075 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='grid_h_8'>
+        <pose>0 -5 0.0075 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>0 -5 0.0075 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='grid_v_0'>
+        <pose>-5 0 0.0075 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-5 0 0.0075 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='grid_v_1'>
+        <pose>-3.75 0 0.0075 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-3.75 0 0.0075 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='grid_v_2'>
+        <pose>-2.5 0 0.0075 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-2.5 0 0.0075 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='grid_v_3'>
+        <pose>-1.25 0 0.0075 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-1.25 0 0.0075 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='grid_v_4'>
+        <pose>0 0 0.0075 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>0 0 0.0075 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='grid_v_5'>
+        <pose>1.25 0 0.0075 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>1.25 0 0.0075 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='grid_v_6'>
+        <pose>2.5 0 0.0075 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>2.5 0 0.0075 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='grid_v_7'>
+        <pose>3.75 0 0.0075 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>3.75 0 0.0075 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='grid_v_8'>
+        <pose>5 0 0.0075 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>5 0 0.0075 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='operation_table'>
+        <pose>1.875 -1.875 0.4375 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>1.875 -1.875 0.4375 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='ramp_down_left'>
+        <pose>-3.125 -1.875 0.118 0 -0.117109 -1.5708</pose>
+        <scale>1.18361 1.39564 1</scale>
+        <link name='link'>
+          <pose>-3.125 -1.875 0.118 0 -0.117109 -1.5708</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='ramp_left_mid'>
+        <pose>-0.658581 0.612685 0.696046 0 -0.882674 -3.14159</pose>
+        <scale>1.19431 1.32413 1</scale>
+        <link name='link'>
+          <pose>-0.658581 0.612685 0.696046 0 -0.882674 -3.14159</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='ramp_up_left'>
+        <pose>-4.375 -1.875 0.118 0 -0.117109 1.5708</pose>
+        <scale>1.24872 1.28399 1</scale>
+        <link name='link'>
+          <pose>-4.375 -1.875 0.118 0 -0.117109 1.5708</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='ridge_h_01_a'>
+        <pose>1.875 4.66875 0.091875 -0.205395 0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>1.875 4.66875 0.091875 -0.205395 0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='ridge_h_01_b'>
+        <pose>1.875 4.08125 0.091875 0.205395 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>1.875 4.08125 0.091875 0.205395 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='ridge_h_02_a'>
+        <pose>1.875 3.41875 0.091875 -0.205395 0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>1.875 3.41875 0.091875 -0.205395 0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='ridge_h_02_b'>
+        <pose>1.875 2.83125 0.091875 0.205395 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>1.875 2.83125 0.091875 0.205395 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='ridge_h_03_a'>
+        <pose>3.125 2.16875 0.091875 -0.205395 0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>3.125 2.16875 0.091875 -0.205395 0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='ridge_h_03_b'>
+        <pose>3.125 1.58125 0.091875 0.205395 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>3.125 1.58125 0.091875 0.205395 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='ridge_h_04_a'>
+        <pose>1.875 0.91875 0.091875 -0.205395 0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>1.875 0.91875 0.091875 -0.205395 0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='ridge_h_04_b'>
+        <pose>1.875 0.33125 0.091875 0.205395 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>1.875 0.33125 0.091875 0.205395 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='ridge_h_05_a'>
+        <pose>-0.625 -0.33125 0.091875 -0.205395 0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-0.625 -0.33125 0.091875 -0.205395 0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='ridge_h_05_b'>
+        <pose>-0.625 -0.91875 0.091875 0.205395 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-0.625 -0.91875 0.091875 0.205395 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='ridge_h_06_a'>
+        <pose>0.625 -0.33125 0.091875 -0.205395 0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>0.625 -0.33125 0.091875 -0.205395 0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='ridge_h_06_b'>
+        <pose>0.625 -0.91875 0.091875 0.205395 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>0.625 -0.91875 0.091875 0.205395 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='ridge_h_07_a'>
+        <pose>1.875 -0.33125 0.091875 -0.205395 0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>1.875 -0.33125 0.091875 -0.205395 0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='ridge_h_07_b'>
+        <pose>1.875 -0.91875 0.091875 0.205395 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>1.875 -0.91875 0.091875 0.205395 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='ridge_h_08_a'>
+        <pose>-1.875 -1.58125 0.091875 -0.205395 0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-1.875 -1.58125 0.091875 -0.205395 0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='ridge_h_08_b'>
+        <pose>-1.875 -2.16875 0.091875 0.205395 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-1.875 -2.16875 0.091875 0.205395 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='ridge_h_09_a'>
+        <pose>-0.625 -1.58125 0.091875 -0.205395 0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-0.625 -1.58125 0.091875 -0.205395 0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='ridge_h_09_b'>
+        <pose>-0.625 -2.16875 0.091875 0.205395 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-0.625 -2.16875 0.091875 0.205395 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='ridge_h_10_a'>
+        <pose>-1.875 -2.83125 0.091875 -0.205395 0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-1.875 -2.83125 0.091875 -0.205395 0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='ridge_h_10_b'>
+        <pose>-1.875 -3.41875 0.091875 0.205395 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-1.875 -3.41875 0.091875 0.205395 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='ridge_h_11_a'>
+        <pose>-0.625 -2.83125 0.091875 -0.205395 0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-0.625 -2.83125 0.091875 -0.205395 0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='ridge_h_11_b'>
+        <pose>-0.625 -3.41875 0.091875 0.205395 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-0.625 -3.41875 0.091875 0.205395 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='ridge_v_01_a'>
+        <pose>3.41875 3.125 0.091875 0 0.205395 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>3.41875 3.125 0.091875 0 0.205395 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='ridge_v_01_b'>
+        <pose>2.83125 3.125 0.091875 0 -0.205395 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>2.83125 3.125 0.091875 0 -0.205395 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='ridge_v_02_a'>
+        <pose>0.91875 0.625 0.091875 0 0.205395 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>0.91875 0.625 0.091875 0 0.205395 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='ridge_v_02_b'>
+        <pose>0.33125 0.625 0.091875 0 -0.205395 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>0.33125 0.625 0.091875 0 -0.205395 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='ridge_v_03_a'>
+        <pose>3.41875 0.625 0.091875 0 0.205395 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>3.41875 0.625 0.091875 0 0.205395 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='ridge_v_03_b'>
+        <pose>2.83125 0.625 0.091875 0 -0.205395 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>2.83125 0.625 0.091875 0 -0.205395 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='second_floor_2'>
+        <pose>-1.875 0.625 1.44981 0 -0 0</pose>
+        <scale>1 1 0.052097</scale>
+        <link name='link'>
+          <pose>-1.875 0.625 1.44981 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='second_floor_2_clone'>
+        <pose>-3.10686 0.62822 1.44981 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-3.10686 0.62822 1.44981 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='second_floor_2_clone_0'>
+        <pose>-1.88597 -0.606444 1.44981 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-1.88597 -0.606444 1.44981 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='second_floor_2_clone_0_clone'>
+        <pose>-1.35448 -1.1464 0.687578 0 -0 0</pose>
+        <scale>0.114217 0.099244 19.5719</scale>
+        <link name='link'>
+          <pose>-1.35448 -1.1464 0.687578 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='second_floor_2_clone_0_clone_clone'>
+        <pose>-2.41357 -1.14976 0.687578 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-2.41357 -1.14976 0.687578 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='second_floor_2_clone_0_clone_clone_0'>
+        <pose>-1.33664 -0.069661 0.687578 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-1.33664 -0.069661 0.687578 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='second_floor_2_clone_0_clone_clone_1'>
+        <pose>-1.32139 0.056785 0.687578 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-1.32139 0.056785 0.687578 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='stairs_up_step_1'>
+        <pose>-3.125 -1.075 0.15 0 -0 1.5708</pose>
+        <scale>1.04177 1.48021 1</scale>
+        <link name='link'>
+          <pose>-3.125 -1.075 0.15 0 -0 1.5708</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='stairs_up_step_2'>
+        <pose>-3.125 -0.85 0.3 0 -0 1.5708</pose>
+        <scale>1.21806 1.43332 1</scale>
+        <link name='link'>
+          <pose>-3.125 -0.85 0.3 0 -0 1.5708</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='stairs_up_step_3'>
+        <pose>-3.125 -0.625 0.45 0 -0 1.5708</pose>
+        <scale>1.1818 1.38723 1</scale>
+        <link name='link'>
+          <pose>-3.125 -0.625 0.45 0 -0 1.5708</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='stairs_up_step_4'>
+        <pose>-3.125 -0.4 0.6 0 -0 1.5708</pose>
+        <scale>1.2277 1.35327 1</scale>
+        <link name='link'>
+          <pose>-3.125 -0.4 0.6 0 -0 1.5708</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='stairs_up_step_5'>
+        <pose>-3.125 -0.150778 0.75 0 -0 1.5708</pose>
+        <scale>1.27031 1.30247 1</scale>
+        <link name='link'>
+          <pose>-3.125 -0.150778 0.75 0 -0 1.5708</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='wall_h_01'>
+        <pose>1.25 5 0.75 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>1.25 5 0.75 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='wall_h_02'>
+        <pose>-0.625 3.75 0.75 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-0.625 3.75 0.75 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='wall_h_03'>
+        <pose>3.125 3.75 0.75 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>3.125 3.75 0.75 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='wall_h_04'>
+        <pose>-1.875 2.5 0.75 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-1.875 2.5 0.75 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='wall_h_05'>
+        <pose>1.875 2.5 0.75 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>1.875 2.5 0.75 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='wall_h_06'>
+        <pose>4.375 2.5 0.75 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>4.375 2.5 0.75 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='wall_h_07'>
+        <pose>-2.5 1.25 0.75 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-2.5 1.25 0.75 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='wall_h_08'>
+        <pose>1.875 1.25 0.75 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>1.875 1.25 0.75 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='wall_h_08_clone'>
+        <pose>-0.654231 1.25307 0.75 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-0.654231 1.25307 0.75 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='wall_h_08_clone_clone'>
+        <pose>-1.89814 -1.16952 0.75 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-1.89814 -1.16952 0.75 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='wall_h_09'>
+        <pose>4.375 1.25 0.75 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>4.375 1.25 0.75 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='wall_h_10'>
+        <pose>-4.375 0 0.75 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-4.375 0 0.75 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='wall_h_11'>
+        <pose>3.125 0 0.75 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>3.125 0 0.75 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='wall_h_12'>
+        <pose>1.875 -1.25 0.75 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>1.875 -1.25 0.75 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='wall_h_13'>
+        <pose>-4.375 -2.5 0.75 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-4.375 -2.5 0.75 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='wall_h_14'>
+        <pose>0.625 -2.5 0.75 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>0.625 -2.5 0.75 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='wall_h_14_clone'>
+        <pose>-0.690771 -3.75834 0.75 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-0.690771 -3.75834 0.75 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='wall_h_15'>
+        <pose>-2.5 -3.75 0.75 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-2.5 -3.75 0.75 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='wall_v_01'>
+        <pose>0 4.375 0.75 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>0 4.375 0.75 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='wall_v_02'>
+        <pose>1.25 3.75 0.75 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>1.25 3.75 0.75 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='wall_v_03'>
+        <pose>2.5 4.375 0.75 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>2.5 4.375 0.75 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='wall_v_04'>
+        <pose>-1.25 3.125 0.75 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-1.25 3.125 0.75 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='wall_v_05'>
+        <pose>3.75 3.125 0.75 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>3.75 3.125 0.75 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='wall_v_06'>
+        <pose>3.75 0.625 0.75 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>3.75 0.625 0.75 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='wall_v_07'>
+        <pose>5 1.875 0.75 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>5 1.875 0.75 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='wall_v_08'>
+        <pose>-2.5 1.875 0.75 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-2.5 1.875 0.75 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='wall_v_09'>
+        <pose>-5 -1.25 0.75 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-5 -1.25 0.75 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='wall_v_10'>
+        <pose>-3.75 0.625 0.75 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-3.75 0.625 0.75 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='wall_v_11'>
+        <pose>2.5 1.875 0.75 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>2.5 1.875 0.75 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='wall_v_12'>
+        <pose>2.5 -0.625 0.75 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>2.5 -0.625 0.75 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='wall_v_13'>
+        <pose>-3.75 -3.125 0.75 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-3.75 -3.125 0.75 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='wall_v_13_clone'>
+        <pose>-1.28986 -0.563183 0.75 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-1.28986 -0.563183 0.75 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='wall_v_13_clone_0'>
+        <pose>-2.45276 -0.617363 0.75 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-2.45276 -0.617363 0.75 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='wall_v_14'>
+        <pose>0 -3.125 0.75 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>0 -3.125 0.75 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='wall_v_15'>
+        <pose>1.25 -1.875 0.75 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>1.25 -1.875 0.75 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <light name='sun'>
+        <pose>0 0 10 0 -0 0</pose>
+      </light>
+    </state>
+    <model name='wall_h_08_clone'>
+      <static>1</static>
+      <pose>-0.654231 1.25307 0.75 0 -0 0</pose>
+      <link name='link'>
+        <collision name='wall_h_08_collision'>
+          <geometry>
+            <box>
+              <size>1.25 0.1 1.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='wall_h_08_visual'>
+          <geometry>
+            <box>
+              <size>1.25 0.1 1.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='second_floor_2_clone'>
+      <static>1</static>
+      <pose>-3.10686 0.62822 1.44981 0 -0 0</pose>
+      <link name='link'>
+        <collision name='second_floor_2_collision'>
+          <geometry>
+            <box>
+              <size>1.2 1.2 0.078145</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='second_floor_2_visual'>
+          <geometry>
+            <box>
+              <size>1.2 1.2 0.078145</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.62 0.62 0.62 1</ambient>
+            <diffuse>0.62 0.62 0.62 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='second_floor_2_clone_0'>
+      <static>1</static>
+      <pose>-1.88597 -0.606444 1.44981 0 -0 0</pose>
+      <link name='link'>
+        <collision name='second_floor_2_collision'>
+          <geometry>
+            <box>
+              <size>1.2 1.2 0.078145</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='second_floor_2_visual'>
+          <geometry>
+            <box>
+              <size>1.2 1.2 0.078145</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.62 0.62 0.62 1</ambient>
+            <diffuse>0.62 0.62 0.62 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='second_floor_2_clone_0_clone'>
+      <static>1</static>
+      <pose>-1.44236 -1.27306 1.44981 0 -0 0</pose>
+      <link name='link'>
+        <collision name='second_floor_2_collision'>
+          <geometry>
+            <box>
+              <size>1.2 1.2 0.078145</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='second_floor_2_visual'>
+          <geometry>
+            <box>
+              <size>1.2 1.2 0.078145</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.62 0.62 0.62 1</ambient>
+            <diffuse>0.62 0.62 0.62 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='second_floor_2_clone_0_clone_clone'>
+      <static>1</static>
+      <pose>-2.41357 -1.14976 0.687578 0 -0 0</pose>
+      <link name='link'>
+        <collision name='second_floor_2_collision'>
+          <geometry>
+            <box>
+              <size>0.137061 0.119094 1.52945</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='second_floor_2_visual'>
+          <geometry>
+            <box>
+              <size>0.137061 0.119094 1.52945</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.62 0.62 0.62 1</ambient>
+            <diffuse>0.62 0.62 0.62 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='second_floor_2_clone_0_clone_clone_0'>
+      <static>1</static>
+      <pose>-1.33664 -0.069661 0.687578 0 -0 0</pose>
+      <link name='link'>
+        <collision name='second_floor_2_collision'>
+          <geometry>
+            <box>
+              <size>0.137061 0.119094 1.52945</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='second_floor_2_visual'>
+          <geometry>
+            <box>
+              <size>0.137061 0.119094 1.52945</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.62 0.62 0.62 1</ambient>
+            <diffuse>0.62 0.62 0.62 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='second_floor_2_clone_0_clone_clone_1'>
+      <static>1</static>
+      <pose>-1.32139 0.056785 0.687578 0 -0 0</pose>
+      <link name='link'>
+        <collision name='second_floor_2_collision'>
+          <geometry>
+            <box>
+              <size>0.137061 0.119094 1.52945</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='second_floor_2_visual'>
+          <geometry>
+            <box>
+              <size>0.137061 0.119094 1.52945</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.62 0.62 0.62 1</ambient>
+            <diffuse>0.62 0.62 0.62 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='wall_h_08_clone_clone'>
+      <static>1</static>
+      <pose>-1.89814 -1.16952 0.75 0 -0 0</pose>
+      <link name='link'>
+        <collision name='wall_h_08_collision'>
+          <geometry>
+            <box>
+              <size>1.25 0.1 1.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='wall_h_08_visual'>
+          <geometry>
+            <box>
+              <size>1.25 0.1 1.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='wall_v_13_clone'>
+      <static>1</static>
+      <pose>-1.28986 -0.563183 0.75 0 -0 0</pose>
+      <link name='link'>
+        <collision name='wall_v_13_collision'>
+          <geometry>
+            <box>
+              <size>0.1 1.25 1.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='wall_v_13_visual'>
+          <geometry>
+            <box>
+              <size>0.1 1.25 1.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <model name='wall_v_13_clone_0'>
+      <static>1</static>
+      <pose>-2.45276 -0.617363 0.75 0 -0 0</pose>
+      <link name='link'>
+        <collision name='wall_v_13_collision'>
+          <geometry>
+            <box>
+              <size>0.1 1.25 1.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='wall_v_13_visual'>
+          <geometry>
+            <box>
+              <size>0.1 1.25 1.5</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+  </world>
+</sdf>

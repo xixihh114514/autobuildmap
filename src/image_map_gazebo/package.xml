@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>image_map_gazebo</name>
+  <version>0.0.1</version>
+  <description>Gazebo map generated from grid image.</description>
+  <maintainer email="user@example.com">user</maintainer>
+  <license>MIT</license>
+  <buildtool_depend>catkin</buildtool_depend>
+  <exec_depend>gazebo_ros</exec_depend>
+  <exec_depend>rospy</exec_depend>
+</package>
