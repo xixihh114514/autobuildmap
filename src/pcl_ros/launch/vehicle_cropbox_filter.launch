@@ -9,8 +9,8 @@
   <arg name="max_x" default="0.38" />
   <arg name="min_y" default="-0.28" />
   <arg name="max_y" default="0.28" />
-  <arg name="min_z" default="-0.20" />
-  <arg name="max_z" default="0.45" />
+  <arg name="min_z" default="-0.22" />
+  <arg name="max_z" default="0.50" />
   <arg name="negative" default="true" />
   <arg name="keep_organized" default="false" />
 

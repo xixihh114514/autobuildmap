@@ -312,9 +312,6 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       目前tare需要的节点有滤波、loam、local_planner、地形检测两个节点（需要关闭地形检测，但是不能完全关掉两个点）、sensor_scan、explore（参数在garage）
       新增了快速启动脚本，完整启动路径为先分别启动simbase，然后启动sim_fast_lio，然后启动loam，然后启动sim_terrain,然后启动local_planner，再然后启动sensor_scan,最后启动explore
 
-   3.32.1
-      解决了嵌套git的问题
-
    3.25.0
       更改了滤波方式，使用pclros的corpbox来过滤车体点云
 
@@ -322,6 +319,9 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       当日初始版本
    3.28.1
       local中允许车辆倒车
+
+   3.32.1
+      解决了嵌套git的问题
 
 26.3.30
    3.30.0
@@ -1140,3 +1140,91 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       说明：
       - 本轮不是单纯继续放宽某一个阈值，而是同时从“局部路径切换稳定性”和“全局探索完成判定”两侧一起收敛问题。
       - `correspondences.txt` 为按新 `searchRadius` 重生成后的结果，因此 diff 很大，属于预期变化。
+26.5.3
+   5.3.0
+      版本目标：记录 RoboCup 当前“19 cm 斜坡地面 + 车辆起伏”场景下，二维 LaserScan、地形分析和局部规划链路的高度参数调整，并重点保留改动前基线值，避免后续再混淆 `lidar` 切片阈值和 `terrain_map` 高差阈值。
+
+      本次改动：
+      1) 修改 `pointcloud_to_laserscan/launch/registered_scan_to_scan.launch`
+         - `min_height`：`-0.10 -> 0.02`
+         - `max_height`：`0.30 -> 0.45`
+         - `range_min`：`0.30 -> 0.10`
+         - 说明：
+           当前 `/scan` 仍工作在 `target_frame=lidar` 下，因此 `min_height/max_height` 是直接对 `lidar` 系点云做高度切片，不应按 `imu` 或 `base_link` 的离地高度直接代入。
+           本轮最终把 `min_height` 收到接近 `0`，目的是尽量不让 19 cm 斜坡和车辆起伏时的地面卷入二维 LaserScan，同时保留近处真正立障。
+
+      2) 修改 `pcl_ros/launch/vehicle_cropbox_filter.launch`
+         - `min_z`：`-0.20 -> -0.22`
+         - `max_z`：`0.45 -> 0.50`
+         - 说明：
+           这里只是略微放宽 FAST-LIO 输出点云在车体系下的保留高度范围，避免上坡、下坡和车体起伏时过早把有效点裁掉。
+
+      3) 修改 `autonomous_exploration_development_environment/src/terrain_analysis/launch/terrain_analysis.launch`
+         - `vehicleHeight`：`0.30 -> 0.50`
+         - `minRelZ`：`-0.20 -> -0.55`
+         - `maxRelZ`：`0.20 -> 0.40`
+         - `disRatioZ`：`0.20 -> 0.22`
+         - 说明：
+           `terrain_analysis` 输出 `/terrain_map`，其点的 `intensity` 表示点到估计地面的离地高差。
+           这里的参数职责是“保住斜坡与起伏场景下的有效地形点，并计算高差”，不是直接做二维障碍切片。
+
+      4) 修改 `autonomous_exploration_development_environment/src/terrain_analysis_ext/launch/terrain_analysis_ext.launch`
+         - `vehicleHeight`：`0.30 -> 0.50`
+         - `lowerBoundZ`：`-0.20 -> -0.55`
+         - `upperBoundZ`：`0.30 -> 0.40`
+         - `disRatioZ`：`0.10 -> 0.18`
+         - 说明：
+           `terrain_analysis_ext` 主要给 TARE 提供 `/terrain_map_ext`，用于远处扩展地形。
+           当前主局部规划仍直接读 `/terrain_map`，因此这一组参数的重点是与近场地形图保持风格一致，而不是单独决定局部避障结果。
+
+      5) 修改 `autonomous_exploration_development_environment/src/local_planner/launch/local_planner.launch`
+         - `useTerrainAnalysis`：保持 `true`
+         - `minRelZ`：`-0.20 -> -0.55`
+         - `maxRelZ`：`0.30 -> 0.40`
+         - `obstacleHeightThre`：`0.15 -> 0.24`
+         - `groundHeightThre`：`0.15 -> 0.22`
+         - `costHeightThre`：`0.10 -> 0.24`
+         - 说明：
+           当前 `useTerrainAnalysis=true` 且 `useCost=false`。
+           因此 `local_planner` 真正最关键的不是 `groundHeightThre`，而是 `obstacleHeightThre`。
+           代码在读取 `/terrain_map` 时，会先过滤 `intensity > obstacleHeightThre` 的点进入规划障碍集合；也就是说，这个阈值本质上是“terrain 高差超过多少就直接算障碍”。
+           本轮把它定在 `0.24`，是为了给 `19 cm` 斜坡留出少量建图/姿态误差余量，但又不放得像 `0.28` 那样过宽。
+
+      当前最终高度参数：
+      1) `registered_scan_to_scan.launch`
+         - `min_height=0.02`
+         - `max_height=0.45`
+         - `range_min=0.10`
+      2) `vehicle_cropbox_filter.launch`
+         - `min_z=-0.22`
+         - `max_z=0.50`
+      3) `terrain_analysis.launch`
+         - `vehicleHeight=0.50`
+         - `minRelZ=-0.55`
+         - `maxRelZ=0.40`
+         - `disRatioZ=0.22`
+      4) `terrain_analysis_ext.launch`
+         - `vehicleHeight=0.50`
+         - `lowerBoundZ=-0.55`
+         - `upperBoundZ=0.40`
+         - `disRatioZ=0.18`
+      5) `local_planner.launch`
+         - `useTerrainAnalysis=true`
+         - `minRelZ=-0.55`
+         - `maxRelZ=0.40`
+         - `obstacleHeightThre=0.24`
+         - `groundHeightThre=0.22`
+         - `costHeightThre=0.24`
+
+      当前重点说明：
+      - 必须区分两类“高度参数”：
+        1) `registered_scan_to_scan` 的 `min_height/max_height`
+           这是 `lidar` 坐标系下的二维切片阈值。
+        2) `terrain_analysis` / `local_planner` 的 `vehicleHeight`、`obstacleHeightThre`
+           这是围绕“点到地面的高差”或“相对车体高度窗口”工作的阈值。
+      - 不能把 `lidar` 相对 `imu/base_link` 的安装高度，直接当成 `/scan` 切片阈值来套用。
+      - 当前 `rebo24` 中 `lidar_joint.z=0.3057`、`imu_joint.z=0.18395`，二者差值约 `0.12175m`；这能说明 LiDAR 相对 IMU 的安装高度差，但不能直接推出 `/scan` 的最佳 `min_height`。
+      - 当前如果后续出现“斜坡又被当地障”或“真正小障碍漏掉”，优先回查：
+        1) `/scan` 实际切片效果
+        2) `/terrain_map` 中 19 cm 斜坡对应的 `intensity`
+        3) `local_planner` 的 `obstacleHeightThre`

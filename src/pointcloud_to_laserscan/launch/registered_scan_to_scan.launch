@@ -10,15 +10,15 @@
 
     <!-- TF 相关与高度切片参数 -->
     <arg name="transform_tolerance" default="0.05" /> <!-- TF 查询容忍时间，单位 s -->
-    <arg name="min_height" default="-0.10" /> <!-- 保留点的最小高度，低于该值的点会被丢弃，单位 m -->
-    <arg name="max_height" default="0.30" /> <!-- 保留点的最大高度，高于该值的点会被丢弃，单位 m -->
+    <arg name="min_height" default="0.02" /> <!-- 保留点的最小高度，低于该值的点会被丢弃，单位 m；该阈值工作在 lidar 坐标系，取接近 0 的下界以尽量避免 19 cm 斜坡和车辆起伏时地面卷入二维 scan，同时不过分抬高切片带 -->
+    <arg name="max_height" default="0.45" /> <!-- 保留点的最大高度，高于该值的点会被丢弃，单位 m；折中保留墙面/围挡信息，同时不过分放宽切片带 -->
 
     <!-- 二维激光的角度与量程参数 -->
     <arg name="angle_min" default="-3.1415926" /> <!-- 起始角，单位 rad -->
     <arg name="angle_max" default="3.1415926" /> <!-- 结束角，单位 rad -->
     <arg name="angle_increment" default="0.00872665" /> <!-- 角分辨率，约 0.5 度，单位 rad -->
     <arg name="scan_time" default="0.1" /> <!-- 一帧 scan 的时间，单位 s -->
-    <arg name="range_min" default="0.3" /> <!-- 最小测距，近于该值的点会被丢弃，单位 m -->
+    <arg name="range_min" default="0.1" /> <!-- 最小测距，近于该值的点会被丢弃，单位 m -->
     <arg name="range_max" default="30.0" /> <!-- 最大测距，远于该值的点会被丢弃，单位 m -->
     <arg name="use_inf" default="true" /> <!-- 没有命中障碍物的方向是否填充为 inf -->
     <arg name="inf_epsilon" default="1.0" /> <!-- use_inf=false 时，用 range_max + inf_epsilon 填充空射线 -->
