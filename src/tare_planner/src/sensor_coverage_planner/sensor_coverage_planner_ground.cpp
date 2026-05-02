@@ -40,6 +40,8 @@ bool PlannerParameters::ReadParameters(ros::NodeHandle& nh)
   pub_waypoint_topic_ = misc_utils_ns::getParam<std::string>(nh, "pub_waypoint_topic_", "/way_point");
   pub_momentum_activation_count_topic_ =
       misc_utils_ns::getParam<std::string>(nh, "pub_momentum_activation_count_topic_", "momentum_activation_count");
+  pub_stuck_recovery_mode_topic_ =
+      misc_utils_ns::getParam<std::string>(nh, "pub_stuck_recovery_mode_topic_", "/stuck_recovery_mode");
 
   // Bool
   kAutoStart = misc_utils_ns::getParam<bool>(nh, "kAutoStart", false);
@@ -50,6 +52,7 @@ bool PlannerParameters::ReadParameters(ros::NodeHandle& nh)
   kUseLineOfSightLookAheadPoint = misc_utils_ns::getParam<bool>(nh, "kUseLineOfSightLookAheadPoint", true);
   kNoExplorationReturnHome = misc_utils_ns::getParam<bool>(nh, "kNoExplorationReturnHome", true);
   kUseMomentum = misc_utils_ns::getParam<bool>(nh, "kUseMomentum", false);
+  kEnableBranchRecovery = misc_utils_ns::getParam<bool>(nh, "kEnableBranchRecovery", true);
 
   // Double
   kKeyposeCloudDwzFilterLeafSize = misc_utils_ns::getParam<double>(nh, "kKeyposeCloudDwzFilterLeafSize", 0.2);
@@ -61,6 +64,11 @@ bool PlannerParameters::ReadParameters(ros::NodeHandle& nh)
   kLookAheadSwitchScoreMargin = misc_utils_ns::getParam<double>(nh, "kLookAheadSwitchScoreMargin", 0.12);
   kExtendWayPointDistanceBig = misc_utils_ns::getParam<double>(nh, "kExtendWayPointDistanceBig", 8.0);
   kExtendWayPointDistanceSmall = misc_utils_ns::getParam<double>(nh, "kExtendWayPointDistanceSmall", 3.0);
+  kBranchAnchorMinSeparation = misc_utils_ns::getParam<double>(nh, "kBranchAnchorMinSeparation", 1.0);
+  kRecoveryAnchorReachedDist = misc_utils_ns::getParam<double>(nh, "kRecoveryAnchorReachedDist", 0.6);
+  kRecoveryProgressMinDist = misc_utils_ns::getParam<double>(nh, "kRecoveryProgressMinDist", 0.15);
+  kRecoveryWaypointMaxDistance = misc_utils_ns::getParam<double>(nh, "kRecoveryWaypointMaxDistance", 1.2);
+  kRecoveryWaypointMinDot = misc_utils_ns::getParam<double>(nh, "kRecoveryWaypointMinDot", -0.35);
 
   // Int
   kReturnHomeCandidateCountThreshold =
@@ -68,6 +76,9 @@ bool PlannerParameters::ReadParameters(ros::NodeHandle& nh)
   kDirectionChangeCounterThr = misc_utils_ns::getParam<int>(nh, "kDirectionChangeCounterThr", 4);
   kDirectionNoChangeCounterThr = misc_utils_ns::getParam<int>(nh, "kDirectionNoChangeCounterThr", 5);
   kResetWaypointJoystickAxesID = misc_utils_ns::getParam<int>(nh, "kResetWaypointJoystickAxesID", 0);
+  kBranchCandidateDegreeThreshold = misc_utils_ns::getParam<int>(nh, "kBranchCandidateDegreeThreshold", 3);
+  kStuckCycleThreshold = misc_utils_ns::getParam<int>(nh, "kStuckCycleThreshold", 4);
+  kRecoveryBreadcrumbLookback = misc_utils_ns::getParam<int>(nh, "kRecoveryBreadcrumbLookback", 12);
 
   return true;
 }
@@ -174,6 +185,9 @@ SensorCoveragePlanner3D::SensorCoveragePlanner3D(ros::NodeHandle& nh, ros::NodeH
   , viewpoint_ind_update_(false)
   , step_(false)
   , use_momentum_(false)
+  , recovery_mode_(false)
+  , stuck_recovery_mode_(false)
+  , progress_tracking_initialized_(false)
   , lookahead_point_in_line_of_sight_(true)
   , reset_waypoint_(false)
   , registered_cloud_count_(0)
@@ -181,7 +195,10 @@ SensorCoveragePlanner3D::SensorCoveragePlanner3D(ros::NodeHandle& nh, ros::NodeH
   , direction_change_count_(0)
   , direction_no_change_count_(0)
   , momentum_activation_count_(0)
+  , recovery_activation_count_(0)
   , return_home_candidate_count_(0)
+  , recovery_target_visited_index_(-1)
+  , stuck_cycle_count_(0)
   , reset_waypoint_joystick_axis_value_(-1.0)
 {
   initialize(nh, nh_p);
@@ -235,6 +252,7 @@ bool SensorCoveragePlanner3D::initialize(ros::NodeHandle& nh, ros::NodeHandle& n
   runtime_breakdown_pub_ = nh.advertise<std_msgs::Int32MultiArray>(pp_.pub_runtime_breakdown_topic_, 2);
   runtime_pub_ = nh.advertise<std_msgs::Float32>(pp_.pub_runtime_topic_, 2);
   momentum_activation_count_pub_ = nh.advertise<std_msgs::Int32>(pp_.pub_momentum_activation_count_topic_, 2);
+  stuck_recovery_mode_pub_ = nh.advertise<std_msgs::Bool>(pp_.pub_stuck_recovery_mode_topic_, 2);
   // Debug
   pointcloud_manager_neighbor_cells_origin_pub_ =
       nh.advertise<geometry_msgs::PointStamped>("pointcloud_manager_neighbor_cells_origin", 1);
@@ -584,6 +602,277 @@ void SensorCoveragePlanner3D::UpdateVisitedPositions()
   {
     pd_.visited_positions_.push_back(robot_current_position);
   }
+}
+
+int SensorCoveragePlanner3D::GetNearestVisitedPositionIndex(const Eigen::Vector3d& position, double max_distance) const
+{
+  int nearest_index = -1;
+  double nearest_distance = max_distance;
+  for (int i = static_cast<int>(pd_.visited_positions_.size()) - 1; i >= 0; --i)
+  {
+    double distance = (position - pd_.visited_positions_[i]).norm();
+    if (distance <= nearest_distance)
+    {
+      nearest_distance = distance;
+      nearest_index = i;
+    }
+  }
+
+  return nearest_index;
+}
+
+void SensorCoveragePlanner3D::UpdateBranchAnchors()
+{
+  if (!pp_.kEnableBranchRecovery || recovery_mode_ || pd_.visited_positions_.empty())
+  {
+    return;
+  }
+
+  Eigen::Vector3d robot_position(pd_.robot_position_.x, pd_.robot_position_.y, pd_.robot_position_.z);
+  int current_visited_index = GetNearestVisitedPositionIndex(robot_position, 1.5);
+  if (current_visited_index < 0)
+  {
+    current_visited_index = static_cast<int>(pd_.visited_positions_.size()) - 1;
+  }
+
+  while (!branch_anchor_indices_.empty() && branch_anchor_indices_.back() > current_visited_index)
+  {
+    branch_anchor_indices_.pop_back();
+  }
+
+  int candidate_degree = pd_.viewpoint_manager_->GetCandidateViewPointNeighborCount(robot_position);
+  if (candidate_degree < pp_.kBranchCandidateDegreeThreshold)
+  {
+    return;
+  }
+
+  if (!branch_anchor_indices_.empty())
+  {
+    int last_anchor_index = branch_anchor_indices_.back();
+    if (current_visited_index <= last_anchor_index)
+    {
+      return;
+    }
+
+    if ((pd_.visited_positions_[current_visited_index] - pd_.visited_positions_[last_anchor_index]).norm() <
+        pp_.kBranchAnchorMinSeparation)
+    {
+      return;
+    }
+  }
+
+  branch_anchor_indices_.push_back(current_visited_index);
+  ROS_INFO_STREAM("Recorded branch anchor at breadcrumb " << current_visited_index
+                                                          << ", candidate degree: " << candidate_degree);
+}
+
+bool SensorCoveragePlanner3D::StartRecoveryToLatestAnchor(const std::string& reason)
+{
+  if (!pp_.kEnableBranchRecovery || branch_anchor_indices_.empty())
+  {
+    return false;
+  }
+
+  Eigen::Vector3d robot_position(pd_.robot_position_.x, pd_.robot_position_.y, pd_.robot_position_.z);
+  int current_visited_index = GetNearestVisitedPositionIndex(robot_position, 1.5);
+  if (current_visited_index < 0)
+  {
+    current_visited_index = static_cast<int>(pd_.visited_positions_.size()) - 1;
+  }
+
+  for (int i = static_cast<int>(branch_anchor_indices_.size()) - 1; i >= 0; --i)
+  {
+    int anchor_index = branch_anchor_indices_[i];
+    if (anchor_index < 0 || anchor_index >= pd_.visited_positions_.size() || anchor_index >= current_visited_index)
+    {
+      continue;
+    }
+
+    if ((pd_.visited_positions_[anchor_index] - robot_position).norm() <= pp_.kRecoveryAnchorReachedDist)
+    {
+      continue;
+    }
+
+    recovery_mode_ = true;
+    stuck_recovery_mode_ = (reason == "robot progress stalled");
+    recovery_target_visited_index_ = anchor_index;
+    recovery_activation_count_++;
+    stuck_cycle_count_ = 0;
+    progress_tracking_initialized_ = true;
+    progress_reference_position_ = robot_position;
+    ROS_WARN_STREAM("Entering recovery mode toward breadcrumb " << anchor_index << ": " << reason
+                    << ", stuck_recovery=" << (stuck_recovery_mode_ ? "true" : "false"));
+    return true;
+  }
+
+  return false;
+}
+
+void SensorCoveragePlanner3D::ExitRecoveryMode(bool reached_anchor)
+{
+  if (reached_anchor)
+  {
+    while (!branch_anchor_indices_.empty() && branch_anchor_indices_.back() >= recovery_target_visited_index_)
+    {
+      branch_anchor_indices_.pop_back();
+    }
+  }
+
+  recovery_mode_ = false;
+  stuck_recovery_mode_ = false;
+  recovery_target_visited_index_ = -1;
+  stuck_cycle_count_ = 0;
+  progress_tracking_initialized_ = true;
+  progress_reference_position_ =
+      Eigen::Vector3d(pd_.robot_position_.x, pd_.robot_position_.y, pd_.robot_position_.z);
+}
+
+void SensorCoveragePlanner3D::UpdateProgressState(const Eigen::Vector3d& target_position, bool target_valid)
+{
+  Eigen::Vector3d robot_position(pd_.robot_position_.x, pd_.robot_position_.y, pd_.robot_position_.z);
+  if (!progress_tracking_initialized_)
+  {
+    progress_reference_position_ = robot_position;
+    progress_tracking_initialized_ = true;
+    stuck_cycle_count_ = 0;
+    return;
+  }
+
+  if ((robot_position - progress_reference_position_).norm() > pp_.kRecoveryProgressMinDist)
+  {
+    progress_reference_position_ = robot_position;
+    stuck_cycle_count_ = 0;
+    return;
+  }
+
+  if (!target_valid)
+  {
+    return;
+  }
+
+  if ((target_position - robot_position).norm() <= pp_.kRecoveryAnchorReachedDist)
+  {
+    progress_reference_position_ = robot_position;
+    stuck_cycle_count_ = 0;
+    return;
+  }
+
+  stuck_cycle_count_++;
+}
+
+bool SensorCoveragePlanner3D::SelectRecoveryWaypointFromPath(const nav_msgs::Path& path, Eigen::Vector3d& waypoint)
+{
+  if (path.poses.size() < 2)
+  {
+    return false;
+  }
+
+  Eigen::Vector3d robot_position(pd_.robot_position_.x, pd_.robot_position_.y, pd_.robot_position_.z);
+  Eigen::Vector2d forward_dir(std::cos(pd_.robot_yaw_), std::sin(pd_.robot_yaw_));
+
+  int best_index = -1;
+  double best_score = -DBL_MAX;
+  int fallback_index = -1;
+  double fallback_score = -DBL_MAX;
+
+  for (int i = 1; i < path.poses.size(); ++i)
+  {
+    Eigen::Vector3d candidate_point(path.poses[i].pose.position.x, path.poses[i].pose.position.y,
+                                    path.poses[i].pose.position.z);
+    Eigen::Vector3d diff = candidate_point - robot_position;
+    diff.z() = 0.0;
+    double dist = diff.norm();
+    if (dist < 0.05)
+    {
+      continue;
+    }
+
+    Eigen::Vector2d dir = diff.head<2>().normalized();
+    double dot = forward_dir.dot(dir);
+    if (dot > fallback_score)
+    {
+      fallback_score = dot;
+      fallback_index = i;
+    }
+
+    if (dist <= pp_.kRecoveryWaypointMaxDistance && dot >= pp_.kRecoveryWaypointMinDot)
+    {
+      double score = dist + 0.2 * dot;
+      if (score > best_score)
+      {
+        best_score = score;
+        best_index = i;
+      }
+    }
+  }
+
+  if (best_index < 0)
+  {
+    best_index = fallback_index >= 0 ? fallback_index : 1;
+  }
+
+  waypoint.x() = path.poses[best_index].pose.position.x;
+  waypoint.y() = path.poses[best_index].pose.position.y;
+  waypoint.z() = path.poses[best_index].pose.position.z;
+  return true;
+}
+
+bool SensorCoveragePlanner3D::UpdateRecoveryWaypoint()
+{
+  if (!recovery_mode_ || recovery_target_visited_index_ < 0 ||
+      recovery_target_visited_index_ >= pd_.visited_positions_.size())
+  {
+    return false;
+  }
+
+  Eigen::Vector3d robot_position(pd_.robot_position_.x, pd_.robot_position_.y, pd_.robot_position_.z);
+  Eigen::Vector3d anchor_position = pd_.visited_positions_[recovery_target_visited_index_];
+  if ((anchor_position - robot_position).norm() <= pp_.kRecoveryAnchorReachedDist)
+  {
+    ExitRecoveryMode(true);
+    return false;
+  }
+
+  int current_visited_index = GetNearestVisitedPositionIndex(robot_position, 1.5);
+  if (current_visited_index < 0)
+  {
+    current_visited_index = static_cast<int>(pd_.visited_positions_.size()) - 1;
+  }
+
+  if (current_visited_index <= recovery_target_visited_index_ + 1)
+  {
+    ExitRecoveryMode(true);
+    return false;
+  }
+
+  int search_begin = std::max(recovery_target_visited_index_, current_visited_index - pp_.kRecoveryBreadcrumbLookback);
+  nav_msgs::Path recovery_path;
+  bool found_path = false;
+  for (int breadcrumb_index = search_begin; breadcrumb_index < current_visited_index; ++breadcrumb_index)
+  {
+    const Eigen::Vector3d& breadcrumb_position = pd_.visited_positions_[breadcrumb_index];
+    if (!pd_.viewpoint_manager_->InLocalPlanningHorizon(breadcrumb_position))
+    {
+      continue;
+    }
+
+    nav_msgs::Path candidate_path =
+        pd_.viewpoint_manager_->GetViewPointShortestPath(robot_position, breadcrumb_position);
+    if (candidate_path.poses.size() >= 2)
+    {
+      recovery_path = candidate_path;
+      found_path = true;
+      break;
+    }
+  }
+
+  if (!found_path)
+  {
+    ROS_WARN_THROTTLE(2.0, "Recovery mode active, but no forward breadcrumb path is currently available");
+    return false;
+  }
+
+  return SelectRecoveryWaypointFromPath(recovery_path, recovery_waypoint_);
 }
 
 void SensorCoveragePlanner3D::UpdateGlobalRepresentation()
@@ -1197,6 +1486,15 @@ void SensorCoveragePlanner3D::PublishWaypoint()
   misc_utils_ns::Publish<geometry_msgs::PointStamped>(waypoint_pub_, waypoint, kWorldFrameID);
 }
 
+void SensorCoveragePlanner3D::PublishRecoveryWaypoint()
+{
+  geometry_msgs::PointStamped waypoint;
+  waypoint.point.x = recovery_waypoint_.x();
+  waypoint.point.y = recovery_waypoint_.y();
+  waypoint.point.z = recovery_waypoint_.z();
+  misc_utils_ns::Publish<geometry_msgs::PointStamped>(waypoint_pub_, waypoint, kWorldFrameID);
+}
+
 void SensorCoveragePlanner3D::PublishRuntime()
 {
   local_viewpoint_sampling_runtime_ = pd_.local_coverage_planner_->GetViewPointSamplingRuntime() / 1000;
@@ -1238,6 +1536,13 @@ void SensorCoveragePlanner3D::PublishExplorationState()
   std_msgs::Bool exploration_finished_msg;
   exploration_finished_msg.data = exploration_finished_;
   exploration_finish_pub_.publish(exploration_finished_msg);
+}
+
+void SensorCoveragePlanner3D::PublishStuckRecoveryMode()
+{
+  std_msgs::Bool recovery_mode_msg;
+  recovery_mode_msg.data = stuck_recovery_mode_;
+  stuck_recovery_mode_pub_.publish(recovery_mode_msg);
 }
 
 void SensorCoveragePlanner3D::PrintExplorationStatus(std::string status, bool clear_last_line)
@@ -1333,6 +1638,7 @@ void SensorCoveragePlanner3D::execute(const ros::TimerEvent&)
       ROS_WARN("Cannot get candidate viewpoints, skipping this round");
       return;
     }
+    UpdateBranchAnchors();
 
     UpdateKeyposeGraph();
 
@@ -1366,6 +1672,14 @@ void SensorCoveragePlanner3D::execute(const ros::TimerEvent&)
     bool return_home_candidate =
         pd_.grid_world_->IsReturningHome() && pd_.local_coverage_planner_->IsLocalCoverageComplete() &&
         (ros::Time::now() - start_time_).toSec() > 5;
+    if (!recovery_mode_ && pd_.local_coverage_planner_->IsLocalCoverageComplete() && !pd_.grid_world_->IsReturningHome())
+    {
+      StartRecoveryToLatestAnchor("completed current dead-end branch");
+    }
+    if (recovery_mode_)
+    {
+      return_home_candidate = false;
+    }
     if (return_home_candidate)
     {
       return_home_candidate_count_++;
@@ -1405,8 +1719,35 @@ void SensorCoveragePlanner3D::execute(const ros::TimerEvent&)
       lookahead_point_update_ = GetLookAheadPoint(pd_.exploration_path_, global_path, pd_.lookahead_point_);
     }
 
+    if (!recovery_mode_)
+    {
+      UpdateProgressState(pd_.lookahead_point_, lookahead_point_update_);
+      if (stuck_cycle_count_ >= pp_.kStuckCycleThreshold)
+      {
+        StartRecoveryToLatestAnchor("robot progress stalled");
+      }
+    }
+
+    bool has_recovery_waypoint = false;
+    if (recovery_mode_)
+    {
+      has_recovery_waypoint = UpdateRecoveryWaypoint();
+      if (!has_recovery_waypoint)
+      {
+        ExitRecoveryMode(false);
+      }
+    }
+
     PublishExplorationState();
-    PublishWaypoint();
+    PublishStuckRecoveryMode();
+    if (has_recovery_waypoint)
+    {
+      PublishRecoveryWaypoint();
+    }
+    else
+    {
+      PublishWaypoint();
+    }
 
     overall_processing_timer.Stop(false);
     overall_runtime_ = overall_processing_timer.GetDuration("ms");

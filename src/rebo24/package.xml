@@ -15,6 +15,10 @@ for rebo24 robot</p>
   <depend>rviz</depend>
   <depend>joint_state_publisher_gui</depend>
   <depend>gazebo</depend>
+  <depend>gazebo_ros</depend>
+  <depend>rostopic</depend>
+  <depend>tf</depend>
+  <depend>image_map_gazebo</depend>
   <export>
     <architecture_independent />
   </export>

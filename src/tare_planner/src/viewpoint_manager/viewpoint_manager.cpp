@@ -1466,6 +1466,23 @@ int ViewPointManager::GetNearestCandidateViewPointInd(const Eigen::Vector3d& pos
   }
 }
 
+int ViewPointManager::GetCandidateViewPointNeighborCount(const Eigen::Vector3d& position)
+{
+  int viewpoint_ind = GetNearestCandidateViewPointInd(position);
+  if (!InRange(viewpoint_ind))
+  {
+    return 0;
+  }
+
+  int graph_ind = graph_index_map_[viewpoint_ind];
+  if (graph_ind < 0 || graph_ind >= candidate_viewpoint_graph_.size())
+  {
+    return 0;
+  }
+
+  return candidate_viewpoint_graph_[graph_ind].size();
+}
+
 void ViewPointManager::GetCollisionViewPointVisCloud(pcl::PointCloud<pcl::PointXYZI>::Ptr& cloud)
 {
   cloud->clear();

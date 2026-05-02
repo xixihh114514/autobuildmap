@@ -322,6 +322,7 @@ public:
   void UpdateCandidateViewPointCellStatus(std::unique_ptr<grid_world_ns::GridWorld> const& grid_world);
 
   int GetNearestCandidateViewPointInd(const Eigen::Vector3d& position);
+  int GetCandidateViewPointNeighborCount(const Eigen::Vector3d& position);
   bool InLocalPlanningHorizon(const Eigen::Vector3d& position);
   Eigen::Vector3d GetLocalPlanningHorizonSize()
   {

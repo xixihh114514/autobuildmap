@@ -83,6 +83,7 @@ struct PlannerParameters
   std::string pub_runtime_topic_;
   std::string pub_waypoint_topic_;
   std::string pub_momentum_activation_count_topic_;
+  std::string pub_stuck_recovery_mode_topic_;
 
   // Bool
   bool kAutoStart;
@@ -93,6 +94,7 @@ struct PlannerParameters
   bool kUseLineOfSightLookAheadPoint;
   bool kNoExplorationReturnHome;
   bool kUseMomentum;
+  bool kEnableBranchRecovery;
 
   // Double
   double kKeyposeCloudDwzFilterLeafSize;
@@ -104,12 +106,20 @@ struct PlannerParameters
   double kLookAheadSwitchScoreMargin;
   double kExtendWayPointDistanceBig;
   double kExtendWayPointDistanceSmall;
+  double kBranchAnchorMinSeparation;
+  double kRecoveryAnchorReachedDist;
+  double kRecoveryProgressMinDist;
+  double kRecoveryWaypointMaxDistance;
+  double kRecoveryWaypointMinDot;
 
   // Int
   int kReturnHomeCandidateCountThreshold;
   int kDirectionChangeCounterThr;
   int kDirectionNoChangeCounterThr;
   int kResetWaypointJoystickAxesID;
+  int kBranchCandidateDegreeThreshold;
+  int kStuckCycleThreshold;
+  int kRecoveryBreadcrumbLookback;
 
   bool ReadParameters(ros::NodeHandle& nh);
 };
@@ -186,6 +196,9 @@ private:
   bool viewpoint_ind_update_;
   bool step_;
   bool use_momentum_;
+  bool recovery_mode_;
+  bool stuck_recovery_mode_;
+  bool progress_tracking_initialized_;
   bool lookahead_point_in_line_of_sight_;
   bool reset_waypoint_;
   PlannerParameters pp_;
@@ -203,12 +216,19 @@ private:
   int direction_change_count_;
   int direction_no_change_count_;
   int momentum_activation_count_;
+  int recovery_activation_count_;
   int return_home_candidate_count_;
+  int recovery_target_visited_index_;
+  int stuck_cycle_count_;
 
   double reset_waypoint_joystick_axis_value_;
 
   ros::Time start_time_;
   ros::Time global_direction_switch_time_;
+
+  Eigen::Vector3d recovery_waypoint_;
+  Eigen::Vector3d progress_reference_position_;
+  std::vector<int> branch_anchor_indices_;
 
   ros::Timer execution_timer_;
 
@@ -236,6 +256,7 @@ private:
   ros::Publisher runtime_breakdown_pub_;
   ros::Publisher runtime_pub_;
   ros::Publisher momentum_activation_count_pub_;
+  ros::Publisher stuck_recovery_mode_pub_;
   // Debug
   ros::Publisher pointcloud_manager_neighbor_cells_origin_pub_;
 
@@ -272,12 +293,21 @@ private:
   void PublishRuntime();
   double GetRobotToHomeDistance();
   void PublishExplorationState();
+  void PublishStuckRecoveryMode();
   void PublishWaypoint();
+  void PublishRecoveryWaypoint();
   bool GetLookAheadPoint(const exploration_path_ns::ExplorationPath& local_path,
                          const exploration_path_ns::ExplorationPath& global_path, Eigen::Vector3d& lookahead_point);
 
   void PrintExplorationStatus(std::string status, bool clear_last_line = true);
   void CountDirectionChange();
+  int GetNearestVisitedPositionIndex(const Eigen::Vector3d& position, double max_distance = DBL_MAX) const;
+  void UpdateBranchAnchors();
+  bool StartRecoveryToLatestAnchor(const std::string& reason);
+  void ExitRecoveryMode(bool reached_anchor);
+  void UpdateProgressState(const Eigen::Vector3d& target_position, bool target_valid);
+  bool SelectRecoveryWaypointFromPath(const nav_msgs::Path& path, Eigen::Vector3d& waypoint);
+  bool UpdateRecoveryWaypoint();
 };
 
 }  // namespace sensor_coverage_planner_3d_ns

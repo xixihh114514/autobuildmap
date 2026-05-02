@@ -37,6 +37,8 @@ pub_runtime_topic_ : /runtime
 pub_waypoint_topic_ : /way_point
 # 动量模式触发次数
 pub_momentum_activation_count_topic_ : momentum_activation_count
+# 卡死脱困模式标志
+pub_stuck_recovery_mode_topic_ : /stuck_recovery_mode
 
 # ===============================
 # 行为开关与核心阈值
@@ -86,6 +88,24 @@ kUseMomentum : true
 kDirectionChangeCounterThr : 2
 # 退出动量模式的连续稳定次数阈值
 kDirectionNoChangeCounterThr : 8
+# 是否启用“分支探完后前进式回撤”和卡住自动脱困
+kEnableBranchRecovery : true
+# 视点图中邻接数达到该值时，认为当前位置附近可能是一个可回退的分叉锚点
+kBranchCandidateDegreeThreshold : 3
+# 两个分叉锚点之间的最小间距
+kBranchAnchorMinSeparation : 1.0
+# 认为已经回到分叉锚点的距离阈值
+kRecoveryAnchorReachedDist : 0.6
+# 若连续多轮位移低于该阈值，则累计为“疑似卡住”
+kRecoveryProgressMinDist : 0.15
+# 连续多少轮低进展后触发自动脱困
+kStuckCycleThreshold : 4
+# 前进式回撤时，最多向后回看多少个 breadcrumb 作为局部子目标候选
+kRecoveryBreadcrumbLookback : 12
+# 回撤子目标的最大直线距离，过大容易重新把目标放到身后
+kRecoveryWaypointMaxDistance : 1.2
+# 回撤子目标相对车头方向允许的最小点积；放宽到允许轻微后向，供卡死时短距离脱困
+kRecoveryWaypointMinDot : -0.75
 
 # 手柄用于 reset waypoint 的轴编号
 kResetWaypointJoystickAxesID : 2

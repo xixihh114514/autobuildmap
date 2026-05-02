@@ -94,6 +94,17 @@ cd /home/lzk/robotcup2026/src/image_map_gazebo
 
 - 新增 `image_map_gazebo` 包，用于图片地图转 Gazebo world。
 - 重写 `src/readme.md`，补充工作区说明、推荐启动顺序和当前链路说明。
+- `rebo24/launch/gazebo.launch` 改为直接加载 `image_map_gazebo/worlds/robocup2026_real.world`，并在 launch 内统一设置仿真出生点与朝向。
+- `image_map_gazebo/worlds/robocup2026_real.world` 清理了 world 内遗留的车模状态，并把地图整体按当前车体相对关系做了位置修正，便于直接配合 `rebo24` 启动。
+- `tare_planner` 新增分支锚点恢复与卡死检测恢复：
+  - 支持“第一条支路探完后回到分叉，再继续第二条、第三条”的前进式回撤。
+  - 连续低进展会触发 `stuck_recovery_mode`，并向下游发布 `/stuck_recovery_mode`。
+  - 当前默认阈值为：`kRecoveryProgressMinDist=0.15 m`，`kStuckCycleThreshold=4`，规划检测周期约 `1 Hz`，因此约 4 秒进入卡死脱困判断。
+- `local_planner` 补充了窄道 / 死胡同脱困控制：
+  - 默认仍然保持前进优先，不允许普通路径跟踪时长距离倒车。
+  - 进入 `stuck_recovery_mode` 后，仅允许短倒车脱困，当前默认 `stuckReverseDist=0.12 m`，`stuckReverseSpeed=0.08 m/s`。
+  - 当恢复目标已经落到车后方时，优先“停住后原地掉头”，不再继续沿原前向路径慢慢顶墙。
+  - 新增 `turnaroundStopAngle`、`turnaroundReverseTriggerAngle`、`turnaroundResumeAngle` 3 个参数，便于后续直接在 launch 里调原地掉头与短倒车触发条件。
 
 ### 历史原始记录
 

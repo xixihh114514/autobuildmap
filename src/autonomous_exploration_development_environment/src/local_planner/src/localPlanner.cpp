@@ -76,6 +76,7 @@ double joyToCheckObstacleDelay = 5.0;
 double goalClearRange = 0.5;
 double goalX = 0;
 double goalY = 0;
+bool stuckRecoveryMode = false;
 
 float joySpeed = 0;
 float joySpeedRaw = 0;
@@ -344,6 +345,11 @@ void checkObstacleHandler(const std_msgs::Bool::ConstPtr& checkObs)
   }
 }
 
+void stuckRecoveryModeHandler(const std_msgs::Bool::ConstPtr& stuck_recovery_mode)
+{
+  stuckRecoveryMode = stuck_recovery_mode->data;
+}
+
 int readPlyHeader(FILE *filePtr)
 {
   char str[50];
@@ -596,6 +602,8 @@ int main(int argc, char** argv)
   ros::Subscriber subAddedObstacles = nh.subscribe<sensor_msgs::PointCloud2> ("/added_obstacles", 5, addedObstaclesHandler);
 
   ros::Subscriber subCheckObstacle = nh.subscribe<std_msgs::Bool> ("/check_obstacle", 5, checkObstacleHandler);
+  ros::Subscriber subStuckRecoveryMode =
+      nh.subscribe<std_msgs::Bool> ("/stuck_recovery_mode", 5, stuckRecoveryModeHandler);
 
   ros::Publisher pubPath = nh.advertise<nav_msgs::Path> ("/path", 5);
   nav_msgs::Path path;
@@ -732,18 +740,29 @@ int main(int argc, char** argv)
       if (pathRange < minPathRange) pathRange = minPathRange;
       float relativeGoalDis = adjacentRange;
 
+      bool forceTurnaroundSearch = false;
       if (autonomyMode) {
         float relativeGoalX = ((goalX - vehicleX) * cosVehicleYaw + (goalY - vehicleY) * sinVehicleYaw);
         float relativeGoalY = (-(goalX - vehicleX) * sinVehicleYaw + (goalY - vehicleY) * cosVehicleYaw);
 
         relativeGoalDis = sqrt(relativeGoalX * relativeGoalX + relativeGoalY * relativeGoalY);
         joyDir = atan2(relativeGoalY, relativeGoalX) * 180 / PI;
-
-        if (!twoWayDrive) {
-          if (joyDir > 90.0) joyDir = 90.0;
-          else if (joyDir < -90.0) joyDir = -90.0;
+        // In stuck recovery, always search for a turnaround instead of
+        // letting the local planner keep squeezing forward in a dead-end.
+        if (!twoWayDrive && stuckRecoveryMode) {
+          forceTurnaroundSearch = true;
+          joyDir = joyDir >= 0.0f ? 180.0f : -180.0f;
+        }
+        // Outside recovery, still force a turnaround if the target is
+        // already behind the vehicle.
+        else if (!twoWayDrive && relativeGoalX < -0.05f) {
+          forceTurnaroundSearch = true;
+          joyDir = relativeGoalY >= 0.0f ? 180.0f : -180.0f;
         }
       }
+
+      float activeDirThre = forceTurnaroundSearch ? 179.0f : dirThre;
+      bool activeDirToVehicle = forceTurnaroundSearch ? false : dirToVehicle;
 
       bool pathFound = false;
       float defPathScale = pathScale;
@@ -778,8 +797,10 @@ int main(int argc, char** argv)
               if (angDiff > 180.0) {
                 angDiff = 360.0 - angDiff;
               }
-              if ((angDiff > dirThre && !dirToVehicle) || (fabs(10.0 * rotDir - 180.0) > dirThre && fabs(joyDir) <= 90.0 && dirToVehicle) ||
-                  ((10.0 * rotDir > dirThre && 360.0 - 10.0 * rotDir > dirThre) && fabs(joyDir) > 90.0 && dirToVehicle)) {
+              if ((angDiff > activeDirThre && !activeDirToVehicle) ||
+                  (fabs(10.0 * rotDir - 180.0) > activeDirThre && fabs(joyDir) <= 90.0 && activeDirToVehicle) ||
+                  ((10.0 * rotDir > activeDirThre && 360.0 - 10.0 * rotDir > activeDirThre) &&
+                   fabs(joyDir) > 90.0 && activeDirToVehicle)) {
                 continue;
               }
 
@@ -829,8 +850,10 @@ int main(int argc, char** argv)
           if (angDiff > 180.0) {
             angDiff = 360.0 - angDiff;
           }
-          if ((angDiff > dirThre && !dirToVehicle) || (fabs(10.0 * rotDir - 180.0) > dirThre && fabs(joyDir) <= 90.0 && dirToVehicle) ||
-              ((10.0 * rotDir > dirThre && 360.0 - 10.0 * rotDir > dirThre) && fabs(joyDir) > 90.0 && dirToVehicle)) {
+          if ((angDiff > activeDirThre && !activeDirToVehicle) ||
+              (fabs(10.0 * rotDir - 180.0) > activeDirThre && fabs(joyDir) <= 90.0 && activeDirToVehicle) ||
+              ((10.0 * rotDir > activeDirThre && 360.0 - 10.0 * rotDir > activeDirThre) &&
+               fabs(joyDir) > 90.0 && activeDirToVehicle)) {
             continue;
           }
 
@@ -871,7 +894,7 @@ int main(int argc, char** argv)
           }
         }
 
-        if (selectedCandidateID >= 0 && lastSelectedCandidateID >= 0) {
+        if (selectedCandidateID >= 0 && lastSelectedCandidateID >= 0 && !forceTurnaroundSearch) {
           float lastScore = clearPathPerGroupScore[lastSelectedCandidateID];
           if (lastScore > 0 && candidateAllowedByRotObstacle(lastSelectedCandidateID, minObsAngCW, minObsAngCCW)) {
             double switchScoreRatio = candidateSwitchesBranch(lastSelectedCandidateID, selectedCandidateID)
@@ -942,8 +965,10 @@ int main(int argc, char** argv)
             if (angDiff > 180.0) {
               angDiff = 360.0 - angDiff;
             }
-            if ((angDiff > dirThre && !dirToVehicle) || (fabs(10.0 * rotDir - 180.0) > dirThre && fabs(joyDir) <= 90.0 && dirToVehicle) ||
-                ((10.0 * rotDir > dirThre && 360.0 - 10.0 * rotDir > dirThre) && fabs(joyDir) > 90.0 && dirToVehicle) || 
+            if ((angDiff > activeDirThre && !activeDirToVehicle) ||
+                (fabs(10.0 * rotDir - 180.0) > activeDirThre && fabs(joyDir) <= 90.0 && activeDirToVehicle) ||
+                ((10.0 * rotDir > activeDirThre && 360.0 - 10.0 * rotDir > activeDirThre) &&
+                 fabs(joyDir) > 90.0 && activeDirToVehicle) || 
                 !((rotAng * 180.0 / PI > minObsAngCW && rotAng * 180.0 / PI < minObsAngCCW) || 
                 (rotDeg > minObsAngCW && rotDeg < minObsAngCCW && twoWayDrive) || !checkRotObstacle)) {
               continue;

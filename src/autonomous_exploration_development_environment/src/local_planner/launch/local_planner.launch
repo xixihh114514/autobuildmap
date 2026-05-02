@@ -99,6 +99,11 @@
     <param name="slowDwnDisThre" type="double" value="0.17" /> <!-- 距终点小于该值时开始按距离减速（m） -->
     <param name="noRotAtStop" type="bool" value="false" /> <!-- 手动速度为 0 时是否禁止原地转向 -->
     <param name="noRotAtGoal" type="bool" value="true" /> <!-- 到达目标附近时是否停止转向 -->
+    <param name="stuckReverseSpeed" type="double" value="0.08" /> <!-- 仅在卡死脱困模式下允许的短倒车速度（m/s） -->
+    <param name="stuckReverseDist" type="double" value="0.12" /> <!-- 仅在卡死脱困模式下允许的累计倒车距离（m） -->
+    <param name="turnaroundStopAngle" type="double" value="1.05" /> <!-- 目标明显跑到车后方后，立即停住改为原地掉头（rad） -->
+    <param name="turnaroundReverseTriggerAngle" type="double" value="2.75" /> <!-- 仅在脱困模式且几乎背向目标时，才允许极短倒车松脱（rad） -->
+    <param name="turnaroundResumeAngle" type="double" value="0.45" /> <!-- 掉头到该角度以内后恢复正常前进跟踪（rad） -->
 
     <!-- 姿态安全保护 -->
     <param name="useInclRateToSlow" type="bool" value="false" /> <!-- 是否根据姿态变化率触发减速 -->

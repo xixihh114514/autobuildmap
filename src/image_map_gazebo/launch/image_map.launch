@@ -1,5 +1,5 @@
 <launch>
-  <arg name="world" default="$(find image_map_gazebo)/worlds/image_map.world" />
+  <arg name="world" default="$(find image_map_gazebo)/worlds/robocup2026_real.world" />
   <arg name="paused" default="false" />
   <arg name="gui" default="true" />
 

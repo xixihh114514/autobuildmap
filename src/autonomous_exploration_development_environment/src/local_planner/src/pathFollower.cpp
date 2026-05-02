@@ -9,6 +9,7 @@
 #include <message_filters/sync_policies/approximate_time.h>
 
 #include <std_msgs/Int8.h>
+#include <std_msgs/Bool.h>
 #include <std_msgs/Float32.h>
 #include <nav_msgs/Path.h>
 #include <nav_msgs/Odometry.h>
@@ -59,6 +60,12 @@ bool noRotAtGoal = true;
 bool autonomyMode = false;
 double autonomySpeed = 1.0;
 double joyToSpeedDelay = 2.0;
+bool stuckRecoveryMode = false;
+double stuckReverseSpeed = 0.08;
+double stuckReverseDist = 0.12;
+double turnaroundStopAngle = 1.05;
+double turnaroundReverseTriggerAngle = 2.75;
+double turnaroundResumeAngle = 0.45;
 
 float joySpeed = 0;
 float joySpeedRaw = 0;
@@ -90,6 +97,10 @@ int pathPointID = 0;
 bool pathInit = false;
 bool navFwd = true;
 double switchTime = 0;
+bool stuckReverseActive = false;
+bool turnaroundModeActive = false;
+float stuckReverseStartX = 0;
+float stuckReverseStartY = 0;
 
 nav_msgs::Path path;
 
@@ -178,6 +189,16 @@ void stopHandler(const std_msgs::Int8::ConstPtr& stop)
   safetyStop = stop->data;
 }
 
+void stuckRecoveryModeHandler(const std_msgs::Bool::ConstPtr& stuck_recovery_mode)
+{
+  stuckRecoveryMode = stuck_recovery_mode->data;
+  if (!stuckRecoveryMode) {
+    stuckReverseActive = false;
+    turnaroundModeActive = false;
+    navFwd = true;
+  }
+}
+
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "pathFollower");
@@ -212,6 +233,11 @@ int main(int argc, char** argv)
   nhPrivate.getParam("autonomyMode", autonomyMode);
   nhPrivate.getParam("autonomySpeed", autonomySpeed);
   nhPrivate.getParam("joyToSpeedDelay", joyToSpeedDelay);
+  nhPrivate.param("stuckReverseSpeed", stuckReverseSpeed, 0.08);
+  nhPrivate.param("stuckReverseDist", stuckReverseDist, 0.12);
+  nhPrivate.param("turnaroundStopAngle", turnaroundStopAngle, 1.05);
+  nhPrivate.param("turnaroundReverseTriggerAngle", turnaroundReverseTriggerAngle, 2.75);
+  nhPrivate.param("turnaroundResumeAngle", turnaroundResumeAngle, 0.45);
 
   ros::Subscriber subOdom = nh.subscribe<nav_msgs::Odometry> ("/state_estimation", 5, odomHandler);
 
@@ -222,6 +248,8 @@ int main(int argc, char** argv)
   ros::Subscriber subSpeed = nh.subscribe<std_msgs::Float32> ("/speed", 5, speedHandler);
 
   ros::Subscriber subStop = nh.subscribe<std_msgs::Int8> ("/stop", 5, stopHandler);
+  ros::Subscriber subStuckRecoveryMode =
+      nh.subscribe<std_msgs::Bool> ("/stuck_recovery_mode", 5, stuckRecoveryModeHandler);
 
   //ros::Publisher pubSpeed = nh.advertise<geometry_msgs::TwistStamped> ("/cmd_vel", 5);
   //geometry_msgs::TwistStamped cmd_vel;
@@ -280,6 +308,7 @@ int main(int argc, char** argv)
       else if (dirDiff < -PI) dirDiff += 2 * PI;
       if (dirDiff > PI) dirDiff -= 2 * PI;
       else if (dirDiff < -PI) dirDiff += 2 * PI;
+      float rawDirDiff = dirDiff;
 
       if (twoWayDrive) {
         double time = ros::Time::now().toSec();
@@ -292,11 +321,43 @@ int main(int argc, char** argv)
         }
       }
 
+      bool allowShortReverse = stuckRecoveryMode && !twoWayDrive;
+      if (!twoWayDrive && rawDirDiff < -turnaroundStopAngle) {
+        turnaroundModeActive = true;
+      } else if (turnaroundModeActive && rawDirDiff > -turnaroundResumeAngle) {
+        turnaroundModeActive = false;
+      }
+
+      if (allowShortReverse && turnaroundModeActive && rawDirDiff < -turnaroundReverseTriggerAngle) {
+        if (!stuckReverseActive && fabs(vehicleSpeed) < 0.03) {
+          stuckReverseActive = true;
+          stuckReverseStartX = vehicleX;
+          stuckReverseStartY = vehicleY;
+        }
+      }
+
+      if (stuckReverseActive) {
+        float reverseTravel = sqrt((vehicleX - stuckReverseStartX) * (vehicleX - stuckReverseStartX) +
+                                   (vehicleY - stuckReverseStartY) * (vehicleY - stuckReverseStartY));
+        if (!allowShortReverse || !turnaroundModeActive || reverseTravel >= stuckReverseDist ||
+            rawDirDiff > -1.9) {
+          stuckReverseActive = false;
+        }
+      }
+
       float joySpeed2 = maxSpeed * joySpeed;
+      if (stuckReverseActive) {
+        joySpeed2 = -stuckReverseSpeed;
+        navFwd = false;
+      } else if (!twoWayDrive) {
+        navFwd = true;
+      }
       if (!navFwd) {
         dirDiff += PI;
         if (dirDiff > PI) dirDiff -= 2 * PI;
-        joySpeed2 *= -1;
+        if (!stuckReverseActive) {
+          joySpeed2 *= -1;
+        }
       }
 
       if (fabs(vehicleSpeed) < 2.0 * maxAccel / 100.0) vehicleYawRate = -stopYawRateGain * dirDiff;
@@ -311,6 +372,13 @@ int main(int argc, char** argv)
         vehicleYawRate = 0;
       }
 
+      bool rotateInPlace = !stuckReverseActive &&
+                           (turnaroundModeActive || fabs(dirDiff) > 1.3 || rawDirDiff < -turnaroundStopAngle);
+      if (rotateInPlace) {
+        joySpeed2 = 0;
+        vehicleSpeed = 0;
+      }
+
       if (pathSize <= 1) {
         joySpeed2 = 0;
       } else if (endDis / slowDwnDisThre < joySpeed) {
@@ -321,7 +389,9 @@ int main(int argc, char** argv)
       if (odomTime < slowInitTime + slowTime1 && slowInitTime > 0) joySpeed3 *= slowRate1;
       else if (odomTime < slowInitTime + slowTime1 + slowTime2 && slowInitTime > 0) joySpeed3 *= slowRate2;
 
-      if (fabs(dirDiff) < dirDiffThre && dis > stopDisThre) {
+      if (rotateInPlace) {
+        vehicleSpeed = 0;
+      } else if (fabs(dirDiff) < dirDiffThre && dis > stopDisThre) {
         if (vehicleSpeed < joySpeed3) vehicleSpeed += maxAccel / 100.0;
         else if (vehicleSpeed > joySpeed3) vehicleSpeed -= maxAccel / 100.0;
       } else {
