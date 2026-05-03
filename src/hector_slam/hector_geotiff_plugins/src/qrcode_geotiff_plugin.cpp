@@ -68,10 +68,10 @@ QRCodeMapWriter::QRCodeMapWriter()
   : initialized_(false)
   , min_separation_distance_(1.0)
   , min_separation_distance_squared_(1.0)
-  , use_palette_colors_(true)
-  , point_color_r_(66)
-  , point_color_g_(135)
-  , point_color_b_(245)
+  , use_palette_colors_(false)
+  , point_color_r_(255)
+  , point_color_g_(70)
+  , point_color_b_(70)
   , point_shape_(SHAPE_DIAMOND)
 {}
 
@@ -85,10 +85,10 @@ void QRCodeMapWriter::initialize(const std::string& name)
 
   plugin_nh.param("topic_name", topic_name_, std::string("/qr_global_localizer/qr_map_markers"));
   plugin_nh.param("min_separation_distance", min_separation_distance_, 1.0);
-  plugin_nh.param("use_palette_colors", use_palette_colors_, true);
-  plugin_nh.param("point_color_r", point_color_r_, 66);
-  plugin_nh.param("point_color_g", point_color_g_, 135);
-  plugin_nh.param("point_color_b", point_color_b_, 245);
+  plugin_nh.param("use_palette_colors", use_palette_colors_, false);
+  plugin_nh.param("point_color_r", point_color_r_, 255);
+  plugin_nh.param("point_color_g", point_color_g_, 70);
+  plugin_nh.param("point_color_b", point_color_b_, 70);
   plugin_nh.param("point_shape", point_shape_name, std::string("diamond"));
 
   min_separation_distance_ = std::max(0.0, min_separation_distance_);

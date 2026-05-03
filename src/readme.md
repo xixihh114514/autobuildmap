@@ -722,22 +722,23 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       - 当前插件不会把视觉原始点云整片画进地图，而是仅绘制人物中心点标注，更适合 2D 地图使用
 
    4.22.3
-      调整 GeoTIFF 中人物中心点的标注方式，使不同位置的人物在导出地图时使用不同颜色，并按稳定顺序编号为 `p1`、`p2`、`p3`
+      调整 GeoTIFF 中人物中心点的标注方式，将人物标记固定为蓝色，并按稳定顺序编号为 `p1`、`p2`、`p3`
 
       本次改动：
       1) 修改 `hector_slam/hector_geotiff_plugins/src/person_geotiff_plugin.cpp`
          - 导出 GeoTIFF 前先按地图坐标对人物中心点排序
          - 当前采用 `x` 优先、`y` 次之的顺序生成稳定编号
-         - 为每个编号使用不同颜色的调色板，而不是统一颜色
+         - 人物标记改为固定蓝色显示，不再按编号轮换调色板颜色
 
       2) 修改 `hector_slam/hector_slam_launch/launch/hector.launch`
          - `PersonMapWriter/label_prefix`：`P -> p`
-         - 新增 `PersonMapWriter/use_palette_colors=true`
+         - `PersonMapWriter/use_palette_colors`：`true -> false`
+         - `PersonMapWriter/point_color_r/g/b`：设置为蓝色
 
       说明：
       - 当前 `p1/p2/p3` 的顺序由保存时刻的人物中心点地图坐标决定
       - 当画面中人物集合变化时，编号会根据当前所有中心点重新排序
-      - 若人数超过调色板长度，颜色会循环复用
+      - 当前人物标记统一使用蓝色绘制
 
    4.22.4
       将 GeoTIFF 中的人物标注改为累计保留模式：一旦某处人物中心点被登记，后续地图持续保留该标记；新位置仅在距离已有标记超过 `1m` 时才新增新的 `pN`
@@ -1208,6 +1209,26 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       1) 原文中的 `senser` 在仓库里对应的是 `sensor.launch`
       2) 原文中的 `senser_scan` 在仓库里对应的是 `sensor_scan_generation.launch`
       3) `damiao` 目前对应底盘控制节点，因此需要使用 `rosrun` 启动
+
+   5.3.1
+      版本目标：补充当前人物视觉识别链路的默认阈值配置，并同步记录最新 GeoTIFF 人物与二维码标记配色，方便现场排查时快速核对。
+
+      本次确认：
+      1) 人物识别主置信度阈值 `conf_threshold` 当前默认值为 `0.5`
+         - `visual_obstacle_detector/launch/visual.launch` 中 `person_conf_threshold=0.5`
+         - `visual_obstacle_detector/launch/person_global_localizer.launch` 中 `conf_threshold=0.5`
+         - `visual_obstacle_detector/src/person_global_localizer_node.cpp` 中节点内部默认值也为 `0.5`
+      2) 人物识别相关的连续帧确认门槛当前默认值为：
+         - `min_confirm_frames=3`
+         - `confirm_pixel_tolerance=60.0`
+         - `confirm_timeout=0.5`
+      3) GeoTIFF 标记配色当前默认值为：
+         - 人物标记固定为蓝色：`RGB(66, 135, 245)`
+         - 二维码标记固定为红色：`RGB(255, 70, 70)`
+
+      说明：
+      1) 上述值是当前仓库中 launch 与节点代码的默认配置
+      2) 若现场启动命令传入了同名参数覆盖值，则实际运行值以启动时传参为准
 
 ## 现场启动教程（同步自 `teach,md`）
 

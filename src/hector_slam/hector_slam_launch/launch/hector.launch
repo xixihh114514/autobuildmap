@@ -70,13 +70,16 @@
     <param name="PersonMapWriter/topic_name" value="/person_global_localizer/person_map_cloud"/>
     <param name="PersonMapWriter/label_prefix" value="p"/>
     <param name="PersonMapWriter/min_separation_distance" value="1.0"/>
-    <param name="PersonMapWriter/use_palette_colors" value="true"/>
-    <param name="PersonMapWriter/point_color_r" value="255"/>
-    <param name="PersonMapWriter/point_color_g" value="70"/>
-    <param name="PersonMapWriter/point_color_b" value="70"/>
+    <param name="PersonMapWriter/use_palette_colors" value="false"/>
+    <param name="PersonMapWriter/point_color_r" value="66"/>
+    <param name="PersonMapWriter/point_color_g" value="135"/>
+    <param name="PersonMapWriter/point_color_b" value="245"/>
     <param name="QRCodeMapWriter/topic_name" value="/qr_global_localizer/qr_map_markers"/>
     <param name="QRCodeMapWriter/min_separation_distance" value="1.0"/>
-    <param name="QRCodeMapWriter/use_palette_colors" value="true"/>
+    <param name="QRCodeMapWriter/use_palette_colors" value="false"/>
+    <param name="QRCodeMapWriter/point_color_r" value="255"/>
+    <param name="QRCodeMapWriter/point_color_g" value="70"/>
+    <param name="QRCodeMapWriter/point_color_b" value="70"/>
   </node>
 
   <!-- ========== 启动RViz可视化（可选，便于调试） ========== -->
