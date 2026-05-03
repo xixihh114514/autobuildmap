@@ -1,39 +1,52 @@
 <launch>
 
-  <arg name="delay_sec" default="0"/>
+  <!-- ==================== 启动时序参数 ==================== -->
+  <arg name="delay_sec" default="0"/> <!-- 启动前延迟秒数，便于等待里程计、点云或 TF 先就绪 -->
 
+  <!-- ==================== 节点：terrainAnalysis ==================== -->
+  <!-- required=true：节点退出时联动结束整个 launch，避免系统在缺少地形图时继续运行 -->
+  <!-- launch-prefix：按 delay_sec 延迟启动 -->
   <node pkg="terrain_analysis"
         type="terrainAnalysis"
         name="terrainAnalysis"
         output="screen"
         required="true"
         launch-prefix="bash -c 'sleep $(arg delay_sec); exec &quot;$0&quot; &quot;$@&quot;'">
-    <param name="scanVoxelSize" type="double" value="0.05" />
-    <param name="decayTime" type="double" value="1.5" />
-    <param name="noDecayDis" type="double" value="4.0" />
-    <param name="clearingDis" type="double" value="10.0" />
-    <param name="useSorting" type="bool" value="false" />
-    <param name="quantileZ" type="double" value="0.2" />
-    <param name="considerDrop" type="bool" value="true" />
-    <param name="limitGroundLift" type="bool" value="false" />
-    <param name="maxGroundLift" type="double" value="0.2" />
-    <param name="clearDyObs" type="bool" value="true" />
-    <param name="minDyObsDis" type="double" value="0.2" />
-    <param name="minDyObsAngle" type="double" value="10" />
-    <param name="minDyObsRelZ" type="double" value="-0.3" />
-    <param name="absDyObsRelZThre" type="double" value="0.2" />
-    <param name="minDyObsVFOV" type="double" value="-16.0" />
-    <param name="maxDyObsVFOV" type="double" value="16.0" />
-    <param name="minDyObsPointNum" type="int" value="5" />
-    <param name="noDataObstacle" type="bool" value="false" />
-    <param name="noDataBlockSkipNum" type="int" value="0" />
-    <param name="minBlockPointNum" type="int" value="10" />
-    <param name="vehicleHeight" type="double" value="0.3" />
-    <param name="voxelPointUpdateThre" type="int" value="100" />
-    <param name="voxelTimeUpdateThre" type="double" value="2.0" />
-    <param name="minRelZ" type="double" value="-0.2" />
-    <param name="maxRelZ" type="double" value="0.2" />
-    <param name="disRatioZ" type="double" value="0.2" />
+    <!-- 点云预处理 -->
+    <param name="scanVoxelSize" type="double" value="0.05" /> <!-- 输入点云体素降采样尺寸（m） -->
+    <param name="decayTime" type="double" value="1.5" /> <!-- 地形体素保留时长，超过该时间未更新则衰减删除（s） -->
+    <param name="noDecayDis" type="double" value="4.0" /> <!-- 车体周围该半径内的点不过期，减少近处地形闪烁（m） -->
+    <param name="clearingDis" type="double" value="10.0" /> <!-- 触发清图时的默认清除半径（m） -->
+
+    <!-- 地面高度估计 -->
+    <param name="useSorting" type="bool" value="false" /> <!-- 是否对每个平面栅格的高度样本排序后取分位值；false 时直接取最低点 -->
+    <param name="quantileZ" type="double" value="0.2" /> <!-- useSorting=true 时采用的高度分位数 -->
+    <param name="considerDrop" type="bool" value="true" /> <!-- 计算点到地面的高差时是否把“向下落差”也按障碍处理 -->
+    <param name="limitGroundLift" type="bool" value="false" /> <!-- 是否限制地面估计相对最低点的抬升幅度 -->
+    <param name="maxGroundLift" type="double" value="0.2" /> <!-- 地面估计最多高于最低点多少（m） -->
+
+    <!-- 动态障碍物剔除 -->
+    <param name="clearDyObs" type="bool" value="true" /> <!-- 是否尝试识别并剔除动态障碍物点 -->
+    <param name="minDyObsDis" type="double" value="0.2" /> <!-- 判定动态障碍时的最小距离（m） -->
+    <param name="minDyObsAngle" type="double" value="10" /> <!-- 判定动态障碍所需的最小仰角/俯角条件（deg） -->
+    <param name="minDyObsRelZ" type="double" value="-0.3" /> <!-- 动态障碍判定时使用的相对高度基准下界（m） -->
+    <param name="absDyObsRelZThre" type="double" value="0.2" /> <!-- 若绝对相对高度小于该值，也可参与动态障碍判断（m） -->
+    <param name="minDyObsVFOV" type="double" value="-16.0" /> <!-- 动态障碍判断允许的最小垂直视场角（deg） -->
+    <param name="maxDyObsVFOV" type="double" value="16.0" /> <!-- 动态障碍判断允许的最大垂直视场角（deg） -->
+    <param name="minDyObsPointNum" type="int" value="5" /> <!-- 一个栅格至少累计多少动态障碍候选点才真正剔除 -->
+
+    <!-- 无数据区域与障碍补全 -->
+    <param name="noDataObstacle" type="bool" value="false" /> <!-- 是否把无数据区域也视为障碍 -->
+    <param name="noDataBlockSkipNum" type="int" value="0" /> <!-- 无数据区域向内膨胀前允许跳过的边界层数 -->
+    <param name="minBlockPointNum" type="int" value="10" /> <!-- 一个平面栅格至少需要多少点，才认为该处地形有效 -->
+
+    <!-- 可通行高度与更新门限 -->
+    <param name="vehicleHeight" type="double" value="0.50" /> <!-- 允许保留的最大离地高差；给 19 cm 斜坡与车辆起伏留中等余量（m） -->
+    <param name="voxelPointUpdateThre" type="int" value="100" /> <!-- 单个体素累计多少点后强制刷新一次地形估计 -->
+    <param name="voxelTimeUpdateThre" type="double" value="2.0" /> <!-- 单个体素最长多久未刷新就强制更新（s） -->
+    <param name="minRelZ" type="double" value="-0.55" /> <!-- 输入点相对车体允许的最低高度（m）；兼容车体俯仰/侧倾时较低一侧地面，但不再放得过宽 -->
+    <param name="maxRelZ" type="double" value="0.40" /> <!-- 输入点相对车体允许的最高高度（m）；兼容上坡和近处立面，但减少过高杂点进入地形图 -->
+    <param name="disRatioZ" type="double" value="0.22" /> <!-- 随距离增大而放宽高度窗口的比例系数；折中保留远处坡面，同时减少过度放宽 -->
   </node>
 
 </launch>

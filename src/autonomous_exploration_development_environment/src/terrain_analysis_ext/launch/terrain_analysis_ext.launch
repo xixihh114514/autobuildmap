@@ -1,31 +1,42 @@
 <launch>
 
-  <arg name="checkTerrainConn" default="true"/>
-  <arg name="delay_sec" default="0"/>
+  <!-- ==================== 共享参数 ==================== -->
+  <arg name="checkTerrainConn" default="true"/> <!-- 是否做地形连通性检查，用于滤掉与地面不连通的天花板/高悬结构 -->
+  <arg name="delay_sec" default="0"/> <!-- 启动前延迟秒数，便于等待前级 terrain_map 或 TF 先稳定 -->
 
+  <!-- ==================== 节点：terrainAnalysisExt ==================== -->
+  <!-- required=true：节点退出时联动结束整个 launch，避免扩展地形图缺失 -->
+  <!-- launch-prefix：按 delay_sec 延迟启动 -->
   <node pkg="terrain_analysis_ext"
         type="terrainAnalysisExt"
         name="terrainAnalysisExt"
         output="screen"
         required="true"
         launch-prefix="bash -c 'sleep $(arg delay_sec); exec &quot;$0&quot; &quot;$@&quot;'">
-    <param name="scanVoxelSize" type="double" value="0.1" />
-    <param name="decayTime" type="double" value="5.0" />
-    <param name="noDecayDis" type="double" value="0" />
-    <param name="clearingDis" type="double" value="35.0" />
-    <param name="useSorting" type="bool" value="false" />
-    <param name="quantileZ" type="double" value="0.1" />
-    <param name="vehicleHeight" type="double" value="0.3" />
-    <param name="voxelPointUpdateThre" type="int" value="100" />
-    <param name="voxelTimeUpdateThre" type="double" value="2.0" />
-    <param name="lowerBoundZ" type="double" value="-0.2" />
-    <param name="upperBoundZ" type="double" value="0.3" />
-    <param name="disRatioZ" type="double" value="0.1" />
-    <param name="checkTerrainConn" type="bool" value="$(arg checkTerrainConn)" />
-    <param name="terrainConnThre" type="double" value="0.5" />
-    <param name="terrainUnderVehicle" type="double" value="-0.3" />
-    <param name="ceilingFilteringThre" type="double" value="2.0" />
-    <param name="localTerrainMapRadius" type="double" value="10.0" />
+    <!-- 点云预处理与地图保留时间 -->
+    <param name="scanVoxelSize" type="double" value="0.1" /> <!-- 输入点云体素降采样尺寸（m） -->
+    <param name="decayTime" type="double" value="5.0" /> <!-- 扩展地形体素保留时长（s） -->
+    <param name="noDecayDis" type="double" value="0" /> <!-- 该半径内点不过期；0 表示不额外保留近处点（m） -->
+    <param name="clearingDis" type="double" value="35.0" /> <!-- 触发清图时的默认清除半径（m） -->
+
+    <!-- 地面高度估计 -->
+    <param name="useSorting" type="bool" value="false" /> <!-- 是否排序后按分位值估计地面；false 时直接取最低点 -->
+    <param name="quantileZ" type="double" value="0.1" /> <!-- useSorting=true 时采用的高度分位数 -->
+    <param name="vehicleHeight" type="double" value="0.50" /> <!-- 允许保留的最大离地高差；给 19 cm 斜坡与车辆起伏留中等余量（m） -->
+    <param name="voxelPointUpdateThre" type="int" value="100" /> <!-- 单个体素累计多少点后强制刷新一次地形估计 -->
+    <param name="voxelTimeUpdateThre" type="double" value="2.0" /> <!-- 单个体素最长多久未刷新就强制更新（s） -->
+
+    <!-- 输入点高度窗口 -->
+    <param name="lowerBoundZ" type="double" value="-0.55" /> <!-- 输入点相对车体允许的最低高度（m）；兼容车体俯仰/侧倾时较低一侧地面，但不再放得过宽 -->
+    <param name="upperBoundZ" type="double" value="0.40" /> <!-- 输入点相对车体允许的最高高度（m）；兼容上坡和近处立面，但减少过高杂点进入扩展地形图 -->
+    <param name="disRatioZ" type="double" value="0.18" /> <!-- 随距离增大而放宽高度窗口的比例系数；折中保留远处坡面，同时减少过度放宽 -->
+
+    <!-- 连通性检查与天花板过滤 -->
+    <param name="checkTerrainConn" type="bool" value="$(arg checkTerrainConn)" /> <!-- 是否启用地形连通性检查 -->
+    <param name="terrainConnThre" type="double" value="0.5" /> <!-- 两个地形栅格高度差小于该值才视为连通（m） -->
+    <param name="terrainUnderVehicle" type="double" value="-0.3" /> <!-- 若车下无点时，假定车下地面相对车体的高度（m） -->
+    <param name="ceilingFilteringThre" type="double" value="2.0" /> <!-- 与连通地面高度差超过该值时，直接按天花板/悬空结构剔除（m） -->
+    <param name="localTerrainMapRadius" type="double" value="10.0" /> <!-- 该半径内沿用近场 terrain_map，半径外由扩展地形图补充（m） -->
   </node>
 
 </launch>

@@ -1,12 +1,5 @@
 <launch>
 
-  <arg name="delay_sec" default="0"/>
-
-  <node pkg="sensor_scan_generation"
-        type="sensorScanGeneration"
-        name="sensorScanGeneration"
-        output="screen"
-        required="true"
-        launch-prefix="bash -c 'sleep $(arg delay_sec); exec &quot;$0&quot; &quot;$@&quot;'"/>
+  <node pkg="sensor_scan_generation" type="sensorScanGeneration" name="sensorScanGeneration" output="screen" required="true"/>
 
 </launch>

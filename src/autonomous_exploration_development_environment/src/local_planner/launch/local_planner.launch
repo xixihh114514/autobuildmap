@@ -1,7 +1,5 @@
 <launch>
 
-  <arg name="delay_sec" default="0"/> <!-- 启动前延迟秒数，便于按顺序拉起整套 TARE 流程 -->
-
   <!-- ==================== 共享参数：传感器外参与坐标系 ==================== -->
   <arg name="sensorOffsetX" default="0.1555"/> <!-- sensor 原点相对 vehicle 参考点的 X 偏移（m） -->
   <arg name="sensorOffsetY" default="-0.0010002"/> <!-- sensor 原点相对 vehicle 参考点的 Y 偏移（m） -->
@@ -9,11 +7,11 @@
 
   <!-- ==================== 共享参数：车辆运动模式与速度 ==================== -->
   <arg name="twoWayDrive" default="false"/> <!-- 是否允许倒车跟踪路径 -->
-  <arg name="maxSpeed" default="1.0"/> <!-- 规划与控制共用的最大线速度（m/s） -->
+  <arg name="maxSpeed" default="0.2"/> <!-- 规划与控制共用的最大线速度（m/s） -->
 
   <!-- ==================== 共享参数：自主模式 ==================== -->
   <arg name="autonomyMode" default="true"/> <!-- 启动时是否默认进入自主模式 -->
-  <arg name="autonomySpeed" default="1.0"/> <!-- 自主模式下的默认速度指令（m/s） -->
+  <arg name="autonomySpeed" default="0.2"/> <!-- 自主模式下的默认速度指令（m/s） -->
   <arg name="joyToSpeedDelay" default="2.0"/> <!-- 手柄介入后延迟多久重新接受外部速度控制（s） -->
 
   <!-- ==================== 共享参数：初始目标 ==================== -->
@@ -21,12 +19,7 @@
   <arg name="goalY" default="0"/> <!-- 启动时初始目标点的 Y 坐标（map 系） -->
 
   <!-- ==================== 节点：localPlanner ==================== -->
-  <node pkg="local_planner"
-        type="localPlanner"
-        name="localPlanner"
-        output="screen"
-        required="true"
-        launch-prefix="bash -c 'sleep $(arg delay_sec); exec &quot;$0&quot; &quot;$@&quot;'"> <!-- 根据环境与目标点生成局部路径 /path -->
+  <node pkg="local_planner" type="localPlanner" name="localPlanner" output="screen" required="true"> <!-- 根据环境与目标点生成局部路径 /path -->
     <!-- 路径库与车体几何 -->
     <param name="pathFolder" type="string" value="$(find local_planner)/paths" /> <!-- 预生成路径库文件所在目录 -->
     <param name="vehicleLength" type="double" value="0.70" /> <!-- 车体长度（m） -->
@@ -41,16 +34,16 @@
     <param name="laserVoxelSize" type="double" value="0.05" /> <!-- 激光点云降采样体素尺寸（m） -->
     <param name="terrainVoxelSize" type="double" value="0.2" /> <!-- 地形点云降采样体素尺寸（m） -->
     <param name="useTerrainAnalysis" type="bool" value="true" /> <!-- 是否使用 /terrain_map 参与可通行性分析 -->
-    <param name="adjacentRange" type="double" value="3.5" /> <!-- 局部规划与障碍检查的搜索半径（m） -->
-    <param name="minRelZ" type="double" value="-0.2" /> <!-- 仅依赖激光点时允许的最低相对高度（m） -->
-    <param name="maxRelZ" type="double" value="0.3" /> <!-- 仅依赖激光点时允许的最高相对高度（m） -->
+    <param name="adjacentRange" type="double" value="1.4" /> <!-- 局部规划与障碍检查的搜索半径（m），略增大以提前看见路口和窄道出口 -->
+    <param name="minRelZ" type="double" value="-0.55" /> <!-- 仅依赖激光点时允许的最低相对高度（m）；兼容车体俯仰/侧倾时较低一侧地面，但不再放得过宽 -->
+    <param name="maxRelZ" type="double" value="0.40" /> <!-- 仅依赖激光点时允许的最高相对高度（m）；兼容上坡与近处立面，同时减少过高杂点进入规划 -->
 
     <!-- 障碍检测与代价评估 -->
     <param name="checkObstacle" type="bool" value="true" /> <!-- 是否检查路径上的障碍物 -->
     <param name="checkRotObstacle" type="bool" value="true" /> <!-- 是否检查转向过程中扫到的障碍物 -->
-    <param name="obstacleHeightThre" type="double" value="0.15" /> <!-- 超过该高度的点视为障碍（m） -->
-    <param name="groundHeightThre" type="double" value="0.15" /> <!-- 低于该高度变化的点视为地面参考（m） -->
-    <param name="costHeightThre" type="double" value="0.1" /> <!-- 代价高度归一化阈值（m） -->
+    <param name="obstacleHeightThre" type="double" value="0.24" /> <!-- 超过该高度的点视为障碍（m）；高于 19 cm 斜坡并保留少量建图/姿态误差裕量，避免把可通行斜坡过度判成障碍 -->
+    <param name="groundHeightThre" type="double" value="0.22" /> <!-- 低于该高度变化的点视为地面参考（m）；与 19 cm 斜坡保持一定安全间隔，供后续启用 useCost 时使用 -->
+    <param name="costHeightThre" type="double" value="0.24" /> <!-- 代价高度归一化阈值（m）；与当前障碍判定阈值保持一致，供后续启用 useCost 时使用 -->
     <param name="costScore" type="double" value="0.02" /> <!-- 路径代价评分的最小保底值 -->
     <param name="useCost" type="bool" value="false" /> <!-- 是否启用基于高度代价的路径评分 -->
     <param name="pointPerPathThre" type="int" value="2" /> <!-- 一条路径至少需要多少有效点才算可通过 -->
@@ -64,28 +57,25 @@
     <param name="minPathScale" type="double" value="0.75" /> <!-- 搜索失败时允许缩小到的最小路径尺度 -->
     <param name="pathScaleStep" type="double" value="0.25" /> <!-- 路径尺度逐步缩放的步长 -->
     <param name="pathScaleBySpeed" type="bool" value="true" /> <!-- 是否根据当前速度调整路径尺度 -->
-    <param name="minPathRange" type="double" value="0.3" /> <!-- 搜索失败时允许缩短到的最小路径长度（m） -->
-    <param name="pathRangeStep" type="double" value="0.1" /> <!-- 路径长度逐步减小的步长（m） -->
+    <param name="minPathRange" type="double" value="0.25" /> <!-- 搜索失败时允许缩短到的最小路径长度（m） -->
+    <param name="pathRangeStep" type="double" value="0.05" /> <!-- 路径长度逐步减小的步长（m） -->
     <param name="pathRangeBySpeed" type="bool" value="true" /> <!-- 是否根据当前速度调整路径长度 -->
     <param name="pathCropByGoal" type="bool" value="true" /> <!-- 是否按目标距离裁剪局部路径 -->
+    <param name="pathSwitchScoreRatio" type="double" value="1.08" /> <!-- 上一帧候选仍可走时，至少被新候选超出多少倍才切换 -->
+    <param name="pathCrossBranchSwitchScoreRatio" type="double" value="1.15" /> <!-- 左右分支互切时需要更明显的优势才允许换边 -->
 
     <!-- 自主控制与目标配置 -->
     <param name="autonomyMode" value="$(arg autonomyMode)" /> <!-- 使用共享的默认自主模式开关 -->
     <param name="autonomySpeed" value="$(arg autonomySpeed)" /> <!-- 使用共享的默认自主速度 -->
     <param name="joyToSpeedDelay" value="$(arg joyToSpeedDelay)" /> <!-- 使用共享的手柄接管后速度延迟 -->
     <param name="joyToCheckObstacleDelay" type="double" value="5.0" /> <!-- 手柄介入后延迟多久重新接受障碍检查开关（s） -->
-    <param name="goalClearRange" type="double" value="0.5" /> <!-- 靠近目标时仍保留部分路径的额外余量（m） -->
+    <param name="goalClearRange" type="double" value="0.1" /> <!-- 靠近目标时仍保留部分路径的额外余量（m） -->
     <param name="goalX" type="double" value="$(arg goalX)" /> <!-- 使用共享的初始目标 X 坐标 -->
     <param name="goalY" type="double" value="$(arg goalY)" /> <!-- 使用共享的初始目标 Y 坐标 -->
   </node>
 
   <!-- ==================== 节点：pathFollower ==================== -->
-  <node pkg="local_planner"
-        type="pathFollower"
-        name="pathFollower"
-        output="screen"
-        required="true"
-        launch-prefix="bash -c 'sleep $(arg delay_sec); exec &quot;$0&quot; &quot;$@&quot;'"> <!-- 将 /path 转换为底盘控制指令 /cmd_vel -->
+  <node pkg="local_planner" type="pathFollower" name="pathFollower" output="screen" required="true"> <!-- 将 /path 转换为底盘控制指令 /cmd_vel -->
     <!-- 车辆参考点与运动模式 -->
     <param name="sensorOffsetX" value="$(arg sensorOffsetX)" /> <!-- 使用共享的 sensor X 偏移计算车体参考点 -->
     <param name="sensorOffsetY" value="$(arg sensorOffsetY)" /> <!-- 使用共享的 sensor Y 偏移计算车体参考点 -->
@@ -93,22 +83,28 @@
 
     <!-- 指令发布与前视跟踪 -->
     <param name="pubSkipNum" type="int" value="1" /> <!-- 每隔多少个控制周期发布一次 /cmd_vel -->
-    <param name="lookAheadDis" type="double" value="0.3" /> <!-- 路径跟踪的前视距离（m） -->
+    <param name="lookAheadDis" type="double" value="0.15" /> <!-- 路径跟踪的前视距离（m） -->
 
     <!-- 转向与速度控制器 -->
-    <param name="yawRateGain" type="double" value="8.5" /> <!-- 常规跟踪时的航向角速度增益 -->
-    <param name="stopYawRateGain" type="double" value="8.5" /> <!-- 低速或接近停止时的航向角速度增益 -->
+    <param name="yawRateGain" type="double" value="2" /> <!-- 常规跟踪时的航向角速度增益 -->
+    <param name="stopYawRateGain" type="double" value="2" /> <!-- 低速或接近停止时的航向角速度增益 -->
     <param name="maxYawRate" type="double" value="60.0" /> <!-- 最大角速度限制（deg/s） -->
     <param name="maxSpeed" value="$(arg maxSpeed)" /> <!-- 使用共享的最大线速度 -->
-    <param name="maxAccel" type="double" value="2.5" /> <!-- 线速度变化的最大加速度（m/s^2） -->
+    <param name="maxAccel" type="double" value="0.5" /> <!-- 线速度变化的最大加速度（m/s^2） -->
     <param name="switchTimeThre" type="double" value="1.0" /> <!-- 前进/倒车切换前至少等待的时间（s） -->
-    <param name="dirDiffThre" type="double" value="0.1" /> <!-- 允许继续加速的最大航向误差（rad） -->
+    <param name="dirDiffThre" type="double" value="0.15" /> <!-- 允许继续加速的最大航向误差（rad） -->
 
     <!-- 到点减速与停车行为 -->
-    <param name="stopDisThre" type="double" value="0.3" /> <!-- 距目标末端小于该值时认为接近停止（m） -->
-    <param name="slowDwnDisThre" type="double" value="0.85" /> <!-- 距终点小于该值时开始按距离减速（m） -->
+    <param name="stopDisThre" type="double" value="0.06" /> <!-- 距目标末端小于该值时认为接近停止（m） -->
+    <param name="slowDwnDisThre" type="double" value="0.17" /> <!-- 距终点小于该值时开始按距离减速（m） -->
     <param name="noRotAtStop" type="bool" value="false" /> <!-- 手动速度为 0 时是否禁止原地转向 -->
     <param name="noRotAtGoal" type="bool" value="true" /> <!-- 到达目标附近时是否停止转向 -->
+    <param name="stuckReverseSpeed" type="double" value="0.05" /> <!-- 仅在卡死脱困模式下允许的短倒车速度（m/s），进一步减小以避免甩尾碰墙 -->
+    <param name="stuckReverseDist" type="double" value="0.08" /> <!-- 仅在卡死脱困模式下允许的累计倒车距离（m），进一步缩短避免过度倒车 -->
+    <param name="turnaroundStopAngle" type="double" value="1.05" /> <!-- 目标明显跑到车后方后，立即停住改为原地掉头（rad） -->
+    <param name="turnaroundReverseTriggerAngle" type="double" value="2.75" /> <!-- 仅在脱困模式且几乎背向目标时，才允许极短倒车松脱（rad） -->
+    <param name="turnaroundResumeAngle" type="double" value="0.45" /> <!-- 掉头到该角度以内后恢复正常前进跟踪（rad） -->
+    <param name="turnaroundAlignCountThreshold" type="int" value="20" /> <!-- 原地掉头需连续稳定对齐多少个控制周期后才释放锁存 -->
 
     <!-- 姿态安全保护 -->
     <param name="useInclRateToSlow" type="bool" value="false" /> <!-- 是否根据姿态变化率触发减速 -->
@@ -128,15 +124,7 @@
   </node>
 
   <!-- ==================== 静态 TF ==================== -->
-  <node pkg="tf"
-        type="static_transform_publisher"
-        name="vehicleTransPublisher"
-        args="-$(arg sensorOffsetX) -$(arg sensorOffsetY) 0 0 0 0 /sensor /vehicle 1000"
-        launch-prefix="bash -c 'sleep $(arg delay_sec); exec &quot;$0&quot; &quot;$@&quot;'"/> <!-- 发布 /sensor 到 /vehicle 的静态变换，平移取 sensorOffset 的相反数 -->
-  <node pkg="tf"
-        type="static_transform_publisher"
-        name="sensorTransPublisher"
-        args="0 0 $(arg cameraOffsetZ) -1.5707963 0 -1.5707963 /sensor /camera 1000"
-        launch-prefix="bash -c 'sleep $(arg delay_sec); exec &quot;$0&quot; &quot;$@&quot;'"/> <!-- 发布 /sensor 到 /camera 的静态变换，包含相机安装高度和固定旋转 -->
+  <node pkg="tf" type="static_transform_publisher" name="vehicleTransPublisher" args="-$(arg sensorOffsetX) -$(arg sensorOffsetY) 0 0 0 0 /sensor /vehicle 1000"/> <!-- 发布 /sensor 到 /vehicle 的静态变换，平移取 sensorOffset 的相反数 -->
+  <node pkg="tf" type="static_transform_publisher" name="sensorTransPublisher" args="0 0 $(arg cameraOffsetZ) -1.5707963 0 -1.5707963 /sensor /camera 1000"/> <!-- 发布 /sensor 到 /camera 的静态变换，包含相机安装高度和固定旋转 -->
 
 </launch>
