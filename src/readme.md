@@ -1151,3 +1151,60 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       3) `source devel/setup.bash && roslaunch --nodes visual_obstacle_detector visual.launch`
          - 已成功展开：
            `/person_global_localizer /qr_global_localizer`
+
+26.5.3
+   5.3.0
+      版本目标：将现场常用启动教程正式写入 `src/readme.md`，统一默认启动顺序，减少执行时继续翻找临时文档。
+
+      使用说明：
+      1) 建议每一步都新开一个终端执行，并且在每个终端中先进入工作空间、再加载环境：
+         `cd /home/rera/robotcup2026`
+         `source devel/setup.bash`
+      2) 如果 `roscore` 还没有启动，请先在单独终端中执行：
+         `roscore`
+      3) 如果需要使用串口和 CAN 设备，建议先完成以下准备：
+         `sudo chmod 666 /dev/ttyUSB0`
+         `sudo ip link set can0 up type can bitrate 1000000`
+
+      推荐启动顺序：
+      1) `roslaunch rebo24 display.launch model:=$(rospack find rebo24)/urdf/rebo24.urdf`
+      2) `roslaunch rebo24 sensor.launch`
+      3) `roslaunch fast_lio mapping_velodyne.launch`
+      4) `roslaunch pcl_ros vehicle_cropbox_filter.launch`
+      5) `roslaunch pointcloud_to_laserscan registered_scan_to_scan.launch`
+      6) `roslaunch sensor_scan_generation base_tare.launch`
+      7) `roslaunch tare_planner explore_robocup.launch`
+      8) `roslaunch visual_obstacle_detector visual.launch`
+      9) `rosrun control damiao_diff_chassis_node`
+      10) `roslaunch hector_slam_launch hector.launch`
+
+      其中第 6 步 `base_tare.launch` 会按顺序依次启动：
+      - `loam_interface.launch`
+      - `terrain_analysis.launch`
+      - `terrain_analysis_ext.launch`
+      - `local_planner.launch`
+      - `sensor_scan_generation.launch`
+      相邻两个阶段之间默认间隔 `5s`。
+
+      现场快速命令清单：
+      1) `sudo chmod 666 /dev/ttyUSB0`
+      2) `sudo ip link set can0 up type can bitrate 1000000`
+      3) `roslaunch rebo24 display.launch model:=$(rospack find rebo24)/urdf/rebo24.urdf`
+      4) `roslaunch rebo24 sensor.launch`
+      5) `roslaunch fast_lio mapping_velodyne.launch`
+      6) `roslaunch pcl_ros vehicle_cropbox_filter.launch`
+      7) `roslaunch pointcloud_to_laserscan registered_scan_to_scan.launch`
+      8) `roslaunch sensor_scan_generation base_tare.launch`
+      9) `roslaunch tare_planner explore_robocup.launch`
+      10) `roslaunch visual_obstacle_detector visual.launch`
+      11) `rosrun control damiao_diff_chassis_node`
+      12) `roslaunch hector_slam_launch hector.launch`
+
+      收尾：
+      1) 使用完成后，记得关闭 CAN 设备：
+         `sudo ip link set can0 down`
+
+      备注：
+      1) 原文中的 `senser` 在仓库里对应的是 `sensor.launch`
+      2) 原文中的 `senser_scan` 在仓库里对应的是 `sensor_scan_generation.launch`
+      3) `damiao` 目前对应底盘控制节点，因此需要使用 `rosrun` 启动
