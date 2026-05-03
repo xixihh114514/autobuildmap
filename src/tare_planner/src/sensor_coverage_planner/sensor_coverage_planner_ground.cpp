@@ -69,6 +69,9 @@ bool PlannerParameters::ReadParameters(ros::NodeHandle& nh)
   kRecoveryProgressMinDist = misc_utils_ns::getParam<double>(nh, "kRecoveryProgressMinDist", 0.15);
   kRecoveryWaypointMaxDistance = misc_utils_ns::getParam<double>(nh, "kRecoveryWaypointMaxDistance", 1.2);
   kRecoveryWaypointMinDot = misc_utils_ns::getParam<double>(nh, "kRecoveryWaypointMinDot", -0.35);
+  kCompletedBranchAnchorActiveDist = misc_utils_ns::getParam<double>(nh, "kCompletedBranchAnchorActiveDist", 0.8);
+  kCompletedBranchSameDirectionDotThr =
+      misc_utils_ns::getParam<double>(nh, "kCompletedBranchSameDirectionDotThr", 0.82);
 
   // Int
   kReturnHomeCandidateCountThreshold =
@@ -190,6 +193,7 @@ SensorCoveragePlanner3D::SensorCoveragePlanner3D(ros::NodeHandle& nh, ros::NodeH
   , progress_tracking_initialized_(false)
   , lookahead_point_in_line_of_sight_(true)
   , reset_waypoint_(false)
+  , completed_branch_backtrack_requested_(false)
   , registered_cloud_count_(0)
   , keypose_count_(0)
   , direction_change_count_(0)
@@ -198,6 +202,8 @@ SensorCoveragePlanner3D::SensorCoveragePlanner3D(ros::NodeHandle& nh, ros::NodeH
   , recovery_activation_count_(0)
   , return_home_candidate_count_(0)
   , recovery_target_visited_index_(-1)
+  , recovery_anchor_stack_index_(-1)
+  , recovery_source_visited_index_(-1)
   , stuck_cycle_count_(0)
   , reset_waypoint_joystick_axis_value_(-1.0)
 {
@@ -621,6 +627,34 @@ int SensorCoveragePlanner3D::GetNearestVisitedPositionIndex(const Eigen::Vector3
   return nearest_index;
 }
 
+int SensorCoveragePlanner3D::GetActiveBranchAnchorStackIndex(const Eigen::Vector3d& position, double max_distance) const
+{
+  if (branch_anchors_.empty())
+  {
+    return -1;
+  }
+
+  int best_stack_index = -1;
+  double best_distance = max_distance;
+  for (int i = static_cast<int>(branch_anchors_.size()) - 1; i >= 0; --i)
+  {
+    int visited_index = branch_anchors_[i].visited_index_;
+    if (visited_index < 0 || visited_index >= pd_.visited_positions_.size())
+    {
+      continue;
+    }
+
+    double distance = (position - pd_.visited_positions_[visited_index]).norm();
+    if (distance <= best_distance)
+    {
+      best_distance = distance;
+      best_stack_index = i;
+    }
+  }
+
+  return best_stack_index;
+}
+
 void SensorCoveragePlanner3D::UpdateBranchAnchors()
 {
   if (!pp_.kEnableBranchRecovery || recovery_mode_ || pd_.visited_positions_.empty())
@@ -638,6 +672,10 @@ void SensorCoveragePlanner3D::UpdateBranchAnchors()
   while (!branch_anchor_indices_.empty() && branch_anchor_indices_.back() > current_visited_index)
   {
     branch_anchor_indices_.pop_back();
+  }
+  while (!branch_anchors_.empty() && branch_anchors_.back().visited_index_ > current_visited_index)
+  {
+    branch_anchors_.pop_back();
   }
 
   int candidate_degree = pd_.viewpoint_manager_->GetCandidateViewPointNeighborCount(robot_position);
@@ -662,6 +700,9 @@ void SensorCoveragePlanner3D::UpdateBranchAnchors()
   }
 
   branch_anchor_indices_.push_back(current_visited_index);
+  BranchAnchorState branch_anchor_state;
+  branch_anchor_state.visited_index_ = current_visited_index;
+  branch_anchors_.push_back(branch_anchor_state);
   ROS_INFO_STREAM("Recorded branch anchor at breadcrumb " << current_visited_index
                                                           << ", candidate degree: " << candidate_degree);
 }
@@ -696,6 +737,9 @@ bool SensorCoveragePlanner3D::StartRecoveryToLatestAnchor(const std::string& rea
     recovery_mode_ = true;
     stuck_recovery_mode_ = (reason == "robot progress stalled");
     recovery_target_visited_index_ = anchor_index;
+    recovery_anchor_stack_index_ = i;
+    recovery_source_visited_index_ = current_visited_index;
+    completed_branch_backtrack_requested_ = (reason == "completed current dead-end branch");
     recovery_activation_count_++;
     stuck_cycle_count_ = 0;
     progress_tracking_initialized_ = true;
@@ -710,21 +754,74 @@ bool SensorCoveragePlanner3D::StartRecoveryToLatestAnchor(const std::string& rea
 
 void SensorCoveragePlanner3D::ExitRecoveryMode(bool reached_anchor)
 {
+  if (reached_anchor && completed_branch_backtrack_requested_)
+  {
+    RememberCompletedBranchDirection();
+  }
+
   if (reached_anchor)
   {
-    while (!branch_anchor_indices_.empty() && branch_anchor_indices_.back() >= recovery_target_visited_index_)
+    while (!branch_anchor_indices_.empty() && branch_anchor_indices_.back() > recovery_target_visited_index_)
     {
       branch_anchor_indices_.pop_back();
+    }
+    while (!branch_anchors_.empty() && branch_anchors_.back().visited_index_ > recovery_target_visited_index_)
+    {
+      branch_anchors_.pop_back();
     }
   }
 
   recovery_mode_ = false;
   stuck_recovery_mode_ = false;
   recovery_target_visited_index_ = -1;
+  recovery_anchor_stack_index_ = -1;
+  recovery_source_visited_index_ = -1;
+  completed_branch_backtrack_requested_ = false;
   stuck_cycle_count_ = 0;
   progress_tracking_initialized_ = true;
   progress_reference_position_ =
       Eigen::Vector3d(pd_.robot_position_.x, pd_.robot_position_.y, pd_.robot_position_.z);
+}
+
+void SensorCoveragePlanner3D::RememberCompletedBranchDirection()
+{
+  if (recovery_anchor_stack_index_ < 0 || recovery_anchor_stack_index_ >= branch_anchors_.size())
+  {
+    return;
+  }
+  if (recovery_source_visited_index_ < 0 || recovery_source_visited_index_ >= pd_.visited_positions_.size())
+  {
+    return;
+  }
+
+  int anchor_visited_index = branch_anchors_[recovery_anchor_stack_index_].visited_index_;
+  if (anchor_visited_index < 0 || anchor_visited_index >= pd_.visited_positions_.size())
+  {
+    return;
+  }
+
+  Eigen::Vector2d branch_direction =
+      (pd_.visited_positions_[recovery_source_visited_index_] - pd_.visited_positions_[anchor_visited_index]).head<2>();
+  double norm = branch_direction.norm();
+  if (norm < 0.2)
+  {
+    return;
+  }
+  branch_direction /= norm;
+
+  std::vector<Eigen::Vector2d>& completed_directions =
+      branch_anchors_[recovery_anchor_stack_index_].completed_branch_directions_;
+  for (const auto& existing_direction : completed_directions)
+  {
+    if (existing_direction.dot(branch_direction) >= pp_.kCompletedBranchSameDirectionDotThr)
+    {
+      return;
+    }
+  }
+
+  completed_directions.push_back(branch_direction);
+  ROS_INFO_STREAM("Marked completed branch direction at anchor breadcrumb " << anchor_visited_index
+                  << ", total completed directions: " << completed_directions.size());
 }
 
 void SensorCoveragePlanner3D::UpdateProgressState(const Eigen::Vector3d& target_position, bool target_valid)
@@ -758,6 +855,38 @@ void SensorCoveragePlanner3D::UpdateProgressState(const Eigen::Vector3d& target_
   }
 
   stuck_cycle_count_++;
+}
+
+bool SensorCoveragePlanner3D::DirectionMatchesCompletedBranch(const BranchAnchorState& anchor_state,
+                                                              const Eigen::Vector3d& candidate_position) const
+{
+  if (anchor_state.completed_branch_directions_.empty())
+  {
+    return false;
+  }
+  if (anchor_state.visited_index_ < 0 || anchor_state.visited_index_ >= pd_.visited_positions_.size())
+  {
+    return false;
+  }
+
+  Eigen::Vector2d candidate_direction =
+      (candidate_position - pd_.visited_positions_[anchor_state.visited_index_]).head<2>();
+  double norm = candidate_direction.norm();
+  if (norm < 0.2)
+  {
+    return false;
+  }
+  candidate_direction /= norm;
+
+  for (const auto& completed_direction : anchor_state.completed_branch_directions_)
+  {
+    if (completed_direction.dot(candidate_direction) >= pp_.kCompletedBranchSameDirectionDotThr)
+    {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 bool SensorCoveragePlanner3D::SelectRecoveryWaypointFromPath(const nav_msgs::Path& path, Eigen::Vector3d& waypoint)
@@ -1312,6 +1441,27 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
   double backward_angle_score = -2;
   double lookahead_angle_score = -2;
 
+  bool forward_matches_completed_branch = false;
+  bool backward_matches_completed_branch = false;
+  int active_branch_anchor_stack_index = -1;
+  if (!recovery_mode_)
+  {
+    active_branch_anchor_stack_index =
+        GetActiveBranchAnchorStackIndex(robot_position, pp_.kCompletedBranchAnchorActiveDist);
+  }
+  if (active_branch_anchor_stack_index >= 0 && active_branch_anchor_stack_index < branch_anchors_.size())
+  {
+    const BranchAnchorState& active_anchor = branch_anchors_[active_branch_anchor_stack_index];
+    if (has_forward)
+    {
+      forward_matches_completed_branch = DirectionMatchesCompletedBranch(active_anchor, forward_lookahead_point);
+    }
+    if (has_backward)
+    {
+      backward_matches_completed_branch = DirectionMatchesCompletedBranch(active_anchor, backward_lookahead_point);
+    }
+  }
+
   double dist_robot_to_lookahead = 0.0;
   bool prev_lookahead_point_in_los = true;
   if (has_forward)
@@ -1358,6 +1508,35 @@ bool SensorCoveragePlanner3D::GetLookAheadPoint(const exploration_path_ns::Explo
         dist_robot_to_lookahead > pp_.kLookAheadKeepMinDistance &&
         pd_.viewpoint_manager_->InLocalPlanningHorizon(local_path.nodes_[lookahead_i].position_) &&
         lookahead_angle_score + pp_.kLookAheadSwitchScoreMargin >= best_candidate_score;
+  }
+
+  if (active_branch_anchor_stack_index >= 0 && has_lookahead &&
+      active_branch_anchor_stack_index < branch_anchors_.size() &&
+      DirectionMatchesCompletedBranch(branch_anchors_[active_branch_anchor_stack_index],
+                                      local_path.nodes_[lookahead_i].position_))
+  {
+    keep_previous_lookahead = false;
+  }
+
+  bool suppress_forward =
+      forward_matches_completed_branch && !backward_matches_completed_branch && backward_viewpoint_count > 0;
+  bool suppress_backward =
+      backward_matches_completed_branch && !forward_matches_completed_branch && forward_viewpoint_count > 0;
+  if (forward_matches_completed_branch && backward_matches_completed_branch)
+  {
+    suppress_forward = false;
+    suppress_backward = false;
+  }
+
+  if (suppress_forward)
+  {
+    forward_viewpoint_count = 0;
+    forward_angle_score = -2;
+  }
+  if (suppress_backward)
+  {
+    backward_viewpoint_count = 0;
+    backward_angle_score = -2;
   }
 
   if (relocation_)

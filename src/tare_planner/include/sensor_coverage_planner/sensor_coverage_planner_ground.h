@@ -111,6 +111,8 @@ struct PlannerParameters
   double kRecoveryProgressMinDist;
   double kRecoveryWaypointMaxDistance;
   double kRecoveryWaypointMinDot;
+  double kCompletedBranchAnchorActiveDist;
+  double kCompletedBranchSameDirectionDotThr;
 
   // Int
   int kReturnHomeCandidateCountThreshold;
@@ -122,6 +124,12 @@ struct PlannerParameters
   int kRecoveryBreadcrumbLookback;
 
   bool ReadParameters(ros::NodeHandle& nh);
+};
+
+struct BranchAnchorState
+{
+  int visited_index_ = -1;
+  std::vector<Eigen::Vector2d> completed_branch_directions_;
 };
 
 struct PlannerData
@@ -201,6 +209,7 @@ private:
   bool progress_tracking_initialized_;
   bool lookahead_point_in_line_of_sight_;
   bool reset_waypoint_;
+  bool completed_branch_backtrack_requested_;
   PlannerParameters pp_;
   PlannerData pd_;
   pointcloud_utils_ns::PointCloudDownsizer<pcl::PointXYZ> pointcloud_downsizer_;
@@ -219,6 +228,8 @@ private:
   int recovery_activation_count_;
   int return_home_candidate_count_;
   int recovery_target_visited_index_;
+  int recovery_anchor_stack_index_;
+  int recovery_source_visited_index_;
   int stuck_cycle_count_;
 
   double reset_waypoint_joystick_axis_value_;
@@ -229,6 +240,7 @@ private:
   Eigen::Vector3d recovery_waypoint_;
   Eigen::Vector3d progress_reference_position_;
   std::vector<int> branch_anchor_indices_;
+  std::vector<BranchAnchorState> branch_anchors_;
 
   ros::Timer execution_timer_;
 
@@ -302,10 +314,14 @@ private:
   void PrintExplorationStatus(std::string status, bool clear_last_line = true);
   void CountDirectionChange();
   int GetNearestVisitedPositionIndex(const Eigen::Vector3d& position, double max_distance = DBL_MAX) const;
+  int GetActiveBranchAnchorStackIndex(const Eigen::Vector3d& position, double max_distance = DBL_MAX) const;
   void UpdateBranchAnchors();
   bool StartRecoveryToLatestAnchor(const std::string& reason);
   void ExitRecoveryMode(bool reached_anchor);
+  void RememberCompletedBranchDirection();
   void UpdateProgressState(const Eigen::Vector3d& target_position, bool target_valid);
+  bool DirectionMatchesCompletedBranch(const BranchAnchorState& anchor_state,
+                                       const Eigen::Vector3d& candidate_position) const;
   bool SelectRecoveryWaypointFromPath(const nav_msgs::Path& path, Eigen::Vector3d& waypoint);
   bool UpdateRecoveryWaypoint();
 };

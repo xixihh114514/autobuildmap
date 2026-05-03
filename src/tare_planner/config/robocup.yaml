@@ -106,6 +106,10 @@ kRecoveryBreadcrumbLookback : 12
 kRecoveryWaypointMaxDistance : 1.2
 # 回撤子目标相对车头方向允许的最小点积；放宽到允许轻微后向，供卡死时短距离脱困
 kRecoveryWaypointMinDot : -0.75
+# 机器人回到该距离内时，认为自己已重新站上分叉锚点，可以开始屏蔽刚探完的那条支路
+kCompletedBranchAnchorActiveDist : 0.8
+# 若候选方向与“刚探完分支”的离开方向余弦相似度超过该阈值，则优先认为是同一支路
+kCompletedBranchSameDirectionDotThr : 0.82
 
 # 手柄用于 reset waypoint 的轴编号
 kResetWaypointJoystickAxesID : 2

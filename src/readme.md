@@ -1228,3 +1228,49 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
         1) `/scan` 实际切片效果
         2) `/terrain_map` 中 19 cm 斜坡对应的 `intensity`
         3) `local_planner` 的 `obstacleHeightThre`
+   5.3.1
+      版本目标：让 RoboCup 当前分叉探索行为更接近“先走当前最深分支到死胡同，再回到上一分叉进入下一支路”，同时减少车辆在中部斜坡边缘贴边和蹭坡。
+
+      本次改动：
+      1) 修改 `tare_planner/include/sensor_coverage_planner/sensor_coverage_planner_ground.h/.cpp`
+         - 新增 `BranchAnchorState`，在原有 branch recovery 基础上额外记录“某个分叉锚点已经完成过哪些支路方向”
+         - 新增：
+           `completed_branch_backtrack_requested_`
+           `recovery_anchor_stack_index_`
+           `recovery_source_visited_index_`
+           `branch_anchors_`
+         - 新增逻辑：
+           `GetActiveBranchAnchorStackIndex()`
+           `RememberCompletedBranchDirection()`
+           `DirectionMatchesCompletedBranch()`
+         - 当 `local_coverage_planner` 判断当前局部分支已完成并触发回撤时：
+           先回到最近有效分叉锚点，再把“刚刚探到底的那条离开方向”登记为已完成方向
+         - 当机器人重新回到该分叉锚点附近时：
+           `GetLookAheadPoint()` 会优先压制与“刚完成支路”方向一致的候选 lookahead，只有另一侧仍有可探索视点时才换到未完成支路
+         - 含义：
+           让当前 TARE 行为从“会回锚点，但可能又钻回同一支路”收敛到更接近深度优先的分支遍历顺序。
+
+      2) 修改 `tare_planner/config/robocup.yaml`
+         - 新增：
+           `kCompletedBranchAnchorActiveDist=0.8`
+           `kCompletedBranchSameDirectionDotThr=0.82`
+         - 含义：
+           规定机器人回到分叉锚点附近后，何时开始屏蔽“刚探完的同向支路”，以及两个候选方向被视为同一支路的方向相似度阈值。
+
+      3) 修改 `autonomous_exploration_development_environment/src/local_planner/launch/local_planner.launch`
+         - `groundHeightThre`：`0.22 -> 0.16`
+         - `costScore`：`0.02 -> 0.05`
+         - `useCost`：`false -> true`
+         - `costHeightThre` 保持 `0.24`
+         - 含义：
+           不把 19 cm 斜坡重新收紧成硬障碍，而是让斜坡边缘进入“可通行但有明显软惩罚”的评分区，使局部路径更倾向离坡边远一点，减少蹭斜坡。
+
+      当前预期效果：
+      1) 在三岔/多岔分支地图中，更接近：
+         先进入一个分支 -> 走到死胡同 -> 掉头回分叉 -> 进入第二个分支 -> 再走到头 -> 再回分叉。
+      2) 回到分叉口后，不再轻易重新进入刚刚已经探完的那一支。
+      3) 经过中部斜坡时，局部路径会更保守，减少贴坡边和擦碰。
+
+      验证说明：
+      - 本轮对 `localPlanner.cpp` 和 `sensor_coverage_planner_ground.cpp` 做了基于当前工作区编译参数的语法检查，均已通过。
+      - 完整 `catkin_make` 仍会被工作区现有的顶层环境/外部依赖问题打断，本轮未额外解决该历史问题。

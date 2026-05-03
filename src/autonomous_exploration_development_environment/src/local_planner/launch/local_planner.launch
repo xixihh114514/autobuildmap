@@ -42,10 +42,10 @@
     <param name="checkObstacle" type="bool" value="true" /> <!-- 是否检查路径上的障碍物 -->
     <param name="checkRotObstacle" type="bool" value="true" /> <!-- 是否检查转向过程中扫到的障碍物 -->
     <param name="obstacleHeightThre" type="double" value="0.24" /> <!-- 超过该高度的点视为障碍（m）；高于 19 cm 斜坡并保留少量建图/姿态误差裕量，避免把可通行斜坡过度判成障碍 -->
-    <param name="groundHeightThre" type="double" value="0.22" /> <!-- 低于该高度变化的点视为地面参考（m）；与 19 cm 斜坡保持一定安全间隔，供后续启用 useCost 时使用 -->
-    <param name="costHeightThre" type="double" value="0.24" /> <!-- 代价高度归一化阈值（m）；与当前障碍判定阈值保持一致，供后续启用 useCost 时使用 -->
-    <param name="costScore" type="double" value="0.02" /> <!-- 路径代价评分的最小保底值 -->
-    <param name="useCost" type="bool" value="false" /> <!-- 是否启用基于高度代价的路径评分 -->
+    <param name="groundHeightThre" type="double" value="0.16" /> <!-- 超过该高度变化的可通行地形会开始给路径加软惩罚（m）；让 19 cm 斜坡边缘变成“尽量绕开”而不是完全忽略 -->
+    <param name="costHeightThre" type="double" value="0.24" /> <!-- 代价高度归一化阈值（m）；继续与当前障碍判定阈值保持一致 -->
+    <param name="costScore" type="double" value="0.05" /> <!-- 路径代价评分的最小保底值；保留少量分数，确保必须经过斜坡时仍可通行 -->
+    <param name="useCost" type="bool" value="true" /> <!-- 启用基于高度代价的路径评分，把斜坡/高边缘从“硬碰撞”前移为“软避让” -->
     <param name="pointPerPathThre" type="int" value="2" /> <!-- 一条路径至少需要多少有效点才算可通过 -->
 
     <!-- 路径搜索范围、尺度与方向偏好 -->
