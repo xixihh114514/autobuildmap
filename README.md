@@ -1,66 +1,131 @@
-# RoboCup2026 自主建图工作区
+# RERA RoboCup China 2026 Autonomous Mapping Repository
 
-rera 的 RoboCup2026 自主建图赛项三维建图工作区。
+本仓库属于 `RERA` 团队 RoboCup 中国机器人大赛环境自主建图赛项项目仓库，用于三维与二维自主建图方案的开发、仿真验证与实车部署。
 
-当前默认车模已从 `src/car` 切换为 `src/rebo24`。建议在自己的分支上提交和保存版本，避免直接覆盖公共工作分支。
+仓库当前围绕两条主技术路线维护：
 
-## 当前链路
+- 三维方案：面向三维点云感知、自主导航、探索建图与目标标记
+- 二维方案：面向二维激光 SLAM、导航探索与目标标记
 
-- `fast_lio` 负责定位
-- `tare_planner` 负责导航探索
-- 三维点云转换为二维点云后使用 `hector_slam` 绘制地图，并导出 `GeoTIFF`
+## Repository Overview
 
-## rebo24 包说明
+本仓库主要包含以下能力模块：
 
-`src/rebo24` 是当前使用的机器人模型包，包含以下内容：
+- 三维定位、建图与导航相关功能包
+- 二维 SLAM、导航与探索相关功能包
+- Gazebo 仿真环境与机器人模型
+- 视觉识别与图像标记相关功能
+- 地图生成与导出相关工具链
 
-- `urdf/rebo24.urdf`：四轮底盘、LiDAR、相机、IMU 以及 Gazebo 传感器配置
-- `launch/gazebo.launch`：启动 Gazebo 空场景、静态 TF 并生成 `rebo24` 模型
-- `launch/display.launch`：发布 `robot_description`，启动 `joint_state_publisher_gui`、`robot_state_publisher`，并支持延时启动
-- `launch/simbase.launch`：组合 `gazebo.launch` 与 `display.launch`
-- `launch/keyboard.launch`：提供 `teleop_twist_keyboard` 键盘控制入口
-- `config/joint_names_rebo24.yaml`：关节名称配置
+## Branch Description
 
-## 依赖
+仓库主要分支说明如下：
 
-- ROS 1 + `catkin`
-- `gazebo_ros`
-- `robot_state_publisher`
-- `joint_state_publisher_gui`
-- `teleop_twist_keyboard`
-- `tf`
-- `rostopic`
-- `std_msgs`
+- `master`
+  - 主要用于三维仿真开发
+  - 也是当前主要功能迭代与修改分支
+- `real_car_3D`
+  - 主要用于三维方案在真实车辆上的部署与适配
+- `2dlidar` 方案分支
+  - 用于二维方案的仿真与实车共用开发
+  - 当前远程分支名为 `robocup26_2dlidar`
 
-## 常用启动命令
+建议在个人分支上进行功能开发与调试，再合并到对应公共分支，避免直接覆盖团队工作内容。
+
+## 3D Solution
+
+三维方案主要面向三维自主建图任务，核心技术链路如下：
+
+- 使用 `FAST-LIO` 进行三维激光定位
+- 使用 `TARE Planner` 进行导航与自主探索
+- 使用 `YOLOv8` 与 `OpenCV` 进行目标识别与标记
+- 使用 `hector_slam` 保存 `TIFF` 格式地图
+
+三维方案当前主要对应：
+
+- `master`：三维仿真与主要开发
+- `real_car_3D`：三维实车部署
+
+## 2D Solution
+
+二维方案主要面向二维激光自主建图任务，核心技术链路如下：
+
+- 使用 `hector_slam` 进行二维 `SLAM` 并保存 `TIFF` 格式地图
+- 使用 `move_base` 进行导航
+- 使用 `explore` 与 `RRT` 融合进行自主探索
+- 使用 `YOLOv8` 与 `OpenCV` 进行目标识别与标记
+
+二维方案对应当前远程分支：
+
+- `robocup26_2dlidar`
+
+## Main Packages
+
+仓库中已包含的核心功能包包括但不限于：
+
+- `fast_lio`
+- `tare_planner`
+- `hector_slam`
+- `navigation`
+- `rebo24`
+- `velodyne`
+- `rplidar_ros`
+- `pointcloud_to_laserscan`
+- `realsense-ros`
+- `autonomous_exploration_development_environment`
+
+## Workspace Structure
+
+本仓库为标准 `ROS 1 + catkin` 工作区，主要目录如下：
+
+- `src/`：功能包源码
+- `build/`：编译输出目录
+- `devel/`：开发环境输出目录
+
+## Environment Requirements
+
+建议使用以下基础环境：
+
+- `ROS 1`
+- `catkin`
+- `Gazebo`
+- `OpenCV`
+- `YOLOv8` 相关运行环境
+
+不同分支在传感器驱动、实车接口与参数配置上可能存在差异，部署前请根据对应分支进行检查。
+
+## Quick Start
 
 ```bash
 cd /home/lzk/robotcup2026
-catkin build rebo24
+catkin build
 source devel/setup.bash
-
-# Gazebo + robot_description + joint_state_publisher_gui
-roslaunch rebo24 simbase.launch
-
-# 单独启键盘控制
-roslaunch rebo24 keyboard.launch
-
-# 启动 FAST-LIO（Velodyne 配置）
-roslaunch fast_lio mapping_velodyne.launch
-
-# 仅加载模型显示
-roslaunch rebo24 display.launch model:=$(rospack find rebo24)/urdf/rebo24.urdf
 ```
 
-## 当前仿真约定
+三维仿真常用启动方式示例：
 
-- `gazebo.launch` 当前默认包含 `gazebo_ros/launch/empty_world.launch`
-- `rebo24` 当前静态 TF 树约定为 `body -> base_footprint -> base_link`
-- `body -> base_footprint` 当前为零位姿，`base_footprint -> base_link` 当前为 `z=0.025`
-- 将 `body` 作为最上层节点，是为了避免 `base_footprint` 同时挂在多个父节点下而触发 `TF_REPEATED_DATA` 警告
-- 差速插件参数已按 `rebo24` 当前模型几何对齐：`wheelSeparation=0.466000391758278`、`wheelDiameter=0.050`
-- LiDAR 通过 `libgazebo_ros_velodyne_laser.so` 发布 `/velodyne_points`
-- 相机链包含 depth、infra1、infra2、color 与 IMU 相关坐标系
-- Gazebo IMU 插件当前仍挂在 `camera_imu_frame`，发布 `/camera/imu`；`imu_link` 目前没有单独的 Gazebo IMU 插件
-- `src/fast_lio/config/velodyne.yaml` 当前按 `lidar -> camera_imu_frame` 对齐，`extrinsic_T=[-0.08376, 0.005038918391, 0.051879206396]`
-- `display.launch` 当前会尝试加载 `$(find rebo24)/urdf.rviz`；如果本地没有该文件，需要先补配置或注释 RViz 节点
+```bash
+# 启动机器人仿真
+roslaunch rebo24 simbase.launch
+
+# 启动 FAST-LIO
+roslaunch fast_lio mapping_velodyne.launch
+```
+
+## Notes
+
+- 当前默认机器人模型位于 `src/rebo24`
+- 三维与二维方案使用的传感器、参数配置与启动流程并不完全相同
+- 在切换分支后，建议重新检查依赖、编译状态与启动参数
+
+## Maintenance Suggestion
+
+为保证团队协作效率，建议遵循以下约定：
+
+- 将仿真开发与实车部署区分在不同分支维护
+- 对重要参数修改保留变更记录
+- 优先在独立分支完成测试后再合并到公共分支
+
+## License
+
+如无单独说明，本仓库内各功能包的许可证以其各自源码与上游项目说明为准。

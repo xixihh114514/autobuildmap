@@ -90,6 +90,18 @@ cd /home/lzk/robotcup2026/src/image_map_gazebo
 
 ## 版本记录
 
+### 26.5.10
+
+- 重写根目录 `README.md`，将仓库说明整理为更标准的项目首页文档。
+- 在根目录 `README.md` 中补充仓库归属说明，明确本仓库属于 `RERA` 团队 RoboCup 中国机器人大赛环境自主建图赛项。
+- 在根目录 `README.md` 中补充分支职责说明：
+  - `master`：三维仿真与主要修改分支。
+  - `real_car_3D`：三维实车部署分支。
+  - `robocup26_2dlidar`：二维方案仿真与实车共用分支。
+- 在根目录 `README.md` 中补充三维与二维两条主方案技术链路说明：
+  - 三维方案使用 `FAST-LIO` 定位、`TARE Planner` 导航与探索、`YOLOv8 + OpenCV` 标记，并使用 `hector_slam` 保存 `TIFF` 格式地图。
+  - 二维方案使用 `hector_slam` 进行 `SLAM` 并保存 `TIFF` 格式地图，使用 `move_base` 进行导航，使用 `explore + RRT` 融合进行探索，并使用 `YOLOv8 + OpenCV` 进行标记。
+
 ### 26.5.2
 
 - 新增 `image_map_gazebo` 包，用于图片地图转 Gazebo world。
