@@ -5,3 +5,16 @@ devel/
 .codex
 __pycache__/
 src/visual_obstacle_detector/yolo_env/
+
+# Local archives and backups
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.tar.bz2
+*.tbz2
+*.tar.xz
+*.txz
+*.7z
+*.rar
+*.gz

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.0.2)
 project(visual_obstacle_detector)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++14)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -11,6 +11,8 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   geometry_msgs
   message_filters
+  roscpp
+  roslib
   rospy
   sensor_msgs
   std_msgs
@@ -18,6 +20,55 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_ros
   visualization_msgs
 )
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+find_package(Threads REQUIRED)
+find_package(OpenCV REQUIRED COMPONENTS core dnn imgproc objdetect)
+
+if(NOT OpenVINO_DIR)
+  execute_process(
+    COMMAND
+      ${Python3_EXECUTABLE}
+      -c
+      "import importlib.util, pathlib, sys; spec = importlib.util.find_spec('openvino'); pkg = pathlib.Path(spec.origin).resolve().parent if spec and spec.origin else None; candidates = [pkg / 'runtime' / 'cmake', pkg / 'cmake'] if pkg else []; existing = [str(path) for path in candidates if path.exists()]; print(existing[0] if existing else '')"
+    OUTPUT_VARIABLE OPENVINO_DIR_FROM_PYTHON
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+  if(OPENVINO_DIR_FROM_PYTHON)
+    set(OpenVINO_DIR "${OPENVINO_DIR_FROM_PYTHON}" CACHE PATH "OpenVINO CMake config path")
+  endif()
+endif()
+
+if(NOT OpenVINO_DIR)
+  message(FATAL_ERROR "OpenVINO C++ runtime was not found. Install openvino-dev or set OpenVINO_DIR manually.")
+endif()
+
+find_package(OpenVINO REQUIRED)
+
+if(DEFINED OpenVINO_GLIBCXX_USE_CXX11_ABI AND NOT OpenVINO_GLIBCXX_USE_CXX11_ABI STREQUAL "")
+  remove_definitions(-D_GLIBCXX_USE_CXX11_ABI=${OpenVINO_GLIBCXX_USE_CXX11_ABI})
+endif()
+
+execute_process(
+  COMMAND
+    ${Python3_EXECUTABLE}
+    -c
+    "import importlib.util, pathlib; spec = importlib.util.find_spec('openvino'); pkg = pathlib.Path(spec.origin).resolve().parent if spec and spec.origin else None; candidates = [pkg / 'libs', pkg / 'runtime' / 'lib' / 'intel64'] if pkg else []; existing = [str(path) for path in candidates if path.exists()]; print(existing[0] if existing else '')"
+  OUTPUT_VARIABLE OPENVINO_RUNTIME_LIB_DIR
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+set(ZXING_VENDOR_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/zxing_cpp/vendor/usr")
+set(ZXING_VENDOR_INCLUDE_DIR "${ZXING_VENDOR_ROOT}/include")
+set(ZXING_VENDOR_LIB_DIR "${ZXING_VENDOR_ROOT}/lib/x86_64-linux-gnu")
+set(ZXING_VENDOR_LIB "${ZXING_VENDOR_LIB_DIR}/libZXingCore.so")
+
+if(NOT EXISTS "${ZXING_VENDOR_INCLUDE_DIR}/ZXing/ReadBarcode.h")
+  message(FATAL_ERROR "ZXing-cpp vendor headers were not found under ${ZXING_VENDOR_INCLUDE_DIR}.")
+endif()
+
+if(NOT EXISTS "${ZXING_VENDOR_LIB}")
+  message(FATAL_ERROR "ZXing-cpp vendor library was not found under ${ZXING_VENDOR_LIB}.")
+endif()
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -113,6 +164,8 @@ catkin_package(
     cv_bridge
     geometry_msgs
     message_filters
+    roscpp
+    roslib
     rospy
     sensor_msgs
     std_msgs
@@ -128,8 +181,10 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+  include
   ${catkin_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
+  ${ZXING_VENDOR_INCLUDE_DIR}
 )
 
 ## Declare a C++ library
@@ -145,7 +200,16 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/visual_obstacle_detector_node.cpp)
+add_library(person_openvino_backend SHARED
+  src/openvino_person_backend.cpp
+)
+add_library(zxing_core_vendor SHARED IMPORTED GLOBAL)
+add_executable(person_global_localizer_node
+  src/person_global_localizer_node.cpp
+)
+add_executable(qr_global_localizer_node
+  src/qr_global_localizer_node.cpp
+)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -155,12 +219,47 @@ include_directories(
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(person_global_localizer_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(qr_global_localizer_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(${PROJECT_NAME}_node
-#   ${catkin_LIBRARIES}
-# )
+set_target_properties(zxing_core_vendor PROPERTIES
+  IMPORTED_LOCATION "${ZXING_VENDOR_LIB}"
+  IMPORTED_SONAME "libZXingCore.so.1"
+  INTERFACE_INCLUDE_DIRECTORIES "${ZXING_VENDOR_INCLUDE_DIR}"
+)
+
+target_link_libraries(person_openvino_backend
+  PRIVATE
+    openvino::runtime
+)
+target_link_libraries(person_global_localizer_node
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+  person_openvino_backend
+)
+target_link_libraries(qr_global_localizer_node
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+  zxing_core_vendor
+  Threads::Threads
+)
+
+if(OPENVINO_RUNTIME_LIB_DIR)
+  set_target_properties(person_openvino_backend PROPERTIES
+    BUILD_RPATH "${OPENVINO_RUNTIME_LIB_DIR}"
+    INSTALL_RPATH "${OPENVINO_RUNTIME_LIB_DIR}"
+  )
+  set_target_properties(person_global_localizer_node PROPERTIES
+    BUILD_RPATH "${OPENVINO_RUNTIME_LIB_DIR}"
+    INSTALL_RPATH "${OPENVINO_RUNTIME_LIB_DIR}"
+  )
+endif()
+
+set_target_properties(qr_global_localizer_node PROPERTIES
+  BUILD_RPATH "${ZXING_VENDOR_LIB_DIR}"
+  INSTALL_RPATH "\$ORIGIN"
+)
 
 #############
 ## Install ##
@@ -173,14 +272,26 @@ include_directories(
 ## in contrast to setup.py, you can choose the destination
 catkin_install_python(PROGRAMS
   scripts/person_global_localizer.py
+  scripts/qr_global_localizer.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
-# install(TARGETS ${PROJECT_NAME}_node
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+install(TARGETS
+  person_openvino_backend
+  person_global_localizer_node
+  qr_global_localizer_node
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(FILES
+  "${ZXING_VENDOR_LIB_DIR}/libZXingCore.so"
+  "${ZXING_VENDOR_LIB_DIR}/libZXingCore.so.1"
+  "${ZXING_VENDOR_LIB_DIR}/libZXingCore.so.1.0.7"
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark libraries for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html

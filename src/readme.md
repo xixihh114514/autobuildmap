@@ -1288,4 +1288,8 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       - 完整 `catkin_make` 仍会被工作区现有的顶层环境/外部依赖问题打断，本轮未额外解决该历史问题。
 
 8月28日
+   8.28.1
    此版本更新了hector的启动方式，将real_car_3D的hecotr启动文件移植并同样放入hector_slam_laucnh文件夹，原先simhecotr入口保留，用作二维建图使用
+
+   8.28.2
+   此版本更新了视觉模块，将real_car_3D的人和qr识别移植到master，同时保留了原master的识别，原识别文件再原名_old压缩包内
