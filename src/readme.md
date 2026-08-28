@@ -1286,3 +1286,6 @@ fastlio的gazebo下崩溃是因为ring内存数组越界，尚未排除仿真插
       验证说明：
       - 本轮对 `localPlanner.cpp` 和 `sensor_coverage_planner_ground.cpp` 做了基于当前工作区编译参数的语法检查，均已通过。
       - 完整 `catkin_make` 仍会被工作区现有的顶层环境/外部依赖问题打断，本轮未额外解决该历史问题。
+
+8月28日
+   此版本更新了hector的启动方式，将real_car_3D的hecotr启动文件移植并同样放入hector_slam_laucnh文件夹，原先simhecotr入口保留，用作二维建图使用
